@@ -1,4 +1,3 @@
-
 import { 
   checkTokenValidity, 
   fetchGoogleAnalyticsProperties, 
@@ -22,13 +21,13 @@ export const getGoogleAnalyticsProperties = async (accessToken: string) => {
   if (!accessToken) {
     throw new Error("Token d'accès non fourni");
   }
-  
+
   // Vérification de la validité du token
   const isValid = await checkTokenValidity(accessToken);
   if (!isValid) {
     throw new Error("Token d'accès invalide ou expiré");
   }
-  
+
   return fetchGoogleAnalyticsProperties(accessToken);
 };
 
@@ -37,20 +36,20 @@ export const getGoogleAnalyticsData = async (accessToken: string, propertyId: st
   if (!accessToken) {
     throw new Error("Token d'accès non fourni");
   }
-  
+
   // Vérification de la validité du token
   const isValid = await checkTokenValidity(accessToken);
   if (!isValid) {
     throw new Error("Token d'accès invalide ou expiré");
   }
-  
+
   return fetchGoogleAnalyticsReport(accessToken, propertyId);
 };
 
 // Fournit les URLs des différents endpoints API
 export const getApiUrl = (endpoint: string, queryParams?: Record<string, string>) => {
   let url = endpoint;
-  
+
   if (queryParams) {
     const params = new URLSearchParams();
     Object.entries(queryParams).forEach(([key, value]) => {
@@ -58,19 +57,23 @@ export const getApiUrl = (endpoint: string, queryParams?: Record<string, string>
     });
     url += `?${params.toString()}`;
   }
-  
+
   return url;
 };
 
 // Fonction pour obtenir les comptes Analytics (via ton backend)
 export const getGoogleAnalyticsAccounts = async () => {
-  // On utilise maintenant le token stocké dans localStorage
   return await fetchGoogleAnalyticsAccounts();
 };
 
+// Fonction pour obtenir les propriétés d'un compte Analytics
 export const getGoogleAnalyticsAccountProperties = async (accountId: string) => {
   if (!accountId) throw new Error("accountId requis");
-  return await fetchGoogleAnalyticsAccountProperties(accountId);
+
+  // ✅ Forcer le bon format avant d'appeler le backend
+  const formattedAccountId = accountId.startsWith("accounts/") ? accountId : `accounts/${accountId}`;
+
+  return await fetchGoogleAnalyticsAccountProperties(formattedAccountId);
 };
 
 export { API_ENDPOINTS };
