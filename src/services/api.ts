@@ -5,15 +5,16 @@ import {
   fetchGoogleAnalyticsReport,
   getStoredAccessToken,
   fetchGoogleAnalyticsAccounts,
-  fetchGoogleAnalyticsAccountProperties
+  fetchGoogleAnalyticsAccountProperties,
+  API_BASE_URL
 } from "./googleAnalytics";
 
-// Définition des points d'entrée de l'API
+// Définition des points d'entrée de l'API externe
 const API_ENDPOINTS = {
-  AUTH_GOOGLE: "/api/auth/google",
-  ANALYTICS_ACCOUNTS: "/api/analytics/accounts",
-  ANALYTICS_PROPERTIES: "/api/analytics/properties",
-  ANALYTICS_DATA: "/api/analytics/data"
+  AUTH_GOOGLE: `${API_BASE_URL}/auth/google`,
+  ANALYTICS_ACCOUNTS: `${API_BASE_URL}/analytics/accounts`,
+  ANALYTICS_PROPERTIES: `${API_BASE_URL}/analytics/properties`,
+  ANALYTICS_DATA: `${API_BASE_URL}/analytics/data`
 };
 
 // Fonction pour obtenir les propriétés Analytics

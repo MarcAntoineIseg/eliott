@@ -1,4 +1,3 @@
-
 // Service pour interagir avec l'API Google Analytics
 
 const CLIENT_ID = "42921046273-93pb94sobo09o0jakrreq2vdeqkgjsdk.apps.googleusercontent.com";
@@ -87,6 +86,10 @@ export const checkTokenValidity = async (accessToken: string): Promise<boolean> 
   }
 };
 
+// Configuration de l'URL de l'API externe
+// Remplacez cette URL par celle de votre vrai backend
+export const API_BASE_URL = "https://votre-backend-api.com";
+
 // Récupération des propriétés Google Analytics
 export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promise<GoogleAnalyticsProperty[]> => {
   if (!accessToken || accessToken.trim() === "") {
@@ -98,17 +101,16 @@ export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promi
     console.log("Fetching Google Analytics properties with token:", 
       accessToken.substring(0, 5) + "..." + accessToken.substring(accessToken.length - 5));
     
-    // Appel à notre API backend qui utilisera googleapis comme suggéré
+    // Appel à votre API backend externe
     const response = await fetch(
-      "/api/analytics/properties",
+      `${API_BASE_URL}/analytics/properties`,
       {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json'
-        },
-        credentials: 'include' // Pour envoyer les cookies de session
+        }
       }
     );
 
@@ -137,7 +139,7 @@ export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promi
   }
 };
 
-// Utiliser l'endpoint backend au lieu de l'appel direct à l'API Google
+// Modification pour utiliser l'API externe
 export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId: string) => {
   if (!accessToken || accessToken.trim() === "") {
     throw new Error("Token d'accès non fourni ou invalide");
@@ -146,13 +148,11 @@ export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId
   try {
     console.log(`Fetching report data for property ${propertyId}`);
     
-    // Appel à l'API backend avec credentials pour envoyer les cookies de session
-    // ET l'accessToken dans l'en-tête Authorization
+    // Appel à l'API backend externe
     const response = await fetch(
-      `/api/analytics/data?propertyId=${encodeURIComponent(propertyId)}`,
+      `${API_BASE_URL}/analytics/data?propertyId=${encodeURIComponent(propertyId)}`,
       {
         method: 'GET',
-        credentials: 'include', // Important: envoie les cookies de session
         headers: {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
@@ -178,7 +178,7 @@ export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId
   }
 };
 
-// Nouvelle fonction pour récupérer les comptes Google Analytics via le backend
+// Modification pour utiliser l'API externe
 export const fetchGoogleAnalyticsAccounts = async (): Promise<any[]> => {
   try {
     // Récupérer le token depuis localStorage
@@ -187,12 +187,11 @@ export const fetchGoogleAnalyticsAccounts = async (): Promise<any[]> => {
       throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
     }
     
-    const response = await fetch("/api/analytics/accounts", {
+    const response = await fetch(`${API_BASE_URL}/analytics/accounts`, {
       method: "GET",
-      credentials: "include", // Assure que la session (cookie) est envoyée
       headers: {
         "Accept": "application/json",
-        "Authorization": `Bearer ${accessToken}` // Ajouter le token dans l'en-tête
+        "Authorization": `Bearer ${accessToken}`
       },
     });
     if (!response.ok) {
@@ -200,7 +199,6 @@ export const fetchGoogleAnalyticsAccounts = async (): Promise<any[]> => {
       throw new Error(`Erreur API Comptes: ${response.status} - ${errorText}`);
     }
     const data = await response.json();
-    // Selon le format de retour, tu veux probablement retourner data.accounts ou data
     return data.accounts || [];
   } catch (error) {
     console.error("Erreur lors de la récupération des comptes Analytics:", error);
@@ -218,6 +216,7 @@ export const GOOGLE_ANALYTICS_SCOPES = [
 
 export { CLIENT_ID };
 
+// Modification pour utiliser l'API externe
 export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): Promise<any[]> => {
   if (!accountId) {
     throw new Error("L'identifiant du compte (accountId) est requis.");
@@ -229,12 +228,11 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
       throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
     }
     
-    const response = await fetch(`/api/analytics/properties?accountId=${encodeURIComponent(accountId)}`, {
+    const response = await fetch(`${API_BASE_URL}/analytics/properties?accountId=${encodeURIComponent(accountId)}`, {
       method: "GET",
-      credentials: "include", // Session avec cookie
       headers: { 
         "Accept": "application/json",
-        "Authorization": `Bearer ${accessToken}` // Ajouter le token dans l'en-tête
+        "Authorization": `Bearer ${accessToken}`
       },
     });
     if (!response.ok) {
@@ -242,7 +240,6 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
       throw new Error(`Erreur API propriétés: ${response.status} - ${errorText}`);
     }
     const data = await response.json();
-    // La réponse aura probablement la forme { properties: [...] }, sinon retourner data directement
     return data.properties || [];
   } catch (error) {
     console.error("Erreur lors de la récupération des propriétés GA4 par compte:", error);
