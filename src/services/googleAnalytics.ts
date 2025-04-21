@@ -13,19 +13,34 @@ export interface GoogleAnalyticsProperty {
 // Extraction du token d'accès depuis l'URL après redirection OAuth
 export const getAccessTokenFromUrl = (): string | null => {
   const hash = window.location.hash;
-  if (!hash) return null;
+  if (!hash || hash.length < 2) return null;
   
-  const params = new URLSearchParams(hash.substring(1));
-  return params.get("access_token");
+  try {
+    const params = new URLSearchParams(hash.substring(1));
+    const accessToken = params.get("access_token");
+    console.log("Access token extracted from URL:", accessToken ? "Found (length: " + accessToken.length + ")" : "Not found");
+    return accessToken;
+  } catch (error) {
+    console.error("Error extracting access token from URL:", error);
+    return null;
+  }
 };
 
 // Vérification de la validité du token
 export const checkTokenValidity = async (accessToken: string): Promise<boolean> => {
+  if (!accessToken || accessToken.trim() === "") {
+    console.error("No token provided to validate");
+    return false;
+  }
+  
   try {
+    console.log("Checking token validity...");
     // Utilise l'API tokeninfo pour vérifier la validité du token
     const response = await fetch(
-      `https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${accessToken}`
+      `https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${encodeURIComponent(accessToken)}`
     );
+    
+    console.log("Token validation response status:", response.status);
     
     if (!response.ok) {
       console.error("Token invalid:", await response.text());
@@ -34,7 +49,17 @@ export const checkTokenValidity = async (accessToken: string): Promise<boolean> 
     
     const data = await response.json();
     console.log("Token info:", data);
-    // Vérifie si le token a les scopes nécessaires
+    
+    // Vérifier que le token a accès aux scopes nécessaires
+    const hasRequiredScopes = GOOGLE_ANALYTICS_SCOPES.every(scope => 
+      data.scope && data.scope.includes(scope)
+    );
+    
+    if (!hasRequiredScopes) {
+      console.error("Token does not have required scopes");
+      return false;
+    }
+    
     return true;
   } catch (error) {
     console.error("Erreur de vérification du token:", error);
@@ -44,8 +69,14 @@ export const checkTokenValidity = async (accessToken: string): Promise<boolean> 
 
 // Récupération des propriétés Google Analytics
 export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promise<GoogleAnalyticsProperty[]> => {
+  if (!accessToken || accessToken.trim() === "") {
+    console.error("No access token provided for fetching properties");
+    throw new Error("Token d'accès non fourni ou invalide");
+  }
+  
   try {
-    console.log("Fetching Google Analytics properties with token:", accessToken.substring(0, 10) + "...");
+    console.log("Fetching Google Analytics properties with token:", 
+      accessToken.substring(0, 5) + "..." + accessToken.substring(accessToken.length - 5));
     
     // S'assurer que l'en-tête Authorization est correctement formaté
     const response = await fetch(
@@ -60,7 +91,7 @@ export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promi
       }
     );
 
-    console.log("Response status:", response.status);
+    console.log("Fetch properties response status:", response.status);
     
     if (!response.ok) {
       const errorText = await response.text();
@@ -87,6 +118,10 @@ export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promi
 
 // Pour récupérer des rapports, nous avons besoin d'utiliser une autre API avec un filtre spécifique
 export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId: string) => {
+  if (!accessToken || accessToken.trim() === "") {
+    throw new Error("Token d'accès non fourni ou invalide");
+  }
+  
   try {
     console.log(`Fetching report data for property ${propertyId}`);
     
@@ -120,6 +155,8 @@ export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId
         })
       }
     );
+
+    console.log("Report API response status:", response.status);
 
     if (!response.ok) {
       const errorText = await response.text();

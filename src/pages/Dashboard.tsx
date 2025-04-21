@@ -24,56 +24,77 @@ const Dashboard = () => {
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
 
   useEffect(() => {
-    // Vérifier si un token d'accès est présent dans l'URL (après redirection OAuth)
-    const token = getAccessTokenFromUrl();
-    if (token) {
-      console.log("Token found in URL, length:", token.length);
-      setAccessToken(token);
-      setConnectionStatus('connected');
-      // On peut sauvegarder le token dans le localStorage pour le conserver
-      localStorage.setItem("googleAccessToken", token);
-      // Notification de succès
-      toast.success("Connexion réussie à Google Analytics");
+    // Supprimer tous les paramètres hash de l'URL tout en préservant le token
+    const clearUrlAndProcessToken = () => {
+      // Vérifier si un token d'accès est présent dans l'URL (après redirection OAuth)
+      const token = getAccessTokenFromUrl();
       
       // Nettoyer l'URL après avoir récupéré le token pour éviter les problèmes de partage d'URL
       window.history.replaceState({}, document.title, "/dashboard");
-    } else {
-      // Essayer de récupérer un token précédemment stocké
-      const storedToken = localStorage.getItem("googleAccessToken");
-      if (storedToken) {
-        console.log("Token found in localStorage");
+      
+      if (token) {
+        console.log("Token found in URL, now processing it");
+        setAccessToken(token);
+        setConnectionStatus('connecting');
         
-        // Vérifier la validité du token avant de l'utiliser
-        checkTokenValidity(storedToken).then(isValid => {
+        // Vérifier la validité du token immédiatement
+        checkTokenValidity(token).then(isValid => {
           if (isValid) {
-            setAccessToken(storedToken);
+            console.log("Token is valid, saving to localStorage");
+            localStorage.setItem("googleAccessToken", token);
             setConnectionStatus('connected');
+            toast.success("Connexion réussie à Google Analytics");
           } else {
-            // Si le token n'est pas valide, le supprimer
+            console.error("Token from URL is invalid");
             localStorage.removeItem("googleAccessToken");
+            setAccessToken(null);
             setConnectionStatus('disconnected');
-            console.log("Stored token is invalid, removed from localStorage");
+            setError("Le token d'accès reçu de Google est invalide. Veuillez réessayer.");
+            toast.error("Échec de connexion : token invalide");
           }
         });
       } else {
-        setConnectionStatus('disconnected');
+        // Essayer de récupérer un token précédemment stocké
+        const storedToken = localStorage.getItem("googleAccessToken");
+        if (storedToken) {
+          console.log("Token found in localStorage, checking validity");
+          setConnectionStatus('connecting');
+          
+          // Vérifier la validité du token avant de l'utiliser
+          checkTokenValidity(storedToken).then(isValid => {
+            if (isValid) {
+              console.log("Stored token is valid");
+              setAccessToken(storedToken);
+              setConnectionStatus('connected');
+              toast.success("Session restaurée");
+            } else {
+              console.log("Stored token is invalid, removing");
+              localStorage.removeItem("googleAccessToken");
+              setConnectionStatus('disconnected');
+              toast.error("Session expirée. Veuillez vous reconnecter.");
+            }
+          });
+        } else {
+          console.log("No token found - user needs to authenticate");
+          setConnectionStatus('disconnected');
+        }
       }
-    }
+    };
+    
+    clearUrlAndProcessToken();
   }, []);
 
   useEffect(() => {
     const loadProperties = async () => {
-      if (!accessToken) return;
+      if (!accessToken || connectionStatus !== 'connected') return;
       
       setIsLoading(true);
       setError(null);
-      setConnectionStatus('connecting');
       
       try {
-        console.log("Loading properties with token");
+        console.log("Loading properties with validated token");
         const propertiesData = await fetchGoogleAnalyticsProperties(accessToken);
         setProperties(propertiesData);
-        setConnectionStatus('connected');
         
         if (propertiesData.length === 0) {
           toast.info("Aucune propriété Google Analytics n'a été trouvée pour ce compte");
@@ -84,18 +105,18 @@ const Dashboard = () => {
         console.error("Erreur lors du chargement des propriétés:", err);
         const errorMessage = err.message || "Impossible de charger vos propriétés Google Analytics. Veuillez réessayer.";
         setError(errorMessage);
-        setConnectionStatus('disconnected');
         toast.error(errorMessage);
         
         // Si l'erreur est due à un token expiré ou invalide, on peut le supprimer
         if (err.message && (
           err.message.includes("401") || 
           err.message.includes("403") || 
-          err.message.includes("400") ||
           err.message.includes("UNAUTHENTICATED")
         )) {
+          console.log("Authentication error detected, clearing token");
           localStorage.removeItem("googleAccessToken");
           setAccessToken(null);
+          setConnectionStatus('disconnected');
           toast.error("Session expirée. Veuillez vous reconnecter.");
         }
       } finally {
@@ -104,7 +125,7 @@ const Dashboard = () => {
     };
 
     loadProperties();
-  }, [accessToken]);
+  }, [accessToken, connectionStatus]);
 
   const handleLogout = () => {
     localStorage.removeItem("googleAccessToken");
@@ -183,6 +204,15 @@ const Dashboard = () => {
                   Connexion à Google Analytics réussie. Votre token d'accès est valide.
                 </AlertDescription>
               </Alert>
+            )}
+            
+            {connectionStatus === 'connecting' && (
+              <div className="flex justify-center items-center my-8">
+                <div className="animate-pulse flex flex-col items-center">
+                  <div className="h-8 w-8 mb-4 rounded-full bg-blue-200 animate-spin"></div>
+                  <div>Vérification de l'authentification...</div>
+                </div>
+              </div>
             )}
             
             <PropertyList properties={properties} isLoading={isLoading} />

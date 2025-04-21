@@ -11,6 +11,9 @@ interface GoogleAuthButtonProps {
 
 const GoogleAuthButton = ({ clientId, onSuccess, onError }: GoogleAuthButtonProps) => {
   const handleGoogleAuth = () => {
+    // Clear any existing tokens before starting a new auth flow
+    localStorage.removeItem("googleAccessToken");
+    
     // Redirection vers l'authentification Google
     const redirectUri = window.location.origin + "/dashboard";
     
@@ -28,10 +31,12 @@ const GoogleAuthButton = ({ clientId, onSuccess, onError }: GoogleAuthButtonProp
       // Ajout d'un state pour la sécurité
       state: Math.random().toString(36).substring(2),
       // Forcer la sélection du compte Google
-      prompt: 'select_account'
+      prompt: 'consent select_account',
+      // Indiquer que nous voulons accéder aux ressources off-line
+      access_type: 'online'
     });
     
-    const authUrl = `https://accounts.google.com/o/oauth2/auth?${params.toString()}`;
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
     console.log("Auth URL:", authUrl);
     
     window.location.href = authUrl;
