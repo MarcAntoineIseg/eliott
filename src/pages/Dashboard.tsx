@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Navbar from "@/components/Navbar";
 import GoogleAuthButton from "@/components/GoogleAuthButton";
 import PropertyList from "@/components/PropertyList";
+import { toast } from "@/components/ui/sonner";
 import { 
   CLIENT_ID, 
   GoogleAnalyticsProperty, 
@@ -22,13 +23,17 @@ const Dashboard = () => {
     // Vérifier si un token d'accès est présent dans l'URL (après redirection OAuth)
     const token = getAccessTokenFromUrl();
     if (token) {
+      console.log("Token found in URL");
       setAccessToken(token);
       // On peut sauvegarder le token dans le localStorage pour le conserver
       localStorage.setItem("googleAccessToken", token);
+      // Notification de succès
+      toast.success("Connexion réussie à Google Analytics");
     } else {
       // Essayer de récupérer un token précédemment stocké
       const storedToken = localStorage.getItem("googleAccessToken");
       if (storedToken) {
+        console.log("Token found in localStorage");
         setAccessToken(storedToken);
       }
     }
@@ -42,14 +47,26 @@ const Dashboard = () => {
       setError(null);
       
       try {
+        console.log("Loading properties with token");
         const propertiesData = await fetchGoogleAnalyticsProperties(accessToken);
         setProperties(propertiesData);
-      } catch (err) {
+        
+        if (propertiesData.length === 0) {
+          toast.info("Aucune propriété Google Analytics n'a été trouvée pour ce compte");
+        } else {
+          toast.success(`${propertiesData.length} propriété(s) Google Analytics trouvée(s)`);
+        }
+      } catch (err: any) {
         console.error("Erreur lors du chargement des propriétés:", err);
-        setError("Impossible de charger vos propriétés Google Analytics. Veuillez réessayer.");
-        // Si l'erreur est due à un token expiré, on peut le supprimer
-        localStorage.removeItem("googleAccessToken");
-        setAccessToken(null);
+        const errorMessage = err.message || "Impossible de charger vos propriétés Google Analytics. Veuillez réessayer.";
+        setError(errorMessage);
+        toast.error(errorMessage);
+        
+        // Si l'erreur est due à un token expiré ou invalide, on peut le supprimer
+        if (err.message && (err.message.includes("401") || err.message.includes("403") || err.message.includes("400"))) {
+          localStorage.removeItem("googleAccessToken");
+          setAccessToken(null);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -62,6 +79,7 @@ const Dashboard = () => {
     localStorage.removeItem("googleAccessToken");
     setAccessToken(null);
     setProperties([]);
+    toast.info("Déconnexion réussie");
   };
 
   return (

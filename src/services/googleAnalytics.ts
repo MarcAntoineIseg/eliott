@@ -22,20 +22,26 @@ export const getAccessTokenFromUrl = (): string | null => {
 // Récupération des propriétés Google Analytics
 export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promise<GoogleAnalyticsProperty[]> => {
   try {
+    console.log("Fetching Google Analytics properties with token:", accessToken.substring(0, 10) + "...");
+    
     const response = await fetch(
-      "https://analyticsadmin.googleapis.com/v1alpha/properties",
+      "https://analyticsadmin.googleapis.com/v1beta/properties",
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
         },
       }
     );
 
     if (!response.ok) {
-      throw new Error(`Erreur API: ${response.status}`);
+      const errorText = await response.text();
+      console.error("API response error:", response.status, errorText);
+      throw new Error(`Erreur API: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
+    console.log("API response data:", data);
     
     // Transformation des données
     return data.properties ? data.properties.map((prop: any) => ({
@@ -47,8 +53,14 @@ export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promi
     
   } catch (error) {
     console.error("Erreur lors de la récupération des propriétés:", error);
-    return [];
+    throw error; // Relancer l'erreur pour la gérer dans le composant
   }
 };
+
+// Les scopes corrects selon la documentation de Google Analytics Admin API
+export const GOOGLE_ANALYTICS_SCOPES = [
+  "https://www.googleapis.com/auth/analytics.readonly",
+  "https://www.googleapis.com/auth/analytics.edit"
+];
 
 export { CLIENT_ID };

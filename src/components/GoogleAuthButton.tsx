@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Cloud } from "lucide-react";
+import { GOOGLE_ANALYTICS_SCOPES } from "@/services/googleAnalytics";
 
 interface GoogleAuthButtonProps {
   clientId: string;
@@ -12,9 +13,13 @@ const GoogleAuthButton = ({ clientId, onSuccess, onError }: GoogleAuthButtonProp
   const handleGoogleAuth = () => {
     // Redirection vers l'authentification Google
     const redirectUri = window.location.origin + "/dashboard";
-    const scope = "https://www.googleapis.com/auth/analytics.readonly";
     
-    const authUrl = `https://accounts.google.com/o/oauth2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=token&prompt=consent`;
+    // Utilisation des scopes corrects depuis le service
+    const scope = GOOGLE_ANALYTICS_SCOPES.join(" ");
+    
+    console.log("Redirecting to Google Auth with scopes:", scope);
+    
+    const authUrl = `https://accounts.google.com/o/oauth2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=token&prompt=consent&access_type=offline`;
     
     window.location.href = authUrl;
   };
