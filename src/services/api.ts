@@ -1,4 +1,3 @@
-
 import { 
   checkTokenValidity, 
   fetchGoogleAnalyticsProperties, 
@@ -71,14 +70,11 @@ export const getGoogleAnalyticsAccounts = async () => {
 export const getGoogleAnalyticsAccountProperties = async (accountId: string) => {
   if (!accountId) throw new Error("accountId requis");
 
-  // Ici, on extrait uniquement l'ID numérique du compte
-  // On retire tout préfixe "accounts/" pour avoir uniquement l'ID 
-  const cleanAccountId = accountId.includes("accounts/") 
-    ? accountId.split("accounts/")[1] 
-    : accountId;
+  // Extraire uniquement l'ID numérique du compte pour éviter les erreurs de formatage
+  const numericAccountId = accountId.replace(/\D/g, '');
 
-  console.log(`Getting properties for account ID: ${cleanAccountId}`);
-  return await fetchGoogleAnalyticsAccountProperties(cleanAccountId);
+  console.log(`Getting properties for account ID: ${numericAccountId}`);
+  return await fetchGoogleAnalyticsAccountProperties(numericAccountId);
 };
 
 export { API_ENDPOINTS };

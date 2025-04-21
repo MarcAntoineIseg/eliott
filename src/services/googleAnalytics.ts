@@ -193,27 +193,30 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
     throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
   }
 
-  // Correction du format de l'ID pour l'API Google
-  // Le format doit être uniquement le numéro de compte, sans le préfixe "accounts/"
-  // L'API s'attend à recevoir juste l'ID numérique du compte
-  const cleanAccountId = accountId.includes("accounts/") 
-    ? accountId.split("accounts/")[1] 
-    : accountId;
+  // Pour l'API, on veut juste l'ID numérique sans préfixe
+  const numericAccountId = accountId.replace(/\D/g, '');
 
   try {
-    console.log(`Fetching properties for account ID: ${cleanAccountId} with token: ${accessToken.substring(0, 5)}...`);
+    console.log(`Fetching properties for account ID: ${numericAccountId} with token: ${accessToken.substring(0, 5)}...`);
     
-    // Corrigé: l'accountId doit être l'ID numérique seul, pas le chemin complet
-    const response = await fetch(
-      `${API_BASE_URL}/api/analytics/properties?accountId=${encodeURIComponent(cleanAccountId)}&token=${encodeURIComponent(accessToken)}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
+    // Envoyer uniquement l'ID numérique à l'API
+    const url = `${API_BASE_URL}/api/analytics/properties`;
+    const params = new URLSearchParams({
+      accountId: numericAccountId,
+      token: accessToken
+    });
+
+    // Construction propre de l'URL avec les paramètres
+    const fullUrl = `${url}?${params.toString()}`;
+    console.log(`Request URL: ${fullUrl}`);
+    
+    const response = await fetch(fullUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       }
-    );
+    });
 
     console.log("Properties API response status:", response.status);
 
