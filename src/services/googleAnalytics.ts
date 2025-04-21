@@ -34,6 +34,8 @@ export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promi
       }
     );
 
+    console.log("Response status:", response.status);
+    
     if (!response.ok) {
       const errorText = await response.text();
       console.error("API response error:", response.status, errorText);
@@ -53,14 +55,13 @@ export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promi
     
   } catch (error) {
     console.error("Erreur lors de la récupération des propriétés:", error);
-    throw error; // Relancer l'erreur pour la gérer dans le composant
+    throw error;
   }
 };
 
-// Les scopes corrects selon la documentation de Google Analytics Admin API
+// Les scopes corrects pour Google Analytics Admin API
 export const GOOGLE_ANALYTICS_SCOPES = [
-  "https://www.googleapis.com/auth/analytics.readonly",
-  "https://www.googleapis.com/auth/analytics.edit"
+  "https://www.googleapis.com/auth/analytics.readonly"
 ];
 
 export { CLIENT_ID };

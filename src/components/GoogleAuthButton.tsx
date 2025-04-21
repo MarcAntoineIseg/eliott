@@ -19,7 +19,8 @@ const GoogleAuthButton = ({ clientId, onSuccess, onError }: GoogleAuthButtonProp
     
     console.log("Redirecting to Google Auth with scopes:", scope);
     
-    const authUrl = `https://accounts.google.com/o/oauth2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=token&prompt=consent&access_type=offline`;
+    // Simplification des paramètres de requête OAuth pour éviter l'erreur 400
+    const authUrl = `https://accounts.google.com/o/oauth2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=token`;
     
     window.location.href = authUrl;
   };

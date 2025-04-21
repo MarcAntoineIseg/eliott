@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Navbar from "@/components/Navbar";
 import GoogleAuthButton from "@/components/GoogleAuthButton";
 import PropertyList from "@/components/PropertyList";
@@ -12,6 +13,7 @@ import {
   getAccessTokenFromUrl,
   fetchGoogleAnalyticsProperties
 } from "@/services/googleAnalytics";
+import { AlertCircle } from "lucide-react";
 
 const Dashboard = () => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -23,12 +25,15 @@ const Dashboard = () => {
     // Vérifier si un token d'accès est présent dans l'URL (après redirection OAuth)
     const token = getAccessTokenFromUrl();
     if (token) {
-      console.log("Token found in URL");
+      console.log("Token found in URL, length:", token.length);
       setAccessToken(token);
       // On peut sauvegarder le token dans le localStorage pour le conserver
       localStorage.setItem("googleAccessToken", token);
       // Notification de succès
       toast.success("Connexion réussie à Google Analytics");
+      
+      // Nettoyer l'URL après avoir récupéré le token pour éviter les problèmes de partage d'URL
+      window.history.replaceState({}, document.title, "/dashboard");
     } else {
       // Essayer de récupérer un token précédemment stocké
       const storedToken = localStorage.getItem("googleAccessToken");
@@ -99,6 +104,25 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <GoogleAuthButton clientId={CLIENT_ID} />
+              
+              {error && (
+                <Alert variant="destructive" className="mt-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Erreur de connexion</AlertTitle>
+                  <AlertDescription>
+                    {error}
+                  </AlertDescription>
+                </Alert>
+              )}
+              
+              <div className="mt-4 text-sm text-gray-500">
+                <p>Assurez-vous que :</p>
+                <ul className="list-disc pl-5 mt-2">
+                  <li>Votre compte Google a accès à Google Analytics</li>
+                  <li>Vous avez autorisé l'URL de redirection <code>{window.location.origin}/dashboard</code> dans la console Google Cloud</li>
+                  <li>Vous avez activé l'API Google Analytics Admin dans votre projet Google Cloud</li>
+                </ul>
+              </div>
             </CardContent>
           </Card>
         ) : (
@@ -111,9 +135,13 @@ const Dashboard = () => {
             </div>
             
             {error && (
-              <div className="bg-red-100 text-red-700 p-4 rounded-md mb-4">
-                {error}
-              </div>
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Erreur</AlertTitle>
+                <AlertDescription>
+                  {error}
+                </AlertDescription>
+              </Alert>
             )}
             
             <PropertyList properties={properties} isLoading={isLoading} />
