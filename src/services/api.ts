@@ -1,3 +1,4 @@
+
 import { 
   checkTokenValidity, 
   fetchGoogleAnalyticsProperties, 
@@ -70,9 +71,13 @@ export const getGoogleAnalyticsAccounts = async () => {
 export const getGoogleAnalyticsAccountProperties = async (accountId: string) => {
   if (!accountId) throw new Error("accountId requis");
 
-  // ✅ Forcer le bon format avant d'appeler le backend
-  const formattedAccountId = accountId.startsWith("accounts/") ? accountId : `accounts/${accountId}`;
+  // Assurons-nous que l'ID du compte est correctement formaté 
+  // L'API Google Analytics Admin s'attend à un format "accounts/XXXX"
+  const formattedAccountId = accountId.includes("accounts/") 
+    ? accountId 
+    : `accounts/${accountId.replace(/^accounts\//, '')}`;
 
+  console.log(`Getting properties for account: ${formattedAccountId}`);
   return await fetchGoogleAnalyticsAccountProperties(formattedAccountId);
 };
 

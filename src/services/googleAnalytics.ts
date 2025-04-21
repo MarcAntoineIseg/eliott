@@ -1,3 +1,4 @@
+
 // Service pour interagir avec l'API Google Analytics
 
 const CLIENT_ID = "42921046273-93pb94sobo09o0jakrreq2vdeqkgjsdk.apps.googleusercontent.com";
@@ -83,7 +84,7 @@ export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promi
     console.log("Fetching Google Analytics properties with token:", accessToken.substring(0, 5) + "..." + accessToken.substring(accessToken.length - 5));
 
     const response = await fetch(
-      `${API_BASE_URL}/api/analytics/properties?token=${accessToken}`,
+      `${API_BASE_URL}/api/analytics/properties?token=${encodeURIComponent(accessToken)}`,
       {
         method: 'GET',
         headers: {
@@ -126,7 +127,7 @@ export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId
     console.log(`Fetching report data for property ${propertyId}`);
 
     const response = await fetch(
-      `${API_BASE_URL}/api/analytics/data?propertyId=${encodeURIComponent(propertyId)}&token=${accessToken}`,
+      `${API_BASE_URL}/api/analytics/data?propertyId=${encodeURIComponent(propertyId)}&token=${encodeURIComponent(accessToken)}`,
       {
         method: 'GET',
         headers: {
@@ -160,7 +161,7 @@ export const fetchGoogleAnalyticsAccounts = async (): Promise<any[]> => {
       throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/analytics/accounts?token=${accessToken}`);
+    const response = await fetch(`${API_BASE_URL}/api/analytics/accounts?token=${encodeURIComponent(accessToken)}`);
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Erreur API Comptes: ${response.status} - ${errorText}`);
@@ -192,22 +193,39 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
     throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
   }
 
-  // ✅ Forcer le bon format de l'identifiant de compte
-  const formattedAccountId = accountId.startsWith("accounts/")
-    ? accountId
-    : `accounts/${accountId}`;
+  // S'assurer que l'ID du compte est au format correct pour l'API Google Analytics
+  // Format attendu: accounts/XXXX
+  const formattedAccountId = accountId.includes("accounts/") 
+    ? accountId 
+    : `accounts/${accountId.replace(/^accounts\//, '')}`;
 
   try {
+    console.log(`Fetching properties for account: ${formattedAccountId} with token: ${accessToken.substring(0, 5)}...`);
+    
+    // Utiliser le bon endpoint en s'assurant que le token et l'accountId sont correctement encodés
     const response = await fetch(
-      `${API_BASE_URL}/api/analytics/properties?accountId=${encodeURIComponent(formattedAccountId)}&token=${accessToken}`
+      `${API_BASE_URL}/api/analytics/properties?accountId=${encodeURIComponent(formattedAccountId)}&token=${encodeURIComponent(accessToken)}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      }
     );
+
+    console.log("Properties API response status:", response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Erreur API propriétés: ${response.status} - ${errorText}`);
+      console.error("API properties error:", response.status, errorText);
+      throw new Error(`Erreur lors de la récupération des propriétés: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
+    console.log("Properties data:", data);
+    
+    // S'assurer de traiter correctement la réponse même si le format peut varier
     return data.properties || [];
   } catch (error) {
     console.error("Erreur lors de la récupération des propriétés GA4 par compte:", error);
