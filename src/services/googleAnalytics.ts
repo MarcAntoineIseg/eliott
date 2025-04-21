@@ -13,21 +13,18 @@ export interface GoogleAnalyticsProperty {
 export const getAccessTokenFromUrl = (): string | null => {
   const hash = window.location.hash;
   if (!hash || hash.length < 2) return null;
-  
+
   try {
     const params = new URLSearchParams(hash.substring(1));
     const accessToken = params.get("access_token");
     console.log("Access token extracted from URL:", accessToken ? "Found (length: " + accessToken.length + ")" : "Not found");
-    
-    // Si un token est trouvé, le stocker dans localStorage
+
     if (accessToken) {
       localStorage.setItem("googleAccessToken", accessToken);
       console.log("Access token saved to localStorage");
-      
-      // Nettoyer l'URL après avoir stocké le token
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-    
+
     return accessToken;
   } catch (error) {
     console.error("Error extracting access token from URL:", error);
@@ -35,50 +32,39 @@ export const getAccessTokenFromUrl = (): string | null => {
   }
 };
 
-// Récupération du token depuis localStorage
 export const getStoredAccessToken = (): string | null => {
   const token = localStorage.getItem("googleAccessToken");
   console.log("Retrieved token from localStorage:", token ? "Found" : "Not found");
   return token;
 };
 
-// Vérification de la validité du token
 export const checkTokenValidity = async (accessToken: string): Promise<boolean> => {
   if (!accessToken || accessToken.trim() === "") {
     console.error("No token provided to validate");
     return false;
   }
-  
+
   try {
     console.log("Checking token validity...");
-    // Utilise l'API tokeninfo pour vérifier la validité du token
-    const response = await fetch(
-      `https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${encodeURIComponent(accessToken)}`
-    );
-    
+    const response = await fetch(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${encodeURIComponent(accessToken)}`);
     console.log("Token validation response status:", response.status);
-    
+
     if (!response.ok) {
       console.error("Token invalid:", await response.text());
-      // Si le token est invalide, le supprimer du localStorage
       localStorage.removeItem("googleAccessToken");
       return false;
     }
-    
+
     const data = await response.json();
     console.log("Token info:", data);
-    
-    // Vérifier que le token a accès aux scopes nécessaires
-    const hasRequiredScopes = GOOGLE_ANALYTICS_SCOPES.every(scope => 
-      data.scope && data.scope.includes(scope)
-    );
-    
+
+    const hasRequiredScopes = GOOGLE_ANALYTICS_SCOPES.every(scope => data.scope && data.scope.includes(scope));
     if (!hasRequiredScopes) {
       console.error("Token does not have required scopes");
       localStorage.removeItem("googleAccessToken");
       return false;
     }
-    
+
     return true;
   } catch (error) {
     console.error("Erreur de vérification du token:", error);
@@ -86,28 +72,22 @@ export const checkTokenValidity = async (accessToken: string): Promise<boolean> 
   }
 };
 
-// Configuration de l'URL de l'API externe
-// Remplacez cette URL par celle de votre vrai backend
 export const API_BASE_URL = "https://api.askeliott.com";
 
-// Récupération des propriétés Google Analytics
 export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promise<GoogleAnalyticsProperty[]> => {
   if (!accessToken || accessToken.trim() === "") {
     console.error("No access token provided for fetching properties");
     throw new Error("Token d'accès non fourni ou invalide");
   }
-  
+
   try {
-    console.log("Fetching Google Analytics properties with token:", 
-      accessToken.substring(0, 5) + "..." + accessToken.substring(accessToken.length - 5));
-    
-    // Appel à votre API backend externe
+    console.log("Fetching Google Analytics properties with token:", accessToken.substring(0, 5) + "..." + accessToken.substring(accessToken.length - 5));
+
     const response = await fetch(
-      `${API_BASE_URL}/analytics/properties`,
+      `${API_BASE_URL}/api/analytics/properties?token=${accessToken}`,
       {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         }
@@ -115,7 +95,7 @@ export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promi
     );
 
     console.log("Fetch properties response status:", response.status);
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error("API response error:", response.status, errorText);
@@ -124,33 +104,30 @@ export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promi
 
     const data = await response.json();
     console.log("API response data:", data);
-    
-    // Transformation des données
+
     return data.properties ? data.properties.map((prop: any) => ({
       id: prop.name.split("/").pop(),
       name: prop.displayName,
       url: prop.webLink,
       createdAt: prop.createTime,
     })) : [];
-    
+
   } catch (error) {
     console.error("Erreur lors de la récupération des propriétés:", error);
     throw error;
   }
 };
 
-// Modification pour utiliser l'API externe
 export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId: string) => {
   if (!accessToken || accessToken.trim() === "") {
     throw new Error("Token d'accès non fourni ou invalide");
   }
-  
+
   try {
     console.log(`Fetching report data for property ${propertyId}`);
-    
-    // Appel à l'API backend externe
+
     const response = await fetch(
-      `${API_BASE_URL}/analytics/data?propertyId=${encodeURIComponent(propertyId)}`,
+      `${API_BASE_URL}/api/analytics/data?propertyId=${encodeURIComponent(propertyId)}`,
       {
         method: 'GET',
         headers: {
@@ -178,16 +155,14 @@ export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId
   }
 };
 
-// Modification pour utiliser l'API externe
 export const fetchGoogleAnalyticsAccounts = async (): Promise<any[]> => {
   try {
-    // Récupérer le token depuis localStorage
     const accessToken = getStoredAccessToken();
     if (!accessToken) {
       throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
     }
-    
-    const response = await fetch(`${API_BASE_URL}/analytics/accounts`, {
+
+    const response = await fetch(`${API_BASE_URL}/api/analytics/accounts`, {
       method: "GET",
       headers: {
         "Accept": "application/json",
@@ -206,7 +181,6 @@ export const fetchGoogleAnalyticsAccounts = async (): Promise<any[]> => {
   }
 };
 
-// Les scopes corrects pour Google Analytics Admin API et Data API
 export const GOOGLE_ANALYTICS_SCOPES = [
   "https://www.googleapis.com/auth/analytics.readonly",
   "https://www.googleapis.com/auth/userinfo.email",
@@ -216,21 +190,19 @@ export const GOOGLE_ANALYTICS_SCOPES = [
 
 export { CLIENT_ID };
 
-// Modification pour utiliser l'API externe
 export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): Promise<any[]> => {
   if (!accountId) {
     throw new Error("L'identifiant du compte (accountId) est requis.");
   }
   try {
-    // Récupérer le token depuis localStorage
     const accessToken = getStoredAccessToken();
     if (!accessToken) {
       throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
     }
-    
-    const response = await fetch(`${API_BASE_URL}/analytics/properties?accountId=${encodeURIComponent(accountId)}`, {
+
+    const response = await fetch(`${API_BASE_URL}/api/analytics/properties?accountId=${encodeURIComponent(accountId)}`, {
       method: "GET",
-      headers: { 
+      headers: {
         "Accept": "application/json",
         "Authorization": `Bearer ${accessToken}`
       },
