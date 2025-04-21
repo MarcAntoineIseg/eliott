@@ -145,8 +145,16 @@ const Dashboard = () => {
       <main className="container py-8">
         <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
 
-        {connectionStatus !== 'connected' ? (
-          
+        {connectionStatus === 'connecting' && (
+          <div className="flex justify-center items-center my-8">
+            <div className="animate-pulse flex flex-col items-center">
+              <div className="h-8 w-8 mb-4 rounded-full bg-blue-200 animate-spin"></div>
+              <div>Vérification de l'authentification...</div>
+            </div>
+          </div>
+        )}
+
+        {connectionStatus !== 'connected' && connectionStatus !== 'connecting' ? (
           <Card>
             <CardHeader>
               <CardTitle>Connectez votre compte Google Analytics</CardTitle>
@@ -177,7 +185,9 @@ const Dashboard = () => {
               </div>
             </CardContent>
           </Card>
-        ) : (
+        ) : null}
+
+        {connectionStatus === 'connected' && (
           <div>
             
             <div className="flex justify-between items-center mb-6">
@@ -201,7 +211,7 @@ const Dashboard = () => {
               </Alert>
             )}
 
-            {!error && connectionStatus === 'connected' && (
+            {!error && (
               <Alert className="mb-4">
                 <Info className="h-4 w-4" />
                 <AlertTitle>Statut de connexion</AlertTitle>
@@ -209,16 +219,6 @@ const Dashboard = () => {
                   Connexion à Google Analytics réussie. Votre token d'accès est valide.
                 </AlertDescription>
               </Alert>
-            )}
-
-            {/* Fixed the TypeScript error by using strict equality comparison */}
-            {connectionStatus === 'connecting' && (
-              <div className="flex justify-center items-center my-8">
-                <div className="animate-pulse flex flex-col items-center">
-                  <div className="h-8 w-8 mb-4 rounded-full bg-blue-200 animate-spin"></div>
-                  <div>Vérification de l'authentification...</div>
-                </div>
-              </div>
             )}
 
             <PropertyList 
