@@ -193,18 +193,19 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
     throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
   }
 
-  // S'assurer que l'ID du compte est au format correct pour l'API Google Analytics
-  // Format attendu: accounts/XXXX
-  const formattedAccountId = accountId.includes("accounts/") 
-    ? accountId 
-    : `accounts/${accountId.replace(/^accounts\//, '')}`;
+  // Correction du format de l'ID pour l'API Google
+  // Le format doit être uniquement le numéro de compte, sans le préfixe "accounts/"
+  // L'API s'attend à recevoir juste l'ID numérique du compte
+  const cleanAccountId = accountId.includes("accounts/") 
+    ? accountId.split("accounts/")[1] 
+    : accountId;
 
   try {
-    console.log(`Fetching properties for account: ${formattedAccountId} with token: ${accessToken.substring(0, 5)}...`);
+    console.log(`Fetching properties for account ID: ${cleanAccountId} with token: ${accessToken.substring(0, 5)}...`);
     
-    // Utiliser le bon endpoint en s'assurant que le token et l'accountId sont correctement encodés
+    // Corrigé: l'accountId doit être l'ID numérique seul, pas le chemin complet
     const response = await fetch(
-      `${API_BASE_URL}/api/analytics/properties?accountId=${encodeURIComponent(formattedAccountId)}&token=${encodeURIComponent(accessToken)}`,
+      `${API_BASE_URL}/api/analytics/properties?accountId=${encodeURIComponent(cleanAccountId)}&token=${encodeURIComponent(accessToken)}`,
       {
         method: 'GET',
         headers: {
@@ -225,7 +226,6 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
     const data = await response.json();
     console.log("Properties data:", data);
     
-    // S'assurer de traiter correctement la réponse même si le format peut varier
     return data.properties || [];
   } catch (error) {
     console.error("Erreur lors de la récupération des propriétés GA4 par compte:", error);
