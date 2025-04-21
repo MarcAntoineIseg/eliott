@@ -9,7 +9,6 @@ export interface GoogleAnalyticsProperty {
   createdAt?: string;
 }
 
-// Extraction du token d'accès depuis l'URL après redirection OAuth
 export const getAccessTokenFromUrl = (): string | null => {
   const hash = window.location.hash;
   if (!hash || hash.length < 2) return null;
@@ -127,11 +126,10 @@ export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId
     console.log(`Fetching report data for property ${propertyId}`);
 
     const response = await fetch(
-      `${API_BASE_URL}/api/analytics/data?propertyId=${encodeURIComponent(propertyId)}`,
+      `${API_BASE_URL}/api/analytics/data?propertyId=${encodeURIComponent(propertyId)}&token=${accessToken}`,
       {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         }
@@ -162,13 +160,7 @@ export const fetchGoogleAnalyticsAccounts = async (): Promise<any[]> => {
       throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/analytics/accounts`, {
-      method: "GET",
-      headers: {
-        "Accept": "application/json",
-        "Authorization": `Bearer ${accessToken}`
-      },
-    });
+    const response = await fetch(`${API_BASE_URL}/api/analytics/accounts?token=${accessToken}`);
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Erreur API Comptes: ${response.status} - ${errorText}`);
@@ -200,13 +192,7 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
       throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/analytics/properties?accountId=${encodeURIComponent(accountId)}`, {
-      method: "GET",
-      headers: {
-        "Accept": "application/json",
-        "Authorization": `Bearer ${accessToken}`
-      },
-    });
+    const response = await fetch(`${API_BASE_URL}/api/analytics/properties?accountId=${encodeURIComponent(accountId)}&token=${accessToken}`);
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Erreur API propriétés: ${response.status} - ${errorText}`);
