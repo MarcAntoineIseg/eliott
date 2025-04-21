@@ -65,4 +65,11 @@ export const getGoogleAnalyticsAccounts = async () => {
   return await fetchGoogleAnalyticsAccounts();
 };
 
+import { fetchGoogleAnalyticsAccountProperties } from "./googleAnalytics";
+
+export const getGoogleAnalyticsAccountProperties = async (accountId: string) => {
+  if (!accountId) throw new Error("accountId requis");
+  return await fetchGoogleAnalyticsAccountProperties(accountId);
+};
+
 export { API_ENDPOINTS };

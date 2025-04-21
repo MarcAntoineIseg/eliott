@@ -211,3 +211,26 @@ export const GOOGLE_ANALYTICS_SCOPES = [
 ];
 
 export { CLIENT_ID };
+
+export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): Promise<any[]> => {
+  if (!accountId) {
+    throw new Error("L'identifiant du compte (accountId) est requis.");
+  }
+  try {
+    const response = await fetch(`/api/analytics/properties?accountId=${encodeURIComponent(accountId)}`, {
+      method: "GET",
+      credentials: "include", // Session avec cookie
+      headers: { "Accept": "application/json" },
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Erreur API propriétés: ${response.status} - ${errorText}`);
+    }
+    const data = await response.json();
+    // La réponse aura probablement la forme { properties: [...] }, sinon retourner data directement
+    return data.properties || [];
+  } catch (error) {
+    console.error("Erreur lors de la récupération des propriétés GA4 par compte:", error);
+    throw error;
+  }
+};
