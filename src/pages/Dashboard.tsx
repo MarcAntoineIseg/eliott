@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,43 +11,40 @@ import {
   CLIENT_ID, 
   GoogleAnalyticsProperty, 
   getAccessTokenFromUrl,
+  fetchGoogleAnalyticsAccounts,
+  fetchGoogleAnalyticsAccountProperties,
   fetchGoogleAnalyticsProperties,
   checkTokenValidity
 } from "@/services/googleAnalytics";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { AlertCircle, Info } from "lucide-react";
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 
 const Dashboard = () => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   const [properties, setProperties] = useState<GoogleAnalyticsProperty[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [accountsLoading, setAccountsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
 
+  // Auth flow, première connexion & restauration de session
   useEffect(() => {
-    // Supprimer tous les paramètres hash de l'URL tout en préservant le token
     const clearUrlAndProcessToken = () => {
-      // Vérifier si un token d'accès est présent dans l'URL (après redirection OAuth)
       const token = getAccessTokenFromUrl();
-      
-      // Nettoyer l'URL après avoir récupéré le token pour éviter les problèmes de partage d'URL
       window.history.replaceState({}, document.title, "/dashboard");
-      
       if (token) {
-        console.log("Token found in URL, now processing it");
         setAccessToken(token);
         setConnectionStatus('connecting');
-        
-        // Vérifier la validité du token immédiatement
         checkTokenValidity(token).then(isValid => {
           if (isValid) {
-            console.log("Token is valid, saving to localStorage");
             localStorage.setItem("googleAccessToken", token);
             setConnectionStatus('connected');
             toast.success("Connexion réussie à Google Analytics");
           } else {
-            console.error("Token from URL is invalid");
             localStorage.removeItem("googleAccessToken");
             setAccessToken(null);
             setConnectionStatus('disconnected');
@@ -55,93 +53,92 @@ const Dashboard = () => {
           }
         });
       } else {
-        // Essayer de récupérer un token précédemment stocké
         const storedToken = localStorage.getItem("googleAccessToken");
         if (storedToken) {
-          console.log("Token found in localStorage, checking validity");
           setConnectionStatus('connecting');
-          
-          // Vérifier la validité du token avant de l'utiliser
           checkTokenValidity(storedToken).then(isValid => {
             if (isValid) {
-              console.log("Stored token is valid");
               setAccessToken(storedToken);
               setConnectionStatus('connected');
               toast.success("Session restaurée");
             } else {
-              console.log("Stored token is invalid, removing");
               localStorage.removeItem("googleAccessToken");
               setConnectionStatus('disconnected');
               toast.error("Session expirée. Veuillez vous reconnecter.");
             }
           });
         } else {
-          console.log("No token found - user needs to authenticate");
           setConnectionStatus('disconnected');
         }
       }
     };
-    
     clearUrlAndProcessToken();
   }, []);
 
+  // Charger la liste des comptes Analytics après connexion
   useEffect(() => {
-    const loadProperties = async () => {
-      if (!accessToken || connectionStatus !== 'connected') return;
-      
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        console.log("Loading properties with validated token");
-        const propertiesData = await fetchGoogleAnalyticsProperties(accessToken);
-        setProperties(propertiesData);
-        
-        if (propertiesData.length === 0) {
-          toast.info("Aucune propriété Google Analytics n'a été trouvée pour ce compte");
-        } else {
-          toast.success(`${propertiesData.length} propriété(s) Google Analytics trouvée(s)`);
+    if (connectionStatus !== 'connected' || !accessToken) return;
+    setAccountsLoading(true);
+    setError(null);
+    fetchGoogleAnalyticsAccounts().then(
+      (accountsData) => {
+        setAccounts(accountsData || []);
+        if (accountsData.length === 0) {
+          toast.info("Aucun compte Google Analytics trouvé.");
         }
-      } catch (err: any) {
-        console.error("Erreur lors du chargement des propriétés:", err);
-        const errorMessage = err.message || "Impossible de charger vos propriétés Google Analytics. Veuillez réessayer.";
-        setError(errorMessage);
-        toast.error(errorMessage);
-        
-        // Si l'erreur est due à un token expiré ou invalide, on peut le supprimer
-        if (err.message && (
-          err.message.includes("401") || 
-          err.message.includes("403") || 
-          err.message.includes("UNAUTHENTICATED")
-        )) {
-          console.log("Authentication error detected, clearing token");
-          localStorage.removeItem("googleAccessToken");
-          setAccessToken(null);
-          setConnectionStatus('disconnected');
-          toast.error("Session expirée. Veuillez vous reconnecter.");
-        }
-      } finally {
-        setIsLoading(false);
       }
-    };
+    ).catch(err => {
+      setError(err.message || "Problème lors de la récupération des comptes Google Analytics.");
+      toast.error(err.message || "Erreur lors du chargement des comptes Analytics.");
+    }).finally(() => setAccountsLoading(false));
+  }, [connectionStatus, accessToken]);
 
-    loadProperties();
-  }, [accessToken, connectionStatus]);
+  // Lorsque le compte change, charger ses propriétés
+  useEffect(() => {
+    if (!accessToken || !selectedAccount || connectionStatus !== "connected") {
+      setProperties([]);
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    fetchGoogleAnalyticsAccountProperties(selectedAccount)
+      .then(propertiesData => {
+        // On mappe les champs pour correspondre à GoogleAnalyticsProperty si besoin
+        const propsList = (propertiesData || []).map((prop: any) => ({
+          id: prop.name ? prop.name.split("/").pop() : prop.id,
+          name: prop.displayName,
+          url: prop.webLink,
+          createdAt: prop.createTime,
+        }));
+        setProperties(propsList);
+        if (propsList.length === 0) {
+          toast.info("Aucune propriété trouvée pour ce compte.");
+        } else {
+          toast.success(`${propsList.length} propriété(s) Google Analytics trouvée(s)`);
+        }
+      })
+      .catch(err => {
+        setError(err.message || "Impossible de charger les propriétés pour ce compte.");
+        setProperties([]);
+        toast.error(err.message || "Erreur lors du chargement des propriétés.");
+      })
+      .finally(() => setIsLoading(false));
+  }, [accessToken, selectedAccount, connectionStatus]);
 
   const handleLogout = () => {
     localStorage.removeItem("googleAccessToken");
     setAccessToken(null);
+    setAccounts([]);
+    setSelectedAccount(null);
     setProperties([]);
     setConnectionStatus('disconnected');
     toast.info("Déconnexion réussie");
   };
 
-  // Rendering part with fixed TypeScript error:
+  // UI code
   return (
     <div className="min-h-screen bg-gray-50">
-      
       <Navbar />
-      
       <main className="container py-8">
         <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
 
@@ -164,7 +161,6 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <GoogleAuthButton clientId={CLIENT_ID} />
-              
               {error && (
                 <Alert variant="destructive" className="mt-4">
                   <AlertCircle className="h-4 w-4" />
@@ -174,7 +170,6 @@ const Dashboard = () => {
                   </AlertDescription>
                 </Alert>
               )}
-              
               <div className="mt-4 text-sm text-gray-500">
                 <p>Assurez-vous que :</p>
                 <ul className="list-disc pl-5 mt-2">
@@ -189,14 +184,42 @@ const Dashboard = () => {
 
         {connectionStatus === 'connected' && (
           <div>
-            
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold">Vos propriétés Google Analytics</h2>
+              <h2 className="text-xl font-semibold">Vos comptes Google Analytics</h2>
               <Button variant="outline" onClick={handleLogout}>
                 Déconnecter
               </Button>
             </div>
-            
+
+            {accountsLoading &&
+              <div className="flex justify-center items-center my-8">
+                <div className="animate-pulse flex flex-col items-center">
+                  <div className="h-8 w-8 mb-4 rounded-full bg-blue-200 animate-spin"></div>
+                  <div>Chargement des comptes Google Analytics...</div>
+                </div>
+              </div>
+            }
+
+            {accounts.length > 0 && (
+              <div className="mb-6 max-w-md">
+                <label className="block mb-2 text-sm font-medium">Sélectionnez un compte</label>
+                <Select 
+                  value={selectedAccount ?? ""} 
+                  onValueChange={(val) => setSelectedAccount(val)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choisissez un compte" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {accounts.map(acct => (
+                      <SelectItem key={acct.name} value={acct.name}>
+                        {acct.displayName || acct.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {error && (
               <Alert variant="destructive" className="mb-4">
                 <AlertCircle className="h-4 w-4" />
@@ -234,3 +257,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
