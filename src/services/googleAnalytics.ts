@@ -193,19 +193,21 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
     throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
   }
 
-  // Pour l'API, on veut juste l'ID numérique sans préfixe
-  const numericAccountId = accountId.replace(/\D/g, '');
+  // Maintenant on s'assure que l'accountId a bien le préfixe "accounts/" comme attendu par l'API
+  // Si l'accountId ne commence pas déjà par "accounts/", on l'ajoute
+  const formattedAccountId = accountId.startsWith("accounts/") 
+    ? accountId 
+    : `accounts/${accountId}`;
 
   try {
-    console.log(`Fetching properties for account ID: ${numericAccountId} with token: ${accessToken.substring(0, 5)}...`);
+    console.log(`Fetching properties for account ID: ${formattedAccountId} with token: ${accessToken.substring(0, 5)}...`);
     
     // Utilisation du format d'URL attendu par le backend exactement
     const apiUrl = `${API_BASE_URL}/api/analytics/properties`;
     
     // Construction de l'URL avec ses paramètres
-    // Important: vérifiez que votre backend s'attend bien à recevoir ces noms de paramètres exacts
     const params = new URLSearchParams({
-      accountId: numericAccountId,
+      accountId: formattedAccountId,
       token: accessToken
     });
 

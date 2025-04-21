@@ -70,11 +70,10 @@ export const getGoogleAnalyticsAccounts = async () => {
 export const getGoogleAnalyticsAccountProperties = async (accountId: string) => {
   if (!accountId) throw new Error("accountId requis");
 
-  // Extraire uniquement l'ID numérique du compte pour éviter les erreurs de formatage
-  const numericAccountId = accountId.replace(/\D/g, '');
-
-  console.log(`Getting properties for account ID: ${numericAccountId}`);
-  return await fetchGoogleAnalyticsAccountProperties(numericAccountId);
+  // Nous ne modifions plus l'ID pour extraire uniquement la partie numérique
+  // Nous conservons le format complet attendu par l'API
+  console.log(`Getting properties for account ID: ${accountId}`);
+  return await fetchGoogleAnalyticsAccountProperties(accountId);
 };
 
 export { API_ENDPOINTS };
