@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +12,6 @@ import {
   getAccessTokenFromUrl,
   fetchGoogleAnalyticsAccounts,
   fetchGoogleAnalyticsAccountProperties,
-  fetchGoogleAnalyticsProperties,
   checkTokenValidity
 } from "@/services/googleAnalytics";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -31,7 +29,6 @@ const Dashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
 
-  // Auth flow, première connexion & restauration de session
   useEffect(() => {
     const clearUrlAndProcessToken = () => {
       const token = getAccessTokenFromUrl();
@@ -75,7 +72,6 @@ const Dashboard = () => {
     clearUrlAndProcessToken();
   }, []);
 
-  // Charger la liste des comptes Analytics après connexion
   useEffect(() => {
     if (connectionStatus !== 'connected' || !accessToken) return;
     setAccountsLoading(true);
@@ -93,7 +89,6 @@ const Dashboard = () => {
     }).finally(() => setAccountsLoading(false));
   }, [connectionStatus, accessToken]);
 
-  // Lorsque le compte change, charger ses propriétés
   useEffect(() => {
     if (!accessToken || !selectedAccount || connectionStatus !== "connected") {
       setProperties([]);
@@ -103,7 +98,6 @@ const Dashboard = () => {
     setError(null);
     fetchGoogleAnalyticsAccountProperties(selectedAccount)
       .then(propertiesData => {
-        // On mappe les champs pour correspondre à GoogleAnalyticsProperty si besoin
         const propsList = (propertiesData || []).map((prop: any) => ({
           id: prop.name ? prop.name.split("/").pop() : prop.id,
           name: prop.displayName,
@@ -118,6 +112,7 @@ const Dashboard = () => {
         }
       })
       .catch(err => {
+        console.error("Erreur de chargement des propriétés:", err);
         setError(err.message || "Impossible de charger les propriétés pour ce compte.");
         setProperties([]);
         toast.error(err.message || "Erreur lors du chargement des propriétés.");
@@ -135,7 +130,6 @@ const Dashboard = () => {
     toast.info("Déconnexion réussie");
   };
 
-  // UI code
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -248,6 +242,7 @@ const Dashboard = () => {
               properties={properties} 
               isLoading={isLoading} 
               accessToken={accessToken}
+              error={error}
             />
           </div>
         )}
@@ -257,4 +252,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-

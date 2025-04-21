@@ -6,22 +6,27 @@ import { Button } from "@/components/ui/button";
 import { Link, BarChart } from "lucide-react";
 import { getGoogleAnalyticsData } from "@/services/api";
 import { toast } from "@/components/ui/sonner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface PropertyListProps {
   properties: GoogleAnalyticsProperty[];
   isLoading: boolean;
   accessToken?: string | null;
+  error?: string | null;
 }
 
-const PropertyList = ({ properties, isLoading, accessToken }: PropertyListProps) => {
+const PropertyList = ({ properties, isLoading, accessToken, error }: PropertyListProps) => {
   const [selectedProperty, setSelectedProperty] = useState<string | null>(null);
   const [isLoadingData, setIsLoadingData] = useState<boolean>(false);
   const [analyticsData, setAnalyticsData] = useState<any | null>(null);
+  const [dataError, setDataError] = useState<string | null>(null);
 
   const handleLoadData = async () => {
     if (!selectedProperty || !accessToken) return;
     
     setIsLoadingData(true);
+    setDataError(null);
     
     try {
       const data = await getGoogleAnalyticsData(accessToken, selectedProperty);
@@ -29,6 +34,7 @@ const PropertyList = ({ properties, isLoading, accessToken }: PropertyListProps)
       toast.success("Données analytiques chargées avec succès");
     } catch (error: any) {
       console.error("Erreur lors du chargement des données:", error);
+      setDataError(error.message || "Erreur lors du chargement des données analytiques");
       toast.error(error.message || "Erreur lors du chargement des données analytiques");
     } finally {
       setIsLoadingData(false);
@@ -43,6 +49,40 @@ const PropertyList = ({ properties, isLoading, accessToken }: PropertyListProps)
           <div>Chargement des propriétés Google Analytics...</div>
         </div>
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-red-500" />
+            Erreur de chargement
+          </CardTitle>
+          <CardDescription>
+            Une erreur s'est produite lors du chargement des propriétés.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Détails de l'erreur</AlertTitle>
+            <AlertDescription className="mt-2 text-sm">
+              {error}
+            </AlertDescription>
+          </Alert>
+          <div className="text-sm text-gray-500">
+            <p>Voici quelques suggestions :</p>
+            <ul className="list-disc pl-5 mt-2">
+              <li>Vérifiez que votre backend est correctement configuré pour l'API Google Analytics</li>
+              <li>Assurez-vous que les APIs Google Analytics Admin et Data sont activées dans votre projet</li>
+              <li>Vérifiez les journaux d'erreur côté serveur pour plus de détails</li>
+              <li>L'URL de l'API n'est peut-être pas correcte ou le format des paramètres attendu diffère</li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -122,6 +162,14 @@ const PropertyList = ({ properties, isLoading, accessToken }: PropertyListProps)
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {dataError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Erreur</AlertTitle>
+                <AlertDescription>{dataError}</AlertDescription>
+              </Alert>
+            )}
+            
             {!analyticsData ? (
               <>
                 <p className="text-sm text-gray-500 mb-4">

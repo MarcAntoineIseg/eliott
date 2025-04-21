@@ -199,15 +199,18 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
   try {
     console.log(`Fetching properties for account ID: ${numericAccountId} with token: ${accessToken.substring(0, 5)}...`);
     
-    // Envoyer uniquement l'ID numérique à l'API
-    const url = `${API_BASE_URL}/api/analytics/properties`;
+    // Utilisation du format d'URL attendu par le backend exactement
+    const apiUrl = `${API_BASE_URL}/api/analytics/properties`;
+    
+    // Construction de l'URL avec ses paramètres
+    // Important: vérifiez que votre backend s'attend bien à recevoir ces noms de paramètres exacts
     const params = new URLSearchParams({
       accountId: numericAccountId,
       token: accessToken
     });
 
     // Construction propre de l'URL avec les paramètres
-    const fullUrl = `${url}?${params.toString()}`;
+    const fullUrl = `${apiUrl}?${params.toString()}`;
     console.log(`Request URL: ${fullUrl}`);
     
     const response = await fetch(fullUrl, {
@@ -223,7 +226,9 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
     if (!response.ok) {
       const errorText = await response.text();
       console.error("API properties error:", response.status, errorText);
-      throw new Error(`Erreur lors de la récupération des propriétés: ${response.status} - ${errorText}`);
+      const errorDetails = `Erreur lors de la récupération des propriétés: ${response.status} - ${errorText}`;
+      console.error(errorDetails);
+      throw new Error(errorDetails);
     }
 
     const data = await response.json();

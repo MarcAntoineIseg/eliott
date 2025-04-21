@@ -11,9 +11,9 @@ import {
 // Définition des points d'entrée de l'API externe
 const API_ENDPOINTS = {
   AUTH_GOOGLE: `${API_BASE_URL}/auth/google`,
-  ANALYTICS_ACCOUNTS: `${API_BASE_URL}/analytics/accounts`,
-  ANALYTICS_PROPERTIES: `${API_BASE_URL}/analytics/properties`,
-  ANALYTICS_DATA: `${API_BASE_URL}/analytics/data`
+  ANALYTICS_ACCOUNTS: `${API_BASE_URL}/api/analytics/accounts`,  // Assurez-vous que ces chemins correspondent à ceux de votre backend
+  ANALYTICS_PROPERTIES: `${API_BASE_URL}/api/analytics/properties`,
+  ANALYTICS_DATA: `${API_BASE_URL}/api/analytics/data`
 };
 
 // Fonction pour obtenir les propriétés Analytics
