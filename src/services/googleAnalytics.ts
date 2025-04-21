@@ -207,7 +207,10 @@ export const fetchGoogleAnalyticsAccounts = async (): Promise<any[]> => {
 
 // Les scopes corrects pour Google Analytics Admin API et Data API
 export const GOOGLE_ANALYTICS_SCOPES = [
-  "https://www.googleapis.com/auth/analytics.readonly"
+  "https://www.googleapis.com/auth/analytics.readonly",
+  "https://www.googleapis.com/auth/userinfo.email",
+  "https://www.googleapis.com/auth/userinfo.profile",
+  "openid"
 ];
 
 export { CLIENT_ID };
