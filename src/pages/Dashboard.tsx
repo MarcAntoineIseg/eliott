@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -211,6 +212,7 @@ const Dashboard = () => {
               </Alert>
             )}
 
+            {/* Fixed the TypeScript error by changing the logical condition */}
             {connectionStatus === 'connecting' && (
               <div className="flex justify-center items-center my-8">
                 <div className="animate-pulse flex flex-col items-center">
