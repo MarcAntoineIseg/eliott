@@ -192,7 +192,8 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
       throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/analytics/properties?accountId=${encodeURIComponent(accountId)}&token=${accessToken}`);
+    const formattedId = accountId.startsWith("accounts/") ? accountId : `accounts/${accountId}`;
+    const response = await fetch(`${API_BASE_URL}/api/analytics/properties?accountId=${encodeURIComponent(formattedId)}&token=${accessToken}`);
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Erreur API propriétés: ${response.status} - ${errorText}`);
