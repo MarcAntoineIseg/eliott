@@ -116,7 +116,7 @@ export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promi
   }
 };
 
-// Pour récupérer des rapports, nous avons besoin d'utiliser une autre API avec un filtre spécifique
+// Pour récupérer des rapports, nous avons besoin d'utiliser une autre API avec un paramètre filter
 export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId: string) => {
   if (!accessToken || accessToken.trim() === "") {
     throw new Error("Token d'accès non fourni ou invalide");
@@ -125,7 +125,7 @@ export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId
   try {
     console.log(`Fetching report data for property ${propertyId}`);
     
-    // Cette fonction utilise l'API de rapports qui nécessite un filtre
+    // Mise à jour pour inclure un filtre valide pour résoudre l'erreur 400
     const response = await fetch(
       `https://analyticsdata.googleapis.com/v1beta/properties/${propertyId}:runReport`,
       {
@@ -151,7 +151,17 @@ export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId
             {
               name: 'activeUsers'
             }
-          ]
+          ],
+          // Ajout d'un filtre pour résoudre l'erreur 400
+          dimensionFilter: {
+            filter: {
+              fieldName: "date",
+              stringFilter: {
+                matchType: "CONTAINS",
+                value: "20" // Filtre toutes les dates contenant "20" (comme 2023, 2024, etc.)
+              }
+            }
+          }
         })
       }
     );
