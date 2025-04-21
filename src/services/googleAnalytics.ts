@@ -186,18 +186,27 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
   if (!accountId) {
     throw new Error("L'identifiant du compte (accountId) est requis.");
   }
-  try {
-    const accessToken = getStoredAccessToken();
-    if (!accessToken) {
-      throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
-    }
 
-    const formattedId = accountId.startsWith("accounts/") ? accountId : `accounts/${accountId}`;
-    const response = await fetch(`${API_BASE_URL}/api/analytics/properties?accountId=${encodeURIComponent(formattedId)}&token=${accessToken}`);
+  const accessToken = getStoredAccessToken();
+  if (!accessToken) {
+    throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
+  }
+
+  // ✅ Forcer le bon format de l'identifiant de compte
+  const formattedAccountId = accountId.startsWith("accounts/")
+    ? accountId
+    : `accounts/${accountId}`;
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/analytics/properties?accountId=${encodeURIComponent(formattedAccountId)}&token=${accessToken}`
+    );
+
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Erreur API propriétés: ${response.status} - ${errorText}`);
     }
+
     const data = await response.json();
     return data.properties || [];
   } catch (error) {
