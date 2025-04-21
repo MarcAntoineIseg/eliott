@@ -11,7 +11,8 @@ import {
   CLIENT_ID, 
   GoogleAnalyticsProperty, 
   getAccessTokenFromUrl,
-  fetchGoogleAnalyticsProperties
+  fetchGoogleAnalyticsProperties,
+  checkTokenValidity
 } from "@/services/googleAnalytics";
 import { AlertCircle, Info } from "lucide-react";
 
@@ -41,8 +42,19 @@ const Dashboard = () => {
       const storedToken = localStorage.getItem("googleAccessToken");
       if (storedToken) {
         console.log("Token found in localStorage");
-        setAccessToken(storedToken);
-        setConnectionStatus('connected');
+        
+        // Vérifier la validité du token avant de l'utiliser
+        checkTokenValidity(storedToken).then(isValid => {
+          if (isValid) {
+            setAccessToken(storedToken);
+            setConnectionStatus('connected');
+          } else {
+            // Si le token n'est pas valide, le supprimer
+            localStorage.removeItem("googleAccessToken");
+            setConnectionStatus('disconnected');
+            console.log("Stored token is invalid, removed from localStorage");
+          }
+        });
       } else {
         setConnectionStatus('disconnected');
       }
@@ -76,9 +88,15 @@ const Dashboard = () => {
         toast.error(errorMessage);
         
         // Si l'erreur est due à un token expiré ou invalide, on peut le supprimer
-        if (err.message && (err.message.includes("401") || err.message.includes("403") || err.message.includes("400"))) {
+        if (err.message && (
+          err.message.includes("401") || 
+          err.message.includes("403") || 
+          err.message.includes("400") ||
+          err.message.includes("UNAUTHENTICATED")
+        )) {
           localStorage.removeItem("googleAccessToken");
           setAccessToken(null);
+          toast.error("Session expirée. Veuillez vous reconnecter.");
         }
       } finally {
         setIsLoading(false);

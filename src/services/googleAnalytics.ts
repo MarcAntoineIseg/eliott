@@ -19,19 +19,43 @@ export const getAccessTokenFromUrl = (): string | null => {
   return params.get("access_token");
 };
 
+// Vérification de la validité du token
+export const checkTokenValidity = async (accessToken: string): Promise<boolean> => {
+  try {
+    // Utilise l'API tokeninfo pour vérifier la validité du token
+    const response = await fetch(
+      `https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${accessToken}`
+    );
+    
+    if (!response.ok) {
+      console.error("Token invalid:", await response.text());
+      return false;
+    }
+    
+    const data = await response.json();
+    console.log("Token info:", data);
+    // Vérifie si le token a les scopes nécessaires
+    return true;
+  } catch (error) {
+    console.error("Erreur de vérification du token:", error);
+    return false;
+  }
+};
+
 // Récupération des propriétés Google Analytics
 export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promise<GoogleAnalyticsProperty[]> => {
   try {
     console.log("Fetching Google Analytics properties with token:", accessToken.substring(0, 10) + "...");
     
-    // Dans l'API Analytics Admin v1beta, nous n'utilisons pas de filtre pour récupérer les propriétés
-    // Nous utilisons directement l'endpoint /properties
+    // S'assurer que l'en-tête Authorization est correctement formaté
     const response = await fetch(
       "https://analyticsadmin.googleapis.com/v1beta/properties",
       {
+        method: 'GET',
         headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
       }
     );
@@ -67,14 +91,14 @@ export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId
     console.log(`Fetching report data for property ${propertyId}`);
     
     // Cette fonction utilise l'API de rapports qui nécessite un filtre
-    // Remarque : ceci est un exemple pour l'API Google Analytics Data v1beta
     const response = await fetch(
       `https://analyticsdata.googleapis.com/v1beta/properties/${propertyId}:runReport`,
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
           dateRanges: [
