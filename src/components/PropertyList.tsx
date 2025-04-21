@@ -4,14 +4,36 @@ import { GoogleAnalyticsProperty } from "@/services/googleAnalytics";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link, BarChart } from "lucide-react";
+import { getGoogleAnalyticsData } from "@/services/api";
+import { toast } from "@/components/ui/sonner";
 
 interface PropertyListProps {
   properties: GoogleAnalyticsProperty[];
   isLoading: boolean;
+  accessToken?: string | null;
 }
 
-const PropertyList = ({ properties, isLoading }: PropertyListProps) => {
+const PropertyList = ({ properties, isLoading, accessToken }: PropertyListProps) => {
   const [selectedProperty, setSelectedProperty] = useState<string | null>(null);
+  const [isLoadingData, setIsLoadingData] = useState<boolean>(false);
+  const [analyticsData, setAnalyticsData] = useState<any | null>(null);
+
+  const handleLoadData = async () => {
+    if (!selectedProperty || !accessToken) return;
+    
+    setIsLoadingData(true);
+    
+    try {
+      const data = await getGoogleAnalyticsData(accessToken, selectedProperty);
+      setAnalyticsData(data);
+      toast.success("Données analytiques chargées avec succès");
+    } catch (error: any) {
+      console.error("Erreur lors du chargement des données:", error);
+      toast.error(error.message || "Erreur lors du chargement des données analytiques");
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -100,12 +122,34 @@ const PropertyList = ({ properties, isLoading }: PropertyListProps) => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-gray-500">
-              Pour afficher les données de cette propriété, nous devons implémenter la fonctionnalité de récupération et d'affichage des rapports Google Analytics.
-            </p>
-            <Button className="mt-4" variant="outline">
-              Charger les données analytiques
-            </Button>
+            {!analyticsData ? (
+              <>
+                <p className="text-sm text-gray-500 mb-4">
+                  Cliquez sur le bouton ci-dessous pour charger les données analytiques de cette propriété.
+                </p>
+                <Button 
+                  onClick={handleLoadData} 
+                  disabled={isLoadingData}
+                  className="w-full md:w-auto"
+                >
+                  {isLoadingData ? (
+                    <>
+                      <span className="animate-spin mr-2">⟳</span>
+                      Chargement...
+                    </>
+                  ) : (
+                    "Charger les données analytiques"
+                  )}
+                </Button>
+              </>
+            ) : (
+              <div className="space-y-4">
+                <p className="font-medium">Données analytiques chargées avec succès!</p>
+                <div className="bg-gray-50 p-4 rounded-md">
+                  <pre className="text-xs overflow-auto">{JSON.stringify(analyticsData, null, 2)}</pre>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

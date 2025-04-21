@@ -136,7 +136,7 @@ const Dashboard = () => {
     toast.info("Déconnexion réussie");
   };
 
-  // Rendering part with fix:
+  // Rendering part with fixed TypeScript error:
   return (
     <div className="min-h-screen bg-gray-50">
       
@@ -211,7 +211,7 @@ const Dashboard = () => {
               </Alert>
             )}
 
-            {/* Fixed the TypeScript error by changing the logical condition */}
+            {/* Fixed the TypeScript error by using strict equality comparison */}
             {connectionStatus === 'connecting' && (
               <div className="flex justify-center items-center my-8">
                 <div className="animate-pulse flex flex-col items-center">
@@ -221,7 +221,11 @@ const Dashboard = () => {
               </div>
             )}
 
-            <PropertyList properties={properties} isLoading={isLoading} />
+            <PropertyList 
+              properties={properties} 
+              isLoading={isLoading} 
+              accessToken={accessToken}
+            />
           </div>
         )}
       </main>
