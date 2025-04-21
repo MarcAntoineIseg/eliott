@@ -115,7 +115,7 @@ export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promi
   }
 };
 
-// Pour récupérer des rapports, nous avons besoin d'utiliser une autre API avec un paramètre filter
+// Utiliser l'endpoint backend au lieu de l'appel direct à l'API Google
 export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId: string) => {
   if (!accessToken || accessToken.trim() === "") {
     throw new Error("Token d'accès non fourni ou invalide");
@@ -124,44 +124,17 @@ export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId
   try {
     console.log(`Fetching report data for property ${propertyId}`);
     
-    // Mise à jour pour inclure un filtre valide pour résoudre l'erreur 400
+    // Appel à l'API backend avec credentials pour envoyer les cookies de session
     const response = await fetch(
-      `https://analyticsdata.googleapis.com/v1beta/properties/${propertyId}:runReport`,
+      `/api/analytics/data?propertyId=${encodeURIComponent(propertyId)}`,
       {
-        method: 'POST',
+        method: 'GET',
+        credentials: 'include', // Important: envoie les cookies de session
         headers: {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          dateRanges: [
-            {
-              startDate: '30daysAgo',
-              endDate: 'today'
-            }
-          ],
-          dimensions: [
-            {
-              name: 'date'
-            }
-          ],
-          metrics: [
-            {
-              name: 'activeUsers'
-            }
-          ],
-          // Ajout d'un filtre pour résoudre l'erreur 400
-          dimensionFilter: {
-            filter: {
-              fieldName: "date",
-              stringFilter: {
-                matchType: "CONTAINS",
-                value: "20" // Filtre toutes les dates contenant "20" (comme 2023, 2024, etc.)
-              }
-            }
-          }
-        })
+        }
       }
     );
 
