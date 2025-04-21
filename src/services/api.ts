@@ -3,7 +3,9 @@ import {
   checkTokenValidity, 
   fetchGoogleAnalyticsProperties, 
   fetchGoogleAnalyticsReport,
-  getStoredAccessToken
+  getStoredAccessToken,
+  fetchGoogleAnalyticsAccounts,
+  fetchGoogleAnalyticsAccountProperties
 } from "./googleAnalytics";
 
 // Définition des points d'entrée de l'API
@@ -59,15 +61,11 @@ export const getApiUrl = (endpoint: string, queryParams?: Record<string, string>
   return url;
 };
 
-import { fetchGoogleAnalyticsAccounts } from "./googleAnalytics";
-
 // Fonction pour obtenir les comptes Analytics (via ton backend)
 export const getGoogleAnalyticsAccounts = async () => {
   // On utilise maintenant le token stocké dans localStorage
   return await fetchGoogleAnalyticsAccounts();
 };
-
-import { fetchGoogleAnalyticsAccountProperties } from "./googleAnalytics";
 
 export const getGoogleAnalyticsAccountProperties = async (accountId: string) => {
   if (!accountId) throw new Error("accountId requis");

@@ -98,9 +98,9 @@ export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promi
     console.log("Fetching Google Analytics properties with token:", 
       accessToken.substring(0, 5) + "..." + accessToken.substring(accessToken.length - 5));
     
-    // S'assurer que l'en-tête Authorization est correctement formaté
+    // Appel à notre API backend qui utilisera googleapis comme suggéré
     const response = await fetch(
-      "https://analyticsadmin.googleapis.com/v1beta/properties",
+      "/api/analytics/properties",
       {
         method: 'GET',
         headers: {
@@ -108,6 +108,7 @@ export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promi
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
+        credentials: 'include' // Pour envoyer les cookies de session
       }
     );
 
