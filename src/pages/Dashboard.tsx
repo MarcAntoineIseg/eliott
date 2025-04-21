@@ -136,14 +136,17 @@ const Dashboard = () => {
     toast.info("Déconnexion réussie");
   };
 
+  // Rendering part with fix:
   return (
     <div className="min-h-screen bg-gray-50">
+      
       <Navbar />
       
       <main className="container py-8">
         <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
-        
+
         {connectionStatus !== 'connected' ? (
+          
           <Card>
             <CardHeader>
               <CardTitle>Connectez votre compte Google Analytics</CardTitle>
@@ -176,6 +179,7 @@ const Dashboard = () => {
           </Card>
         ) : (
           <div>
+            
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold">Vos propriétés Google Analytics</h2>
               <Button variant="outline" onClick={handleLogout}>
@@ -196,7 +200,7 @@ const Dashboard = () => {
                 </AlertDescription>
               </Alert>
             )}
-            
+
             {!error && connectionStatus === 'connected' && (
               <Alert className="mb-4">
                 <Info className="h-4 w-4" />
@@ -206,7 +210,7 @@ const Dashboard = () => {
                 </AlertDescription>
               </Alert>
             )}
-            
+
             {connectionStatus === 'connecting' && (
               <div className="flex justify-center items-center my-8">
                 <div className="animate-pulse flex flex-col items-center">
@@ -215,7 +219,7 @@ const Dashboard = () => {
                 </div>
               </div>
             )}
-            
+
             <PropertyList properties={properties} isLoading={isLoading} />
           </div>
         )}
