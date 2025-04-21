@@ -71,7 +71,57 @@ export const checkTokenValidity = async (accessToken: string): Promise<boolean> 
   }
 };
 
-export const API_BASE_URL = "https://api.askeliott.com";
+// Modification de l'URL de base pour utiliser l'API Google Analytics directement
+export const API_BASE_URL = "https://analyticsadmin.googleapis.com/v1beta";
+
+export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): Promise<any[]> => {
+  if (!accountId) {
+    throw new Error("L'identifiant du compte (accountId) est requis.");
+  }
+
+  const accessToken = getStoredAccessToken();
+  if (!accessToken) {
+    throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
+  }
+
+  const formattedAccountId = accountId.startsWith("accounts/") 
+    ? accountId 
+    : `accounts/${accountId}`;
+
+  try {
+    console.log(`Fetching properties for account ID: ${formattedAccountId}`);
+    
+    const url = `${API_BASE_URL}/${formattedAccountId}/properties`;
+    console.log(`Request URL: ${url}`);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
+
+    console.log("Properties API response status:", response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("API properties error:", response.status, errorText);
+      const errorDetails = `Erreur lors de la récupération des propriétés: ${response.status} - ${errorText}`;
+      console.error(errorDetails);
+      throw new Error(errorDetails);
+    }
+
+    const data = await response.json();
+    console.log("Properties data:", data);
+    
+    return data.properties || [];
+  } catch (error) {
+    console.error("Erreur lors de la récupération des propriétés GA4 par compte:", error);
+    throw error;
+  }
+};
 
 export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promise<GoogleAnalyticsProperty[]> => {
   if (!accessToken || accessToken.trim() === "") {
@@ -181,63 +231,3 @@ export const GOOGLE_ANALYTICS_SCOPES = [
 ];
 
 export { CLIENT_ID };
-
-export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): Promise<any[]> => {
-  if (!accountId) {
-    throw new Error("L'identifiant du compte (accountId) est requis.");
-  }
-
-  const accessToken = getStoredAccessToken();
-  if (!accessToken) {
-    throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
-  }
-
-  // Maintenant on s'assure que l'accountId a bien le préfixe "accounts/" comme attendu par l'API
-  // Si l'accountId ne commence pas déjà par "accounts/", on l'ajoute
-  const formattedAccountId = accountId.startsWith("accounts/") 
-    ? accountId 
-    : `accounts/${accountId}`;
-
-  try {
-    console.log(`Fetching properties for account ID: ${formattedAccountId} with token: ${accessToken.substring(0, 5)}...`);
-    
-    // Utilisation du format d'URL attendu par le backend exactement
-    const apiUrl = `${API_BASE_URL}/api/analytics/properties`;
-    
-    // Construction de l'URL avec ses paramètres
-    const params = new URLSearchParams({
-      accountId: formattedAccountId,
-      token: accessToken
-    });
-
-    // Construction propre de l'URL avec les paramètres
-    const fullUrl = `${apiUrl}?${params.toString()}`;
-    console.log(`Request URL: ${fullUrl}`);
-    
-    const response = await fetch(fullUrl, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
-    });
-
-    console.log("Properties API response status:", response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("API properties error:", response.status, errorText);
-      const errorDetails = `Erreur lors de la récupération des propriétés: ${response.status} - ${errorText}`;
-      console.error(errorDetails);
-      throw new Error(errorDetails);
-    }
-
-    const data = await response.json();
-    console.log("Properties data:", data);
-    
-    return data.properties || [];
-  } catch (error) {
-    console.error("Erreur lors de la récupération des propriétés GA4 par compte:", error);
-    throw error;
-  }
-};
