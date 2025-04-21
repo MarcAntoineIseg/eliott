@@ -1,3 +1,4 @@
+
 // Service pour interagir avec l'API Google Analytics
 
 const CLIENT_ID = "42921046273-93pb94sobo09o0jakrreq2vdeqkgjsdk.apps.googleusercontent.com";
@@ -18,11 +19,28 @@ export const getAccessTokenFromUrl = (): string | null => {
     const params = new URLSearchParams(hash.substring(1));
     const accessToken = params.get("access_token");
     console.log("Access token extracted from URL:", accessToken ? "Found (length: " + accessToken.length + ")" : "Not found");
+    
+    // Si un token est trouvé, le stocker dans localStorage
+    if (accessToken) {
+      localStorage.setItem("googleAccessToken", accessToken);
+      console.log("Access token saved to localStorage");
+      
+      // Nettoyer l'URL après avoir stocké le token
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
     return accessToken;
   } catch (error) {
     console.error("Error extracting access token from URL:", error);
     return null;
   }
+};
+
+// Récupération du token depuis localStorage
+export const getStoredAccessToken = (): string | null => {
+  const token = localStorage.getItem("googleAccessToken");
+  console.log("Retrieved token from localStorage:", token ? "Found" : "Not found");
+  return token;
 };
 
 // Vérification de la validité du token
@@ -43,6 +61,8 @@ export const checkTokenValidity = async (accessToken: string): Promise<boolean> 
     
     if (!response.ok) {
       console.error("Token invalid:", await response.text());
+      // Si le token est invalide, le supprimer du localStorage
+      localStorage.removeItem("googleAccessToken");
       return false;
     }
     
@@ -56,6 +76,7 @@ export const checkTokenValidity = async (accessToken: string): Promise<boolean> 
     
     if (!hasRequiredScopes) {
       console.error("Token does not have required scopes");
+      localStorage.removeItem("googleAccessToken");
       return false;
     }
     
@@ -125,6 +146,7 @@ export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId
     console.log(`Fetching report data for property ${propertyId}`);
     
     // Appel à l'API backend avec credentials pour envoyer les cookies de session
+    // ET l'accessToken dans l'en-tête Authorization
     const response = await fetch(
       `/api/analytics/data?propertyId=${encodeURIComponent(propertyId)}`,
       {
@@ -158,11 +180,18 @@ export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId
 // Nouvelle fonction pour récupérer les comptes Google Analytics via le backend
 export const fetchGoogleAnalyticsAccounts = async (): Promise<any[]> => {
   try {
+    // Récupérer le token depuis localStorage
+    const accessToken = getStoredAccessToken();
+    if (!accessToken) {
+      throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
+    }
+    
     const response = await fetch("/api/analytics/accounts", {
       method: "GET",
       credentials: "include", // Assure que la session (cookie) est envoyée
       headers: {
         "Accept": "application/json",
+        "Authorization": `Bearer ${accessToken}` // Ajouter le token dans l'en-tête
       },
     });
     if (!response.ok) {
@@ -193,10 +222,19 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
     throw new Error("L'identifiant du compte (accountId) est requis.");
   }
   try {
+    // Récupérer le token depuis localStorage
+    const accessToken = getStoredAccessToken();
+    if (!accessToken) {
+      throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
+    }
+    
     const response = await fetch(`/api/analytics/properties?accountId=${encodeURIComponent(accountId)}`, {
       method: "GET",
       credentials: "include", // Session avec cookie
-      headers: { "Accept": "application/json" },
+      headers: { 
+        "Accept": "application/json",
+        "Authorization": `Bearer ${accessToken}` // Ajouter le token dans l'en-tête
+      },
     });
     if (!response.ok) {
       const errorText = await response.text();
