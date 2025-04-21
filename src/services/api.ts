@@ -1,4 +1,3 @@
-
 import { 
   checkTokenValidity, 
   fetchGoogleAnalyticsProperties, 
@@ -56,6 +55,14 @@ export const getApiUrl = (endpoint: string, queryParams?: Record<string, string>
   }
   
   return url;
+};
+
+import { fetchGoogleAnalyticsAccounts } from "./googleAnalytics";
+
+// Fonction pour obtenir les comptes Analytics (via ton backend)
+export const getGoogleAnalyticsAccounts = async () => {
+  // On se base sur la session, donc pas besoin d'envoyer le token ici
+  return await fetchGoogleAnalyticsAccounts();
 };
 
 export { API_ENDPOINTS };

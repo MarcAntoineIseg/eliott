@@ -1,4 +1,3 @@
-
 // Service pour interagir avec l'API Google Analytics
 
 const CLIENT_ID = "42921046273-93pb94sobo09o0jakrreq2vdeqkgjsdk.apps.googleusercontent.com";
@@ -179,6 +178,29 @@ export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId
     return reportData;
   } catch (error) {
     console.error("Erreur lors de la récupération du rapport:", error);
+    throw error;
+  }
+};
+
+// Nouvelle fonction pour récupérer les comptes Google Analytics via le backend
+export const fetchGoogleAnalyticsAccounts = async (): Promise<any[]> => {
+  try {
+    const response = await fetch("/api/analytics/accounts", {
+      method: "GET",
+      credentials: "include", // Assure que la session (cookie) est envoyée
+      headers: {
+        "Accept": "application/json",
+      },
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Erreur API Comptes: ${response.status} - ${errorText}`);
+    }
+    const data = await response.json();
+    // Selon le format de retour, tu veux probablement retourner data.accounts ou data
+    return data.accounts || [];
+  } catch (error) {
+    console.error("Erreur lors de la récupération des comptes Analytics:", error);
     throw error;
   }
 };
