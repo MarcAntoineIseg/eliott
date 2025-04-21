@@ -24,6 +24,8 @@ export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promi
   try {
     console.log("Fetching Google Analytics properties with token:", accessToken.substring(0, 10) + "...");
     
+    // Dans l'API Analytics Admin v1beta, nous n'utilisons pas de filtre pour récupérer les propriétés
+    // Nous utilisons directement l'endpoint /properties
     const response = await fetch(
       "https://analyticsadmin.googleapis.com/v1beta/properties",
       {
@@ -59,7 +61,58 @@ export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promi
   }
 };
 
-// Les scopes corrects pour Google Analytics Admin API
+// Pour récupérer des rapports, nous avons besoin d'utiliser une autre API avec un filtre spécifique
+export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId: string) => {
+  try {
+    console.log(`Fetching report data for property ${propertyId}`);
+    
+    // Cette fonction utilise l'API de rapports qui nécessite un filtre
+    // Remarque : ceci est un exemple pour l'API Google Analytics Data v1beta
+    const response = await fetch(
+      `https://analyticsdata.googleapis.com/v1beta/properties/${propertyId}:runReport`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          dateRanges: [
+            {
+              startDate: '30daysAgo',
+              endDate: 'today'
+            }
+          ],
+          dimensions: [
+            {
+              name: 'date'
+            }
+          ],
+          metrics: [
+            {
+              name: 'activeUsers'
+            }
+          ]
+        })
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("API report error:", response.status, errorText);
+      throw new Error(`Erreur API de rapport: ${response.status} - ${errorText}`);
+    }
+
+    const reportData = await response.json();
+    console.log("Report data:", reportData);
+    return reportData;
+  } catch (error) {
+    console.error("Erreur lors de la récupération du rapport:", error);
+    throw error;
+  }
+};
+
+// Les scopes corrects pour Google Analytics Admin API et Data API
 export const GOOGLE_ANALYTICS_SCOPES = [
   "https://www.googleapis.com/auth/analytics.readonly"
 ];

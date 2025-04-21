@@ -13,13 +13,14 @@ import {
   getAccessTokenFromUrl,
   fetchGoogleAnalyticsProperties
 } from "@/services/googleAnalytics";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Info } from "lucide-react";
 
 const Dashboard = () => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [properties, setProperties] = useState<GoogleAnalyticsProperty[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
 
   useEffect(() => {
     // Vérifier si un token d'accès est présent dans l'URL (après redirection OAuth)
@@ -27,6 +28,7 @@ const Dashboard = () => {
     if (token) {
       console.log("Token found in URL, length:", token.length);
       setAccessToken(token);
+      setConnectionStatus('connected');
       // On peut sauvegarder le token dans le localStorage pour le conserver
       localStorage.setItem("googleAccessToken", token);
       // Notification de succès
@@ -40,6 +42,9 @@ const Dashboard = () => {
       if (storedToken) {
         console.log("Token found in localStorage");
         setAccessToken(storedToken);
+        setConnectionStatus('connected');
+      } else {
+        setConnectionStatus('disconnected');
       }
     }
   }, []);
@@ -50,11 +55,13 @@ const Dashboard = () => {
       
       setIsLoading(true);
       setError(null);
+      setConnectionStatus('connecting');
       
       try {
         console.log("Loading properties with token");
         const propertiesData = await fetchGoogleAnalyticsProperties(accessToken);
         setProperties(propertiesData);
+        setConnectionStatus('connected');
         
         if (propertiesData.length === 0) {
           toast.info("Aucune propriété Google Analytics n'a été trouvée pour ce compte");
@@ -65,6 +72,7 @@ const Dashboard = () => {
         console.error("Erreur lors du chargement des propriétés:", err);
         const errorMessage = err.message || "Impossible de charger vos propriétés Google Analytics. Veuillez réessayer.";
         setError(errorMessage);
+        setConnectionStatus('disconnected');
         toast.error(errorMessage);
         
         // Si l'erreur est due à un token expiré ou invalide, on peut le supprimer
@@ -84,6 +92,7 @@ const Dashboard = () => {
     localStorage.removeItem("googleAccessToken");
     setAccessToken(null);
     setProperties([]);
+    setConnectionStatus('disconnected');
     toast.info("Déconnexion réussie");
   };
 
@@ -94,7 +103,7 @@ const Dashboard = () => {
       <main className="container py-8">
         <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
         
-        {!accessToken ? (
+        {connectionStatus !== 'connected' ? (
           <Card>
             <CardHeader>
               <CardTitle>Connectez votre compte Google Analytics</CardTitle>
@@ -120,7 +129,7 @@ const Dashboard = () => {
                 <ul className="list-disc pl-5 mt-2">
                   <li>Votre compte Google a accès à Google Analytics</li>
                   <li>Vous avez autorisé l'URL de redirection <code>{window.location.origin}/dashboard</code> dans la console Google Cloud</li>
-                  <li>Vous avez activé l'API Google Analytics Admin dans votre projet Google Cloud</li>
+                  <li>Vous avez activé l'API Google Analytics Admin ET l'API Google Analytics Data dans votre projet Google Cloud</li>
                 </ul>
               </div>
             </CardContent>
@@ -138,8 +147,22 @@ const Dashboard = () => {
               <Alert variant="destructive" className="mb-4">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Erreur</AlertTitle>
+                <AlertDescription className="space-y-2">
+                  <p>{error}</p>
+                  <p className="text-sm">
+                    Cette erreur peut indiquer un problème d'accès aux données ou de configuration API.
+                    Vérifiez les autorisations de votre compte Google et l'activation des APIs requises.
+                  </p>
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {!error && connectionStatus === 'connected' && (
+              <Alert className="mb-4">
+                <Info className="h-4 w-4" />
+                <AlertTitle>Statut de connexion</AlertTitle>
                 <AlertDescription>
-                  {error}
+                  Connexion à Google Analytics réussie. Votre token d'accès est valide.
                 </AlertDescription>
               </Alert>
             )}
