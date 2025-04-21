@@ -8,12 +8,12 @@ import {
   API_BASE_URL
 } from "./googleAnalytics";
 
-// Définition des points d'entrée de l'API externe
+// Mise à jour des points d'entrée de l'API pour utiliser directement l'API Google Analytics
 const API_ENDPOINTS = {
   AUTH_GOOGLE: `${API_BASE_URL}/auth/google`,
-  ANALYTICS_ACCOUNTS: `${API_BASE_URL}/api/analytics/accounts`,  // Assurez-vous que ces chemins correspondent à ceux de votre backend
-  ANALYTICS_PROPERTIES: `${API_BASE_URL}/api/analytics/properties`,
-  ANALYTICS_DATA: `${API_BASE_URL}/api/analytics/data`
+  ANALYTICS_ACCOUNTS: `${API_BASE_URL}/accounts`,
+  ANALYTICS_PROPERTIES: `${API_BASE_URL}/properties`,
+  ANALYTICS_DATA: `${API_BASE_URL}/properties/{propertyId}:runReport`
 };
 
 // Fonction pour obtenir les propriétés Analytics

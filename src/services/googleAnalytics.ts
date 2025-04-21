@@ -1,3 +1,4 @@
+
 // Service pour interagir avec l'API Google Analytics
 
 const CLIENT_ID = "42921046273-93pb94sobo09o0jakrreq2vdeqkgjsdk.apps.googleusercontent.com";
@@ -132,16 +133,18 @@ export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promi
   try {
     console.log("Fetching Google Analytics properties with token:", accessToken.substring(0, 5) + "..." + accessToken.substring(accessToken.length - 5));
 
-    const response = await fetch(
-      `${API_BASE_URL}/api/analytics/properties?token=${encodeURIComponent(accessToken)}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
+    // Cette fonction doit maintenant appeler directement l'API Google
+    const url = `${API_BASE_URL}/properties`;
+    console.log(`Request URL: ${url}`);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       }
-    );
+    });
 
     console.log("Fetch properties response status:", response.status);
 
@@ -175,16 +178,42 @@ export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId
   try {
     console.log(`Fetching report data for property ${propertyId}`);
 
-    const response = await fetch(
-      `${API_BASE_URL}/api/analytics/data?propertyId=${encodeURIComponent(propertyId)}&token=${encodeURIComponent(accessToken)}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
+    // Mettre à jour l'URL pour l'API Google Analytics Data
+    const url = `${API_BASE_URL}/properties/${propertyId}:runReport`;
+    console.log(`Report request URL: ${url}`);
+    
+    // Corps de la requête selon la documentation Google Analytics Data API
+    const requestBody = {
+      dateRanges: [
+        {
+          startDate: "30daysAgo",
+          endDate: "today"
         }
-      }
-    );
+      ],
+      dimensions: [
+        {
+          name: "date"
+        }
+      ],
+      metrics: [
+        {
+          name: "sessions"
+        },
+        {
+          name: "activeUsers"
+        }
+      ]
+    };
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    });
 
     console.log("Report API response status:", response.status);
 
@@ -210,12 +239,29 @@ export const fetchGoogleAnalyticsAccounts = async (): Promise<any[]> => {
       throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/analytics/accounts?token=${encodeURIComponent(accessToken)}`);
+    // Modification de l'URL pour appeler directement l'API Google
+    const url = `${API_BASE_URL}/accounts`;
+    console.log(`Accounts request URL: ${url}`);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
+
+    console.log("Accounts API response status:", response.status);
+
     if (!response.ok) {
       const errorText = await response.text();
+      console.error("API accounts error:", response.status, errorText);
       throw new Error(`Erreur API Comptes: ${response.status} - ${errorText}`);
     }
+
     const data = await response.json();
+    console.log("Accounts data:", data);
     return data.accounts || [];
   } catch (error) {
     console.error("Erreur lors de la récupération des comptes Analytics:", error);
