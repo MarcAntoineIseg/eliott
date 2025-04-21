@@ -88,7 +88,7 @@ export const checkTokenValidity = async (accessToken: string): Promise<boolean> 
 
 // Configuration de l'URL de l'API externe
 // Remplacez cette URL par celle de votre vrai backend
-export const API_BASE_URL = "https://votre-backend-api.com";
+export const API_BASE_URL = "https://api.askeliott.com";
 
 // Récupération des propriétés Google Analytics
 export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promise<GoogleAnalyticsProperty[]> => {
