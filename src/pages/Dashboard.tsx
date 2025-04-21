@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,12 +15,14 @@ import {
 } from "@/services/googleAnalytics";
 import { AlertCircle, Info } from "lucide-react";
 
+type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
+
 const Dashboard = () => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [properties, setProperties] = useState<GoogleAnalyticsProperty[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
 
   useEffect(() => {
     // Supprimer tous les paramètres hash de l'URL tout en préservant le token
