@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +8,7 @@ import { toast } from "@/components/ui/sonner";
 import { CLIENT_ID, GOOGLE_ANALYTICS_SCOPES, GoogleAnalyticsProperty, getAccessTokenFromUrl, fetchGoogleAnalyticsAccounts, fetchGoogleAnalyticsAccountProperties, checkTokenValidity } from "@/services/googleAnalytics";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Info, GoogleAds, GoogleSheets, Hubspot } from "lucide-react";
+import { AlertCircle, Info, LineChart, BarChart3, Presentation } from "lucide-react";
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 
@@ -181,7 +180,7 @@ const Integration = () => {
           {/* Google Ads */}
           <Card>
             <CardHeader className="flex flex-row items-center gap-4">
-              <GoogleAds size={40} color="#4285F4" />
+              <LineChart size={40} color="#4285F4" />
               <div>
                 <CardTitle>Google Ads</CardTitle>
                 <CardDescription>Connectez votre compte Google Ads pour récupérer vos campagnes publicitaires.</CardDescription>
@@ -196,7 +195,7 @@ const Integration = () => {
           {/* Google Sheets */}
           <Card>
             <CardHeader className="flex flex-row items-center gap-4">
-              <GoogleSheets size={40} color="#34A853" />
+              <BarChart3 size={40} color="#34A853" />
               <div>
                 <CardTitle>Google Sheets</CardTitle>
                 <CardDescription>Connectez Google Sheets pour automatiser l'export de vos rapports.</CardDescription>
@@ -211,7 +210,7 @@ const Integration = () => {
           {/* Hubspot */}
           <Card>
             <CardHeader className="flex flex-row items-center gap-4">
-              <Hubspot size={40} color="#FF7A59" />
+              <Presentation size={40} color="#FF7A59" />
               <div>
                 <CardTitle>HubSpot</CardTitle>
                 <CardDescription>Connectez HubSpot pour croiser vos données marketing.</CardDescription>
