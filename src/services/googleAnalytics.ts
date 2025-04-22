@@ -1,5 +1,3 @@
-import { google } from '@google/client-api';
-
 // Service pour interagir avec l'API Google Analytics
 
 const CLIENT_ID = "42921046273-93pb94sobo09o0jakrreq2vdeqkgjsdk.apps.googleusercontent.com";
@@ -74,7 +72,7 @@ export const checkTokenValidity = async (accessToken: string): Promise<boolean> 
 };
 
 // Modification de l'URL de base pour correspondre à l'emplacement de votre API backend
-export const API_BASE_URL = "https://api.askeliott.com";  // Supposant que votre backend est en local sur le port 3000
+export const API_BASE_URL = "https://api.askeliott.com";  // URL du backend
 
 export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): Promise<any[]> => {
   if (!accountId) {
