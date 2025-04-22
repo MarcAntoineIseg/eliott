@@ -1,3 +1,5 @@
+import { google } from '@google/client-api';
+
 // Service pour interagir avec l'API Google Analytics
 
 const CLIENT_ID = "42921046273-93pb94sobo09o0jakrreq2vdeqkgjsdk.apps.googleusercontent.com";
