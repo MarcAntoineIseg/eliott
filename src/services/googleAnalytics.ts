@@ -1,4 +1,3 @@
-
 // Service pour interagir avec l'API Google Analytics
 
 const CLIENT_ID = "42921046273-93pb94sobo09o0jakrreq2vdeqkgjsdk.apps.googleusercontent.com";
@@ -72,8 +71,8 @@ export const checkTokenValidity = async (accessToken: string): Promise<boolean> 
   }
 };
 
-// Définition de l'URL de base correcte pour notre API backend
-export const API_BASE_URL = "https://api.askeliott.com";
+// Modification de l'URL de base pour utiliser le backend
+export const API_BASE_URL = "https://app.askeliott.com";
 
 export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): Promise<any[]> => {
   if (!accountId) {

@@ -8,7 +8,7 @@ import {
   API_BASE_URL
 } from "./googleAnalytics";
 
-// Mise à jour des points d'entrée de l'API pour utiliser le bon backend
+// Mise à jour des points d'entrée de l'API pour utiliser le backend
 const API_ENDPOINTS = {
   AUTH_GOOGLE: `${API_BASE_URL}/auth/google`,
   ANALYTICS_ACCOUNTS: `${API_BASE_URL}/api/analytics/accounts`,
@@ -69,7 +69,9 @@ export const getGoogleAnalyticsAccounts = async () => {
 // Fonction pour obtenir les propriétés d'un compte Analytics
 export const getGoogleAnalyticsAccountProperties = async (accountId: string) => {
   if (!accountId) throw new Error("accountId requis");
-  
+
+  // Nous ne modifions plus l'ID pour extraire uniquement la partie numérique
+  // Nous conservons le format complet attendu par l'API
   console.log(`Getting properties for account ID: ${accountId}`);
   return await fetchGoogleAnalyticsAccountProperties(accountId);
 };
