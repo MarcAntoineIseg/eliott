@@ -69,9 +69,7 @@ export const getGoogleAnalyticsAccounts = async () => {
 // Fonction pour obtenir les propriétés d'un compte Analytics
 export const getGoogleAnalyticsAccountProperties = async (accountId: string) => {
   if (!accountId) throw new Error("accountId requis");
-
-  // Nous ne modifions plus l'ID pour extraire uniquement la partie numérique
-  // Nous conservons le format complet attendu par l'API
+  
   console.log(`Getting properties for account ID: ${accountId}`);
   return await fetchGoogleAnalyticsAccountProperties(accountId);
 };
