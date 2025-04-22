@@ -72,7 +72,7 @@ export const checkTokenValidity = async (accessToken: string): Promise<boolean> 
 };
 
 // Modification de l'URL de base pour correspondre à l'emplacement de votre API backend
-export const API_BASE_URL = "http://localhost:3000";  // Supposant que votre backend est en local sur le port 3000
+export const API_BASE_URL = "https://api.askeliott.com";  // Supposant que votre backend est en local sur le port 3000
 
 export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): Promise<any[]> => {
   if (!accountId) {
