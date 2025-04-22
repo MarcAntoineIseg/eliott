@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 // Mise à jour de l'URL de base de l'API et du CLIENT_ID
@@ -56,24 +57,27 @@ export const checkTokenValidity = async (accessToken: string): Promise<boolean> 
 };
 
 export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): Promise<any[]> => {
+  // Validation robuste de l'accountId
   if (!accountId) {
+    console.error("Erreur : L'identifiant du compte (accountId) est requis.");
     throw new Error("L'identifiant du compte (accountId) est requis.");
   }
 
+  // Log détaillé pour le débogage
+  console.log(`Type de accountId: ${typeof accountId}`);
+  console.log(`Longueur de accountId: ${accountId.length}`);
+  console.log(`Valeur brute de accountId: ${accountId}`);
+
   const accessToken = getStoredAccessToken();
   if (!accessToken) {
+    console.error("Erreur : Aucun token d'accès trouvé.");
     throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
   }
 
   try {
-    // Log détaillé de l'identifiant de compte
-    console.log(`Fetching properties for account ID: ${accountId}`);
-    console.log(`Account ID type: ${typeof accountId}`);
-    console.log(`Account ID length: ${accountId.length}`);
-
-    // Afficher l'URL complète avec l'accountId et le token
+    // Log de l'URL complète avec encodage
     const url = `${API_BASE_URL}/api/analytics/properties?accountId=${encodeURIComponent(accountId)}&token=${encodeURIComponent(accessToken)}`;
-    console.log(`Request URL: ${url}`);
+    console.log(`URL de requête complète (encodée): ${url}`);
     
     const response = await fetch(url, {
       method: 'GET',
@@ -83,16 +87,17 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
       }
     });
 
-    console.log(`Response status: ${response.status}`);
+    // Log du statut de la réponse
+    console.log(`Statut de la réponse : ${response.status}`);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`API Error response: ${errorText}`);
+      console.error(`Erreur API détaillée : ${response.status} - ${errorText}`);
       throw new Error(`Erreur API: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    console.log("Properties data:", data);
+    console.log("Données des propriétés reçues:", data);
     return data.properties || [];
   } catch (error) {
     console.error("Erreur lors de la récupération des propriétés GA4 par compte:", error);
