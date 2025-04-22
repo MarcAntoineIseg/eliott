@@ -1,7 +1,12 @@
+import React from 'react';
+
+// Mise à jour de l'URL de base de l'API et du CLIENT_ID
+export const API_BASE_URL = "https://api.askeliott.com"; 
+export const CLIENT_ID = "42921046273-93pb94sobo09o0jakrreq2vdeqkgjsdk.apps.googleusercontent.com";
 
 // Constants pour les API URLs et scopes
-export const API_BASE_URL = "https://your-backend-api-url"; // Ajustez selon votre URL backend
-export const CLIENT_ID = "your-google-client-id"; // Remplacez par votre ID client Google
+//export const API_BASE_URL = "https://your-backend-api-url"; // Ajustez selon votre URL backend
+//export const CLIENT_ID = "your-google-client-id"; // Remplacez par votre ID client Google
 
 // Définition des scopes OAuth2 nécessaires pour Google Analytics
 export const GOOGLE_ANALYTICS_SCOPES = [
