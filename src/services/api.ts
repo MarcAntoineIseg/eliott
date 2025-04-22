@@ -8,7 +8,7 @@ import {
   API_BASE_URL
 } from "./googleAnalytics";
 
-// Mise à jour des points d'entrée de l'API pour utiliser le backend
+// Mise à jour des points d'entrée de l'API pour utiliser le bon backend
 const API_ENDPOINTS = {
   AUTH_GOOGLE: `${API_BASE_URL}/auth/google`,
   ANALYTICS_ACCOUNTS: `${API_BASE_URL}/api/analytics/accounts`,
