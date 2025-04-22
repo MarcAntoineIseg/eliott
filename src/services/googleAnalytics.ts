@@ -1,9 +1,11 @@
-
 import React from 'react';
 
 // Mise à jour de l'URL de base de l'API et du CLIENT_ID
 export const API_BASE_URL = "https://api.askeliott.com"; 
 export const CLIENT_ID = "42921046273-93pb94sobo09o0jakrreq2vdeqkgjsdk.apps.googleusercontent.com";
+
+// Add a new constant for the redirect URI
+export const REDIRECT_URI = "https://app.askeliott.com/integration";
 
 // Constants pour les API URLs et scopes
 //export const API_BASE_URL = "https://your-backend-api-url"; // Ajustez selon votre URL backend
@@ -105,7 +107,6 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
   }
 };
 
-// Fonction pour récupérer les comptes Google Analytics
 export const fetchGoogleAnalyticsAccounts = async (): Promise<any[]> => {
   const accessToken = getStoredAccessToken();
   if (!accessToken) {
