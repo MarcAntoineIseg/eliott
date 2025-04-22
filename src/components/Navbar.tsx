@@ -15,13 +15,13 @@ const Navbar = () => {
             <Link to="/" className="text-sm font-medium hover:text-blue-600">
               Accueil
             </Link>
-            <Link to="/dashboard" className="text-sm font-medium hover:text-blue-600">
-              Dashboard
+            <Link to="/integration" className="text-sm font-medium hover:text-blue-600">
+              Intégrations
             </Link>
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <Link to="/dashboard">
+          <Link to="/integration">
             <Button variant="outline" className="hidden md:flex gap-2 items-center">
               <LogIn size={16} />
               Connexion
