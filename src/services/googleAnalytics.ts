@@ -71,8 +71,8 @@ export const checkTokenValidity = async (accessToken: string): Promise<boolean> 
   }
 };
 
-// Modification de l'URL de base pour utiliser le backend
-export const API_BASE_URL = "https://app.askeliott.com";
+// Modification de l'URL de base pour utiliser api.askeliott.com
+export const API_BASE_URL = "https://api.askeliott.com";
 
 export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): Promise<any[]> => {
   if (!accountId) {
@@ -115,6 +115,7 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
   }
 };
 
+// Les autres fonctions seront mises à jour de la même manière
 export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promise<GoogleAnalyticsProperty[]> => {
   if (!accessToken) {
     throw new Error("Token d'accès non fourni");
