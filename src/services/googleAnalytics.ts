@@ -71,8 +71,8 @@ export const checkTokenValidity = async (accessToken: string): Promise<boolean> 
   }
 };
 
-// Modification de l'URL de base pour utiliser api.askeliott.com
-export const API_BASE_URL = "https://api.askeliott.com";
+// Modification de l'URL de base pour qu'elle corresponde à la configuration CORS du backend
+export const API_BASE_URL = "https://app.askeliott.com";
 
 export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): Promise<any[]> => {
   if (!accountId) {
