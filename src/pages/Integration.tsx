@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,17 +7,9 @@ import PropertyList from "@/components/PropertyList";
 import { toast } from "@/components/ui/sonner";
 import { CLIENT_ID, GOOGLE_ANALYTICS_SCOPES, GoogleAnalyticsProperty, getAccessTokenFromUrl, fetchGoogleAnalyticsAccounts, fetchGoogleAnalyticsAccountProperties, checkTokenValidity } from "@/services/googleAnalytics";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Info, LineChart, BarChart3, Presentation } from "lucide-react";
+import { LineChart, BarChart3, Presentation } from "lucide-react";
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
-
-const INTEGRATION_CARD_GRADIENTS = [
-  "bg-gradient-to-tr from-[#E5DEFF] via-white to-[#D3E4FD]",
-  "bg-gradient-to-tr from-[#FEFAF6] via-[#E7F0FD] to-[#F1F0FB]",
-  "bg-gradient-to-tr from-[#fdfcfb] via-[#e2d1c3] to-[#fbeee6]",
-  "bg-gradient-to-tr from-[#FFE29F] via-[#FFA99F] to-[#FF719A]",
-];
 
 const Integration = () => {
   // GOOGLE ANALYTICS STATE LOGIC CONSERVÉ
@@ -134,32 +125,33 @@ const Integration = () => {
 
   // UI DES INTEGRATIONS
   return (
-    <div className="min-h-screen w-full bg-gradient-to-tr from-[#faf8ff] via-[#f5f9ff] to-[#eef2fb]">
+    <div className="min-h-screen w-full bg-[#f4f6f9]">
       <Navbar />
       <main className="container py-8">
-        <h1 className="text-4xl font-extrabold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-300 drop-shadow-sm">Intégrations</h1>
+        <h1 className="text-4xl font-extrabold mb-8 text-gray-800">Intégrations</h1>
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {/* Google Analytics */}
-          <Card className={`transition-all duration-200 border-0 shadow-xl hover:shadow-2xl hover:scale-105 ${INTEGRATION_CARD_GRADIENTS[0]} relative`}>
-            <div className="absolute top-0 right-0 left-0 h-2 rounded-t-lg bg-gradient-to-r from-[#9b87f5] via-[#7e69ab] to-[#0ea5e9] opacity-60" />
-            <CardHeader className="flex flex-row items-center gap-4 border-b border-muted/40">
-              <img src="https://www.gstatic.com/analytics-suite/header/suite/v2/ic_analytics.svg" alt="Google Analytics" className="w-12 h-12 rounded-lg border bg-white shadow" />
-              <div>
-                <CardTitle className="text-lg font-bold text-primary">Google Analytics</CardTitle>
-                <CardDescription>Connectez votre compte Google Analytics pour récupérer vos données Insights.</CardDescription>
+          <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
+            <div className="bg-blue-50/50 p-4 border-b border-blue-100">
+              <div className="flex items-center gap-4">
+                <img src="https://www.gstatic.com/analytics-suite/header/suite/v2/ic_analytics.svg" alt="Google Analytics" className="w-12 h-12 rounded-lg border bg-white shadow" />
+                <div>
+                  <CardTitle className="text-lg font-bold text-gray-800">Google Analytics</CardTitle>
+                  <CardDescription className="text-gray-600">Connectez votre compte Google Analytics</CardDescription>
+                </div>
               </div>
-            </CardHeader>
-            <CardContent>
+            </div>
+            <CardContent className="p-6">
               {connectionStatus !== 'connected' && connectionStatus !== 'connecting' ? (
                 <GoogleAuthButton clientId={CLIENT_ID} />
               ) : (
-                <Button variant="outline" onClick={handleLogout}>Déconnecter</Button>
+                <Button variant="outline" onClick={handleLogout} className="w-full">Déconnecter</Button>
               )}
               {connectionStatus === "connected" && (
                 <div className="mt-4">
                   {accounts.length > 0 && (
                     <div className="mb-4">
-                      <label className="block mb-2 text-sm font-medium">Sélectionnez un compte</label>
+                      <label className="block mb-2 text-sm font-medium text-gray-700">Sélectionnez un compte</label>
                       <Select 
                         value={selectedAccount ?? ""} 
                         onValueChange={(val) => setSelectedAccount(val)}>
@@ -186,50 +178,56 @@ const Integration = () => {
               )}
             </CardContent>
           </Card>
+
           {/* Google Ads */}
-          <Card className={`transition-all duration-200 border-0 shadow-xl hover:shadow-2xl hover:scale-105 ${INTEGRATION_CARD_GRADIENTS[1]} relative`}>
-            <div className="absolute top-0 right-0 left-0 h-2 rounded-t-lg bg-gradient-to-r from-[#4285F4] via-[#8B5CF6] to-[#7E69AB] opacity-50" />
-            <CardHeader className="flex flex-row items-center gap-4 border-b border-muted/40">
-              <LineChart size={48} color="#4285F4" className="rounded-lg bg-white p-2 shadow border" />
-              <div>
-                <CardTitle className="text-lg font-bold text-primary">Google Ads</CardTitle>
-                <CardDescription>Connectez votre compte Google Ads pour récupérer vos campagnes publicitaires.</CardDescription>
+          <Card className="border-2 border-gray-50 hover:border-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
+            <div className="bg-gray-50/50 p-4 border-b border-gray-100">
+              <div className="flex items-center gap-4">
+                <LineChart size={48} color="#4285F4" className="rounded-lg bg-white p-2 shadow border" />
+                <div>
+                  <CardTitle className="text-lg font-bold text-gray-800">Google Ads</CardTitle>
+                  <CardDescription className="text-gray-600">Connectez vos campagnes publicitaires</CardDescription>
+                </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" disabled className="opacity-70 cursor-not-allowed">
+            </div>
+            <CardContent className="p-6">
+              <Button variant="outline" disabled className="w-full opacity-70 cursor-not-allowed">
                 Connecter (bientôt disponible)
               </Button>
             </CardContent>
           </Card>
+
           {/* Google Sheets */}
-          <Card className={`transition-all duration-200 border-0 shadow-xl hover:shadow-2xl hover:scale-105 ${INTEGRATION_CARD_GRADIENTS[2]} relative`}>
-            <div className="absolute top-0 right-0 left-0 h-2 rounded-t-lg bg-gradient-to-r from-[#34A853] via-[#9b87f5] to-[#FFA99F] opacity-40" />
-            <CardHeader className="flex flex-row items-center gap-4 border-b border-muted/40">
-              <BarChart3 size={48} color="#34A853" className="rounded-lg bg-white p-2 shadow border" />
-              <div>
-                <CardTitle className="text-lg font-bold text-primary">Google Sheets</CardTitle>
-                <CardDescription>Connectez Google Sheets pour automatiser l'export de vos rapports.</CardDescription>
+          <Card className="border-2 border-green-50 hover:border-green-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
+            <div className="bg-green-50/50 p-4 border-b border-green-100">
+              <div className="flex items-center gap-4">
+                <BarChart3 size={48} color="#34A853" className="rounded-lg bg-white p-2 shadow border" />
+                <div>
+                  <CardTitle className="text-lg font-bold text-gray-800">Google Sheets</CardTitle>
+                  <CardDescription className="text-gray-600">Exportez vos rapports automatiquement</CardDescription>
+                </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" disabled className="opacity-70 cursor-not-allowed">
+            </div>
+            <CardContent className="p-6">
+              <Button variant="outline" disabled className="w-full opacity-70 cursor-not-allowed">
                 Connecter (bientôt disponible)
               </Button>
             </CardContent>
           </Card>
-          {/* Hubspot */}
-          <Card className={`transition-all duration-200 border-0 shadow-xl hover:shadow-2xl hover:scale-105 ${INTEGRATION_CARD_GRADIENTS[3]} relative`}>
-            <div className="absolute top-0 right-0 left-0 h-2 rounded-t-lg bg-gradient-to-r from-[#FF7A59] via-[#FFA99F] to-[#FF719A] opacity-60" />
-            <CardHeader className="flex flex-row items-center gap-4 border-b border-muted/40">
-              <Presentation size={48} color="#FF7A59" className="rounded-lg bg-white p-2 shadow border" />
-              <div>
-                <CardTitle className="text-lg font-bold text-primary">HubSpot</CardTitle>
-                <CardDescription>Connectez HubSpot pour croiser vos données marketing.</CardDescription>
+
+          {/* HubSpot */}
+          <Card className="border-2 border-orange-50 hover:border-orange-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
+            <div className="bg-orange-50/50 p-4 border-b border-orange-100">
+              <div className="flex items-center gap-4">
+                <Presentation size={48} color="#FF7A59" className="rounded-lg bg-white p-2 shadow border" />
+                <div>
+                  <CardTitle className="text-lg font-bold text-gray-800">HubSpot</CardTitle>
+                  <CardDescription className="text-gray-600">Gérez vos données marketing</CardDescription>
+                </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" disabled className="opacity-70 cursor-not-allowed">
+            </div>
+            <CardContent className="p-6">
+              <Button variant="outline" disabled className="w-full opacity-70 cursor-not-allowed">
                 Connecter (bientôt disponible)
               </Button>
             </CardContent>
@@ -241,4 +239,3 @@ const Integration = () => {
 };
 
 export default Integration;
-
