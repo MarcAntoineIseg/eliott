@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +9,7 @@ import PropertyList from "@/components/PropertyList";
 import { toast } from "@/components/ui/sonner";
 import { 
   CLIENT_ID, 
+  GOOGLE_ANALYTICS_SCOPES, // Make sure this is imported
   GoogleAnalyticsProperty, 
   getAccessTokenFromUrl,
   fetchGoogleAnalyticsAccounts,
@@ -78,6 +80,7 @@ const Dashboard = () => {
     setError(null);
     fetchGoogleAnalyticsAccounts().then(
       (accountsData) => {
+        console.log("Accounts data received:", accountsData);
         setAccounts(accountsData || []);
         if (accountsData.length === 0) {
           toast.info("Aucun compte Google Analytics trouvé.");
@@ -94,10 +97,19 @@ const Dashboard = () => {
       setProperties([]);
       return;
     }
+    
+    // Add detailed logging for the selectedAccount value
+    console.log("Selected Account information:");
+    console.log(`- Selected Account value: ${selectedAccount}`);
+    console.log(`- Selected Account type: ${typeof selectedAccount}`);
+    console.log(`- Selected Account length: ${selectedAccount.length}`);
+    
     setIsLoading(true);
     setError(null);
+    
     fetchGoogleAnalyticsAccountProperties(selectedAccount)
       .then(propertiesData => {
+        console.log("Properties data received:", propertiesData);
         const propsList = (propertiesData || []).map((prop: any) => ({
           id: prop.name ? prop.name.split("/").pop() : prop.id,
           name: prop.displayName,
@@ -199,7 +211,10 @@ const Dashboard = () => {
                 <label className="block mb-2 text-sm font-medium">Sélectionnez un compte</label>
                 <Select 
                   value={selectedAccount ?? ""} 
-                  onValueChange={(val) => setSelectedAccount(val)}>
+                  onValueChange={(val) => {
+                    console.log(`Account selected: ${val}`);
+                    setSelectedAccount(val);
+                  }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Choisissez un compte" />
                   </SelectTrigger>
