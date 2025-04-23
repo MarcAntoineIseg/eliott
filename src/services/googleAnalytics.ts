@@ -119,8 +119,8 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
       console.log(`AccountId reformaté en parent: ${parentParam}`);
     }
     
-    // Remove encoding for the URL parameter
-    const url = `${API_BASE_URL}/api/analytics/properties?accountId=${parentParam}&token=${encodeURIComponent(accessToken)}`;
+    // Updated to use parent parameter instead of accountId as expected by the backend
+    const url = `${API_BASE_URL}/api/analytics/properties?parent=${parentParam}&token=${encodeURIComponent(accessToken)}`;
     console.log(`URL de requête complète: ${url}`);
     
     const response = await fetch(url, {
