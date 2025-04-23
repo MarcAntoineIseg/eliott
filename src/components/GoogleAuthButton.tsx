@@ -17,9 +17,13 @@ const GoogleAuthButton = ({ clientId, onSuccess, onError }: GoogleAuthButtonProp
     // Utilisation des scopes corrects depuis le service
     const scope = GOOGLE_ANALYTICS_SCOPES.join(" ");
     
-    // Génération explicite de l'URL OAuth avec prompt=consent
-    const oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=consent`;
-    console.log("OAuth URL:", oauthUrl);
+    // Ajout d'un timestamp unique pour éviter la mise en cache du token
+    const timestamp = new Date().getTime();
+    const nonce = Math.random().toString(36).substring(2);
+    
+    // Génération explicite de l'URL OAuth avec prompt=consent et paramètres anti-cache
+    const oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=consent&access_type=online&nonce=${nonce}&_=${timestamp}`;
+    console.log("OAuth URL avec anti-cache:", oauthUrl);
 
     window.location.href = oauthUrl;
   };
@@ -36,4 +40,3 @@ const GoogleAuthButton = ({ clientId, onSuccess, onError }: GoogleAuthButtonProp
 };
 
 export default GoogleAuthButton;
-
