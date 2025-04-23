@@ -14,33 +14,14 @@ const GoogleAuthButton = ({ clientId, onSuccess, onError }: GoogleAuthButtonProp
     // Clear any existing tokens before starting a new auth flow
     localStorage.removeItem("googleAccessToken");
     
-    // Redirection forcée vers l'URL exacte d'intégration
-    const redirectUri = REDIRECT_URI;
-    
     // Utilisation des scopes corrects depuis le service
     const scope = GOOGLE_ANALYTICS_SCOPES.join(" ");
     
-    console.log("Redirecting to Google Auth with scopes:", scope);
-    console.log("Using redirect_uri:", redirectUri);
-    
-    // Garantir que tous les paramètres sont correctement encodés
-    const params = new URLSearchParams({
-      client_id: clientId,
-      redirect_uri: redirectUri,
-      scope: scope,
-      response_type: 'token',
-      // Ajout d'un state pour la sécurité
-      state: Math.random().toString(36).substring(2),
-      // Forcer la sélection du compte Google et le consentement
-      prompt: 'consent select_account',
-      // Indiquer que nous voulons accéder aux ressources off-line
-      access_type: 'online'
-    });
-    
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
-    console.log("Auth URL:", authUrl);
-    
-    window.location.href = authUrl;
+    // Génération explicite de l'URL OAuth avec prompt=consent
+    const oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=consent`;
+    console.log("OAuth URL:", oauthUrl);
+
+    window.location.href = oauthUrl;
   };
 
   return (
@@ -55,3 +36,4 @@ const GoogleAuthButton = ({ clientId, onSuccess, onError }: GoogleAuthButtonProp
 };
 
 export default GoogleAuthButton;
+
