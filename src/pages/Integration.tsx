@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,7 +6,7 @@ import Navbar from "@/components/Navbar";
 import GoogleAuthButton from "@/components/GoogleAuthButton";
 import PropertyList from "@/components/PropertyList";
 import { toast } from "@/components/ui/sonner";
-import { CLIENT_ID, GOOGLE_ANALYTICS_SCOPES, GoogleAnalyticsProperty, getAccessTokenFromUrl, fetchGoogleAnalyticsAccounts, fetchGoogleAnalyticsAccountProperties, checkTokenValidity } from "@/services/googleAnalytics";
+import { CLIENT_ID, GOOGLE_ANALYTICS_SCOPES, GoogleAnalyticsProperty, getAccessTokenFromUrl, fetchGoogleAnalyticsAccounts, fetchGoogleAnalyticsAccountProperties, checkTokenValidity, REDIRECT_URI } from "@/services/googleAnalytics";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { LineChart, BarChart3, Presentation } from "lucide-react";
 
@@ -90,6 +91,9 @@ const Integration = () => {
     setIsLoading(true);
     setError(null);
 
+    console.log("Calling fetchGoogleAnalyticsAccountProperties with accountId:", selectedAccount);
+    
+    // Assurons-nous que l'ID de compte est correctement passé
     fetchGoogleAnalyticsAccountProperties(selectedAccount)
       .then(propertiesData => {
         const propsList = (propertiesData || []).map((prop: any) => ({

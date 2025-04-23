@@ -78,7 +78,7 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
   }
 
   try {
-    // Correction de l'URL pour qu'elle soit parfaitement formée
+    // Correction: Utiliser explicitement 'accountId' comme nom de paramètre
     const url = `${API_BASE_URL}/api/analytics/properties?accountId=${encodeURIComponent(accountId)}&token=${encodeURIComponent(accessToken)}`;
     console.log(`URL de requête complète (encodée): ${url}`);
     
