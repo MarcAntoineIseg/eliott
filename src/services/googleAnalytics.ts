@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 // Mise à jour de l'URL de base de l'API et du CLIENT_ID
@@ -110,21 +111,21 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
   }
 
   try {
-    // Improved account ID formatting and encoding
-    let formattedAccountId = accountId;
+    // Change the parameter name from accountId to parent as expected by the API
+    let parentParam = accountId;
     
     // If the accountId doesn't start with "accounts/", format it
-    if (!accountId.startsWith('accounts/') && !accountId.includes('%')) {
-      formattedAccountId = `accounts/${accountId}`;
-      console.log(`AccountId reformaté: ${formattedAccountId}`);
+    if (!accountId.startsWith('accounts/')) {
+      parentParam = `accounts/${accountId}`;
+      console.log(`AccountId reformaté en parent: ${parentParam}`);
     }
     
-    // Only encode if not already encoded and doesn't contain special characters
-    const encodedAccountId = decodeURIComponent(formattedAccountId) === formattedAccountId 
-      ? encodeURIComponent(formattedAccountId) 
-      : formattedAccountId;
+    // Use decodeURIComponent/encodeURIComponent to check if already encoded
+    const isAlreadyEncoded = decodeURIComponent(parentParam) !== parentParam;
+    const encodedParentParam = isAlreadyEncoded ? parentParam : encodeURIComponent(parentParam);
     
-    const url = `${API_BASE_URL}/api/analytics/properties?accountId=${encodedAccountId}&token=${encodeURIComponent(accessToken)}`;
+    // Change the URL parameter name from accountId to parent
+    const url = `${API_BASE_URL}/api/analytics/properties?parent=${encodedParentParam}&token=${encodeURIComponent(accessToken)}`;
     console.log(`URL de requête complète: ${url}`);
     
     const response = await fetch(url, {
