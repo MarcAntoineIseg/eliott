@@ -5,16 +5,13 @@ import { Search } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { sendToWebhook } from "@/services/webhook";
-import { getAuth } from "firebase/auth";
-import { getStoredAccessToken } from "@/services/googleAnalytics"; // tu l’as déjà
+import { getStoredAccessToken } from "@/services/googleAnalytics";
 
 const Request = () => {
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Exemple de données utilisateur (tu peux les charger depuis Firebase ou un state global)
   const [userContext, setUserContext] = useState<{
-    uid: string;
     accountId: string;
     propertyId: string;
     accessToken: string;
@@ -22,18 +19,13 @@ const Request = () => {
 
   useEffect(() => {
     const loadUserContext = async () => {
-      const auth = getAuth();
-      const user = auth.currentUser;
       const token = getStoredAccessToken();
-
-      if (!user || !token) return;
-
-      // Ces données devraient venir de ta base (Firestore ou props/context)
       const accountId = localStorage.getItem("googleAccountId") || "";
       const propertyId = localStorage.getItem("googlePropertyId") || "";
 
+      if (!token || !accountId || !propertyId) return;
+
       setUserContext({
-        uid: user.uid,
         accountId,
         propertyId,
         accessToken: token,
