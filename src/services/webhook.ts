@@ -1,3 +1,4 @@
+
 interface WebhookPayload {
   uid: string;
   query: string;
@@ -11,14 +12,13 @@ interface WebhookPayload {
 export const sendToWebhook = async (
   query: string,
   userContext: {
-    uid: string;
     accountId: string;
     propertyId: string;
     accessToken: string;
   }
 ) => {
   const payload: WebhookPayload = {
-    uid: userContext.uid,
+    uid: "anonymous", // Puisque nous n'utilisons pas Firebase, nous utilisons une valeur par défaut
     query,
     googleAnalytics: {
       accountId: userContext.accountId,
