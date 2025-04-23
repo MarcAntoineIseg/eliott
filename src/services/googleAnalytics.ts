@@ -110,7 +110,7 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
   }
 
   try {
-    // Change the parameter name from parent back to accountId as expected by the backend
+    // Keep the existing formatting logic
     let parentParam = accountId;
     
     // If the accountId doesn't start with "accounts/", format it
@@ -119,12 +119,8 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
       console.log(`AccountId reformaté en parent: ${parentParam}`);
     }
     
-    // Use decodeURIComponent/encodeURIComponent to check if already encoded
-    const isAlreadyEncoded = decodeURIComponent(parentParam) !== parentParam;
-    const encodedParentParam = isAlreadyEncoded ? parentParam : encodeURIComponent(parentParam);
-    
-    // Change the URL parameter name from parent back to accountId
-    const url = `${API_BASE_URL}/api/analytics/properties?accountId=${encodedParentParam}&token=${encodeURIComponent(accessToken)}`;
+    // Remove encoding for the URL parameter
+    const url = `${API_BASE_URL}/api/analytics/properties?accountId=${parentParam}&token=${encodeURIComponent(accessToken)}`;
     console.log(`URL de requête complète: ${url}`);
     
     const response = await fetch(url, {
