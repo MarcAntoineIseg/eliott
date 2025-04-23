@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -93,8 +92,8 @@ const Integration = () => {
 
     console.log("Calling fetchGoogleAnalyticsAccountProperties with accountId:", selectedAccount);
     
-    // Assurons-nous que l'identifiant du compte est bien passé sans transformation
-    // Le traitement de l'encodage sera géré dans la fonction fetchGoogleAnalyticsAccountProperties
+    // Vérifier si l'accountId est déjà au bon format (accounts/XXX)
+    // Si non, la fonction fetchGoogleAnalyticsAccountProperties s'occupera de le formater correctement
     fetchGoogleAnalyticsAccountProperties(selectedAccount)
       .then(propertiesData => {
         const propsList = (propertiesData || []).map((prop: any) => ({

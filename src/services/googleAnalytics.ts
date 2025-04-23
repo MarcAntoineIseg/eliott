@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 // Mise à jour de l'URL de base de l'API et du CLIENT_ID
@@ -78,9 +77,18 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
   }
 
   try {
-    // Vérifions si accountId est déjà encodé (contient des caractères comme %2F)
-    // Si c'est le cas, nous l'utilisons tel quel, sinon nous l'encodons
-    const encodedAccountId = accountId.includes('%') ? accountId : encodeURIComponent(accountId);
+    // S'assurer que l'accountId est au format correct (accounts/XXX) sans double-encodage
+    let formattedAccountId = accountId;
+    
+    // Si l'accountId ne commence pas par "accounts/", on suppose qu'il s'agit d'un ID brut
+    if (!accountId.startsWith('accounts/') && !accountId.includes('%')) {
+      formattedAccountId = `accounts/${accountId}`;
+      console.log(`AccountId reformaté: ${formattedAccountId}`);
+    }
+    
+    // Encoder l'accountId seulement s'il n'est pas déjà encodé
+    const encodedAccountId = formattedAccountId.includes('%') ? formattedAccountId : encodeURIComponent(formattedAccountId);
+    
     const url = `${API_BASE_URL}/api/analytics/properties?accountId=${encodedAccountId}&token=${encodeURIComponent(accessToken)}`;
     console.log(`URL de requête complète: ${url}`);
     
