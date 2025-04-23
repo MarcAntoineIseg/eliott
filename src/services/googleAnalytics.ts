@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 // Mise à jour de l'URL de base de l'API et du CLIENT_ID
@@ -41,6 +42,8 @@ export const getAccessTokenFromUrl = (): string | null => {
   
   if (accessToken) {
     console.log("Token extrait de l'URL:", accessToken.substring(0, 10) + "...");
+    // Sauvegarde immédiate dans le localStorage pour la suite de l'app
+    localStorage.setItem("googleAccessToken", accessToken);
     return accessToken;
   }
   
