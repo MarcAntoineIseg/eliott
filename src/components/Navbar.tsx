@@ -18,6 +18,9 @@ const Navbar = () => {
             <Link to="/integration" className="text-sm font-medium hover:text-blue-600">
               Intégrations
             </Link>
+            <Link to="/request" className="text-sm font-medium hover:text-blue-600">
+              Requête
+            </Link>
           </div>
         </div>
         <div className="flex items-center gap-4">
