@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 // Mise à jour de l'URL de base de l'API et du CLIENT_ID
@@ -6,10 +7,6 @@ export const CLIENT_ID = "42921046273-93pb94sobo09o0jakrreq2vdeqkgjsdk.apps.goog
 
 // Add a new constant for the redirect URI
 export const REDIRECT_URI = "https://app.askeliott.com/integration";
-
-// Constants pour les API URLs et scopes
-//export const API_BASE_URL = "https://your-backend-api-url"; // Ajustez selon votre URL backend
-//export const CLIENT_ID = "your-google-client-id"; // Remplacez par votre ID client Google
 
 // Définition des scopes OAuth2 nécessaires pour Google Analytics
 export const GOOGLE_ANALYTICS_SCOPES = [
@@ -25,6 +22,38 @@ export interface GoogleAnalyticsProperty {
   url?: string;
   createdAt?: string;
 }
+
+// Cache mechanism
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+interface CacheItem<T> {
+  data: T;
+  timestamp: number;
+}
+
+const cache: Record<string, CacheItem<any>> = {};
+
+const getCachedData = <T>(key: string): T | null => {
+  const item = cache[key];
+  if (!item) return null;
+  
+  const now = Date.now();
+  if (now - item.timestamp > CACHE_DURATION) {
+    // Cache expired
+    delete cache[key];
+    return null;
+  }
+  
+  console.log(`Using cached data for ${key}`);
+  return item.data as T;
+};
+
+const setCachedData = <T>(key: string, data: T): void => {
+  cache[key] = {
+    data,
+    timestamp: Date.now()
+  };
+  console.log(`Cached data for ${key}`);
+};
 
 // Fonction pour récupérer le token d'accès stocké
 export const getStoredAccessToken = (): string | null => {
@@ -59,6 +88,11 @@ export const checkTokenValidity = async (accessToken: string): Promise<boolean> 
 };
 
 export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): Promise<any[]> => {
+  // Use cache if available
+  const cacheKey = `properties_${accountId}`;
+  const cachedData = getCachedData<any[]>(cacheKey);
+  if (cachedData) return cachedData;
+
   // Validation robuste de l'accountId
   if (!accountId) {
     console.error("Erreur : L'identifiant du compte (accountId) est requis.");
@@ -111,6 +145,10 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
 
     const data = await response.json();
     console.log("Données des propriétés reçues:", data);
+    
+    // Cache the results
+    setCachedData(cacheKey, data.properties || []);
+    
     return data.properties || [];
   } catch (error) {
     console.error("Erreur lors de la récupération des propriétés GA4 par compte:", error);
@@ -119,6 +157,11 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
 };
 
 export const fetchGoogleAnalyticsAccounts = async (): Promise<any[]> => {
+  // Use cache if available
+  const cacheKey = 'accounts';
+  const cachedData = getCachedData<any[]>(cacheKey);
+  if (cachedData) return cachedData;
+
   const accessToken = getStoredAccessToken();
   if (!accessToken) {
     throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
@@ -147,7 +190,18 @@ export const fetchGoogleAnalyticsAccounts = async (): Promise<any[]> => {
 
     const data = await response.json();
     console.log("Accounts data:", data);
-    return data.accounts || [];
+    
+    // Filter active accounts only
+    const activeAccounts = (data.accounts || []).filter((account: any) => 
+      !account.deleted && (account.state === 'ACTIVE' || account.state === undefined)
+    );
+    
+    console.log(`Filtered ${activeAccounts.length} active accounts out of ${(data.accounts || []).length} total`);
+    
+    // Cache the results
+    setCachedData(cacheKey, activeAccounts);
+    
+    return activeAccounts;
   } catch (error) {
     console.error("Erreur lors de la récupération des comptes Google Analytics:", error);
     throw error;
@@ -156,6 +210,11 @@ export const fetchGoogleAnalyticsAccounts = async (): Promise<any[]> => {
 
 // Fonction pour récupérer les propriétés Google Analytics
 export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promise<GoogleAnalyticsProperty[]> => {
+  // Use cache if available
+  const cacheKey = 'all_properties';
+  const cachedData = getCachedData<GoogleAnalyticsProperty[]>(cacheKey);
+  if (cachedData) return cachedData;
+
   if (!accessToken) {
     throw new Error("Token d'accès requis pour récupérer les propriétés");
   }
@@ -176,12 +235,17 @@ export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promi
     }
 
     const data = await response.json();
-    return (data.properties || []).map((prop: any) => ({
+    const properties = (data.properties || []).map((prop: any) => ({
       id: prop.name ? prop.name.split("/").pop() : prop.id,
       name: prop.displayName,
       url: prop.webLink,
       createdAt: prop.createTime,
     }));
+    
+    // Cache the results
+    setCachedData(cacheKey, properties);
+    
+    return properties;
   } catch (error) {
     console.error("Erreur lors de la récupération des propriétés Google Analytics:", error);
     throw error;
@@ -190,6 +254,11 @@ export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promi
 
 // Fonction pour récupérer les rapports Google Analytics
 export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId: string): Promise<any> => {
+  // Use cache if available
+  const cacheKey = `report_${propertyId}`;
+  const cachedData = getCachedData<any>(cacheKey);
+  if (cachedData) return cachedData;
+
   if (!accessToken) {
     throw new Error("Token d'accès requis pour récupérer les données analytiques");
   }
@@ -213,7 +282,12 @@ export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId
       throw new Error(`Erreur API: ${response.status}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    
+    // Cache the results
+    setCachedData(cacheKey, data);
+    
+    return data;
   } catch (error) {
     console.error("Erreur lors de la récupération du rapport Google Analytics:", error);
     throw error;

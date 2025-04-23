@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +13,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 
 const Integration = () => {
-  // GOOGLE ANALYTICS STATE LOGIC CONSERVÉ
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
@@ -23,89 +21,110 @@ const Integration = () => {
   const [accountsLoading, setAccountsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
+  const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
 
   useEffect(() => {
-    const clearUrlAndProcessToken = () => {
+    const clearUrlAndProcessToken = async () => {
       const token = getAccessTokenFromUrl();
       window.history.replaceState({}, document.title, "/integration");
-      if (token) {
-        setAccessToken(token);
-        setConnectionStatus('connecting');
-        checkTokenValidity(token).then(isValid => {
-          if (isValid) {
+      
+      // Check for token in URL first, then localStorage as fallback
+      const tokenToUse = token || localStorage.getItem("googleAccessToken");
+      
+      if (!tokenToUse) {
+        setConnectionStatus('disconnected');
+        return;
+      }
+      
+      setConnectionStatus('connecting');
+      try {
+        const isValid = await checkTokenValidity(tokenToUse);
+        if (isValid) {
+          // If token is from URL, store it
+          if (token) {
             localStorage.setItem("googleAccessToken", token);
-            setConnectionStatus('connected');
+          }
+          
+          setAccessToken(tokenToUse);
+          setConnectionStatus('connected');
+          
+          if (token) {
+            // Only show success message if we just logged in
             toast.success("Connexion réussie à Google Analytics");
           } else {
-            localStorage.removeItem("googleAccessToken");
-            setAccessToken(null);
-            setConnectionStatus('disconnected');
+            toast.success("Session restaurée");
+          }
+          
+          // Immediately start loading accounts to reduce perceived wait time
+          loadAccounts(tokenToUse);
+        } else {
+          localStorage.removeItem("googleAccessToken");
+          setAccessToken(null);
+          setConnectionStatus('disconnected');
+          
+          if (token) {
             setError("Le token d'accès reçu de Google est invalide. Veuillez réessayer.");
             toast.error("Échec de connexion : token invalide");
+          } else {
+            toast.error("Session expirée. Veuillez vous reconnecter.");
           }
-        });
-      } else {
-        const storedToken = localStorage.getItem("googleAccessToken");
-        if (storedToken) {
-          setConnectionStatus('connecting');
-          checkTokenValidity(storedToken).then(isValid => {
-            if (isValid) {
-              setAccessToken(storedToken);
-              setConnectionStatus('connected');
-              toast.success("Session restaurée");
-            } else {
-              localStorage.removeItem("googleAccessToken");
-              setConnectionStatus('disconnected');
-              toast.error("Session expirée. Veuillez vous reconnecter.");
-            }
-          });
-        } else {
-          setConnectionStatus('disconnected');
         }
+      } catch (error) {
+        console.error("Erreur lors de la vérification du token:", error);
+        localStorage.removeItem("googleAccessToken");
+        setAccessToken(null);
+        setConnectionStatus('disconnected');
+        toast.error("Erreur lors de la connexion");
+      } finally {
+        setIsInitialLoad(false);
       }
     };
+    
     clearUrlAndProcessToken();
   }, []);
 
-  useEffect(() => {
-    if (connectionStatus !== 'connected' || !accessToken) return;
+  // Separate function to load accounts - can be called from multiple places
+  const loadAccounts = async (token: string) => {
+    if (!token) return;
     
-    // Définir l'état de chargement des comptes
     setAccountsLoading(true);
     setError(null);
     
     console.log("Chargement des comptes Google Analytics...");
     
-    fetchGoogleAnalyticsAccounts().then(
-      (accountsData) => {
-        console.log(`${accountsData.length} comptes récupérés`);
-        setAccounts(accountsData || []);
-        if (accountsData.length === 0) {
-          toast.info("Aucun compte Google Analytics trouvé.");
-        }
+    try {
+      const accountsData = await fetchGoogleAnalyticsAccounts();
+      console.log(`${accountsData.length} comptes récupérés`);
+      setAccounts(accountsData || []);
+      
+      // If there's exactly one account, auto-select it to save a click
+      if (accountsData.length === 1) {
+        setSelectedAccount(accountsData[0].name);
+      } else if (accountsData.length === 0) {
+        toast.info("Aucun compte Google Analytics trouvé.");
       }
-    ).catch(err => {
+    } catch (err: any) {
       console.error("Erreur lors du chargement des comptes:", err);
       setError(err.message || "Problème lors de la récupération des comptes Google Analytics.");
       toast.error(err.message || "Erreur lors du chargement des comptes Analytics.");
-    }).finally(() => {
+    } finally {
       console.log("Fin du chargement des comptes");
       setAccountsLoading(false);
-    });
-  }, [connectionStatus, accessToken]);
+    }
+  };
 
+  // Load properties when an account is selected
   useEffect(() => {
     if (!accessToken || !selectedAccount || connectionStatus !== "connected") {
       setProperties([]);
       return;
     }
+    
     setIsLoading(true);
     setError(null);
 
     console.log("Calling fetchGoogleAnalyticsAccountProperties with accountId:", selectedAccount);
     
-    // Vérifier si l'accountId est déjà au bon format (accounts/XXX)
-    // Si non, la fonction fetchGoogleAnalyticsAccountProperties s'occupera de le formater correctement
     fetchGoogleAnalyticsAccountProperties(selectedAccount)
       .then(propertiesData => {
         const propsList = (propertiesData || []).map((prop: any) => ({
@@ -115,6 +134,7 @@ const Integration = () => {
           createdAt: prop.createTime,
         }));
         setProperties(propsList);
+        
         if (propsList.length === 0) {
           toast.info("Aucune propriété trouvée pour ce compte.");
         } else {
@@ -158,52 +178,60 @@ const Integration = () => {
               </div>
             </div>
             <CardContent className="p-6">
-              {connectionStatus !== 'connected' && connectionStatus !== 'connecting' ? (
+              {connectionStatus === 'disconnected' ? (
                 <GoogleAuthButton clientId={CLIENT_ID} />
-              ) : (
-                <Button variant="outline" onClick={handleLogout} className="w-full">Déconnecter</Button>
-              )}
-              {connectionStatus === "connected" && (
-                <div className="mt-4">
-                  {/* État de chargement des comptes */}
-                  {accountsLoading ? (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Skeleton className="h-4 w-36" />
-                        <Skeleton className="h-4 w-12" />
-                      </div>
-                      <Skeleton className="h-10 w-full" />
-                      <div className="pt-3">
-                        <Skeleton className="h-4 w-48 mb-2" />
-                        <Skeleton className="h-48 w-full" />
-                      </div>
-                    </div>
-                  ) : accounts.length > 0 && (
-                    <div className="mb-4">
-                      <label className="block mb-2 text-sm font-medium text-gray-700">Sélectionnez un compte</label>
-                      <Select 
-                        value={selectedAccount ?? ""} 
-                        onValueChange={(val) => setSelectedAccount(val)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choisissez un compte" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {accounts.map(acct => (
-                            <SelectItem key={acct.name} value={acct.name}>
-                              {acct.displayName || acct.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                  <PropertyList 
-                    properties={properties} 
-                    isLoading={isLoading} 
-                    accessToken={accessToken}
-                    error={error}
-                  />
+              ) : connectionStatus === 'connecting' && isInitialLoad ? (
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="h-4 w-4 rounded-full bg-blue-200 animate-pulse"></div>
+                    <span>Vérification de la connexion...</span>
+                  </div>
+                  <Skeleton className="h-10 w-full" />
                 </div>
+              ) : (
+                <>
+                  <Button variant="outline" onClick={handleLogout} className="w-full">Déconnecter</Button>
+                  <div className="mt-4">
+                    {/* État de chargement des comptes */}
+                    {accountsLoading ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Skeleton className="h-4 w-36" />
+                          <Skeleton className="h-4 w-12" />
+                        </div>
+                        <Skeleton className="h-10 w-full" />
+                        <div className="pt-3">
+                          <Skeleton className="h-4 w-48 mb-2" />
+                          <Skeleton className="h-48 w-full" />
+                        </div>
+                      </div>
+                    ) : accounts.length > 0 && (
+                      <div className="mb-4">
+                        <label className="block mb-2 text-sm font-medium text-gray-700">Sélectionnez un compte</label>
+                        <Select 
+                          value={selectedAccount ?? ""} 
+                          onValueChange={(val) => setSelectedAccount(val)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Choisissez un compte" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {accounts.map(acct => (
+                              <SelectItem key={acct.name} value={acct.name}>
+                                {acct.displayName || acct.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    <PropertyList 
+                      properties={properties} 
+                      isLoading={isLoading} 
+                      accessToken={accessToken}
+                      error={error}
+                    />
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>

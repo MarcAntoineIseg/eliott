@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { GoogleAnalyticsProperty } from "@/services/googleAnalytics";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { getGoogleAnalyticsData } from "@/services/api";
 import { toast } from "@/components/ui/sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PropertyListProps {
   properties: GoogleAnalyticsProperty[];
@@ -21,6 +22,13 @@ const PropertyList = ({ properties, isLoading, accessToken, error }: PropertyLis
   const [isLoadingData, setIsLoadingData] = useState<boolean>(false);
   const [analyticsData, setAnalyticsData] = useState<any | null>(null);
   const [dataError, setDataError] = useState<string | null>(null);
+  
+  // Auto-select first property if there's only one
+  useEffect(() => {
+    if (properties.length === 1 && !selectedProperty) {
+      setSelectedProperty(properties[0].id);
+    }
+  }, [properties, selectedProperty]);
 
   const handleLoadData = async () => {
     if (!selectedProperty || !accessToken) return;
@@ -43,10 +51,26 @@ const PropertyList = ({ properties, isLoading, accessToken, error }: PropertyLis
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="h-8 w-8 mb-4 rounded-full bg-blue-200 animate-spin"></div>
-          <div>Chargement des propriétés Google Analytics...</div>
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-5 w-20" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="overflow-hidden">
+              <CardHeader className="pb-2">
+                <Skeleton className="h-6 w-3/4 mb-1" />
+                <Skeleton className="h-4 w-1/2" />
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-between items-center">
+                  <Skeleton className="h-4 w-1/3" />
+                  <Skeleton className="h-8 w-24" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     );
@@ -113,7 +137,7 @@ const PropertyList = ({ properties, isLoading, accessToken, error }: PropertyLis
   return (
     <div className="space-y-4">
       <div className="text-sm text-gray-500 mb-2">
-        {properties.length} propriété(s) trouvée(s). Cliquez sur une propriété pour afficher ses données.
+        {properties.length} propriété(s) trouvée(s). {properties.length > 1 && "Cliquez sur une propriété pour afficher ses données."}
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
