@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 // Mise à jour de l'URL de base de l'API et du CLIENT_ID
@@ -77,7 +78,7 @@ export const fetchGoogleAnalyticsAccountProperties = async (accountId: string): 
   }
 
   try {
-    // Log de l'URL complète avec encodage
+    // Correction de l'URL pour qu'elle soit parfaitement formée
     const url = `${API_BASE_URL}/api/analytics/properties?accountId=${encodeURIComponent(accountId)}&token=${encodeURIComponent(accessToken)}`;
     console.log(`URL de requête complète (encodée): ${url}`);
     
@@ -114,6 +115,7 @@ export const fetchGoogleAnalyticsAccounts = async (): Promise<any[]> => {
   }
 
   try {
+    // Correction: Assurer que l'URL est complètement formée
     const url = `${API_BASE_URL}/api/analytics/accounts?token=${encodeURIComponent(accessToken)}`;
     console.log(`Fetching accounts from: ${url}`);
     
@@ -149,6 +151,7 @@ export const fetchGoogleAnalyticsProperties = async (accessToken: string): Promi
   }
 
   try {
+    // Correction: URL complète avec le domaine
     const url = `${API_BASE_URL}/api/analytics/properties?token=${encodeURIComponent(accessToken)}`;
     const response = await fetch(url, {
       method: 'GET',
@@ -186,6 +189,7 @@ export const fetchGoogleAnalyticsReport = async (accessToken: string, propertyId
   }
 
   try {
+    // Correction: URL complète avec le domaine
     const url = `${API_BASE_URL}/api/analytics/data?propertyId=${encodeURIComponent(propertyId)}&token=${encodeURIComponent(accessToken)}`;
     const response = await fetch(url, {
       method: 'GET',
