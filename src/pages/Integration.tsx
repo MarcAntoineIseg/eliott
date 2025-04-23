@@ -23,17 +23,15 @@ const Integration = () => {
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
 
   useEffect(() => {
-    // On donne la priorité absolue au token de l’URL
     const clearUrlAndProcessToken = () => {
       const token = getAccessTokenFromUrl();
-      // Clean l’URL dès que possible
       window.history.replaceState({}, document.title, "/integration");
       if (token) {
-        // Ici, le token est déjà stocké dans getAccessTokenFromUrl.
         setAccessToken(token);
         setConnectionStatus('connecting');
         checkTokenValidity(token).then(isValid => {
           if (isValid) {
+            localStorage.setItem("googleAccessToken", token);
             setConnectionStatus('connected');
             toast.success("Connexion réussie à Google Analytics");
           } else {
@@ -45,7 +43,6 @@ const Integration = () => {
           }
         });
       } else {
-        // Si pas de token dans l’URL, fallback localStorage
         const storedToken = localStorage.getItem("googleAccessToken");
         if (storedToken) {
           setConnectionStatus('connecting');
