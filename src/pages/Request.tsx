@@ -1,27 +1,64 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navbar from "@/components/Navbar";
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { sendToWebhook } from "@/services/webhook";
+import { getAuth } from "firebase/auth";
+import { getStoredAccessToken } from "@/services/googleAnalytics"; // tu l’as déjà
 
 const Request = () => {
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Exemple de données utilisateur (tu peux les charger depuis Firebase ou un state global)
+  const [userContext, setUserContext] = useState<{
+    uid: string;
+    accountId: string;
+    propertyId: string;
+    accessToken: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const loadUserContext = async () => {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      const token = getStoredAccessToken();
+
+      if (!user || !token) return;
+
+      // Ces données devraient venir de ta base (Firestore ou props/context)
+      const accountId = localStorage.getItem("googleAccountId") || "";
+      const propertyId = localStorage.getItem("googlePropertyId") || "";
+
+      setUserContext({
+        uid: user.uid,
+        accountId,
+        propertyId,
+        accessToken: token,
+      });
+    };
+
+    loadUserContext();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!query.trim()) {
       toast.error("Veuillez saisir une question");
       return;
     }
 
+    if (!userContext) {
+      toast.error("Contexte utilisateur manquant !");
+      return;
+    }
+
     setIsLoading(true);
     try {
-      await sendToWebhook(query);
+      await sendToWebhook(query, userContext);
       toast.success("Question envoyée avec succès");
       setQuery("");
     } catch (error) {
@@ -36,11 +73,11 @@ const Request = () => {
       <Navbar />
       <main className="container py-8">
         <h1 className="text-4xl font-extrabold mb-8 text-gray-800">Hey Eliott! 👋</h1>
-        
+
         <form onSubmit={handleSubmit} className="max-w-3xl">
           <div className="flex gap-3">
-            <Input 
-              type="text" 
+            <Input
+              type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Que puis-je faire pour vous ?"
