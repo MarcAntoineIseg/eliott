@@ -24,7 +24,6 @@ const GoogleAuthButton = ({ clientId, onSuccess, onError }: GoogleAuthButtonProp
     console.log("Using redirect_uri:", redirectUri);
     
     // Garantir que tous les paramètres sont correctement encodés
-    // Ajout d'un timestamp et nonce pour s'assurer que Google ne renvoie pas le même token
     const params = new URLSearchParams({
       client_id: clientId,
       redirect_uri: redirectUri,
@@ -35,9 +34,8 @@ const GoogleAuthButton = ({ clientId, onSuccess, onError }: GoogleAuthButtonProp
       // Forcer la sélection du compte Google et empêcher le cache
       prompt: 'consent select_account',
       // Indiquer que nous voulons accéder aux ressources en ligne uniquement
-      access_type: 'online',
-      // Ajout d'un timestamp pour éviter le cache
-      nonce: Date.now().toString()
+      access_type: 'online'
+      // Le paramètre nonce a été supprimé car il cause l'erreur 400
     });
     
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
