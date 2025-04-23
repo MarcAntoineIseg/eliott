@@ -14,7 +14,7 @@ const GoogleAuthButton = ({ clientId, onSuccess, onError }: GoogleAuthButtonProp
     // Clear any existing tokens before starting a new auth flow
     localStorage.removeItem("googleAccessToken");
     
-    // Redirection forcée vers l’URL exacte d’intégration
+    // Redirection forcée vers l'URL exacte d'intégration
     const redirectUri = REDIRECT_URI;
     
     // Utilisation des scopes corrects depuis le service
@@ -24,17 +24,20 @@ const GoogleAuthButton = ({ clientId, onSuccess, onError }: GoogleAuthButtonProp
     console.log("Using redirect_uri:", redirectUri);
     
     // Garantir que tous les paramètres sont correctement encodés
+    // Ajout d'un timestamp et nonce pour s'assurer que Google ne renvoie pas le même token
     const params = new URLSearchParams({
       client_id: clientId,
       redirect_uri: redirectUri,
       scope: scope,
       response_type: 'token',
-      // Ajout d'un state pour la sécurité
-      state: Math.random().toString(36).substring(2),
-      // Forcer la sélection du compte Google
+      // Ajout d'un state basé sur timestamp pour forcer un nouveau token
+      state: `${Math.random().toString(36).substring(2)}_${Date.now()}`,
+      // Forcer la sélection du compte Google et empêcher le cache
       prompt: 'consent select_account',
-      // Indiquer que nous voulons accéder aux ressources off-line
-      access_type: 'online'
+      // Indiquer que nous voulons accéder aux ressources en ligne uniquement
+      access_type: 'online',
+      // Ajout d'un timestamp pour éviter le cache
+      nonce: Date.now().toString()
     });
     
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
@@ -46,7 +49,7 @@ const GoogleAuthButton = ({ clientId, onSuccess, onError }: GoogleAuthButtonProp
   return (
     <Button 
       onClick={handleGoogleAuth} 
-      className="bg-white text-gray-800 hover:bg-gray-100 border border-gray-300 shadow-sm flex items-center gap-2"
+      className="bg-white text-gray-800 hover:bg-gray-100 border border-gray-300 shadow-sm flex items-center gap-2 w-full"
     >
       <Cloud size={20} />
       <span>Se connecter avec Google Analytics</span>
@@ -55,4 +58,3 @@ const GoogleAuthButton = ({ clientId, onSuccess, onError }: GoogleAuthButtonProp
 };
 
 export default GoogleAuthButton;
-

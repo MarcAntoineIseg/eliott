@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +9,7 @@ import { toast } from "@/components/ui/sonner";
 import { CLIENT_ID, GOOGLE_ANALYTICS_SCOPES, GoogleAnalyticsProperty, getAccessTokenFromUrl, fetchGoogleAnalyticsAccounts, fetchGoogleAnalyticsAccountProperties, checkTokenValidity, REDIRECT_URI } from "@/services/googleAnalytics";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { LineChart, BarChart3, Presentation } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 
@@ -67,19 +69,29 @@ const Integration = () => {
 
   useEffect(() => {
     if (connectionStatus !== 'connected' || !accessToken) return;
+    
+    // Définir l'état de chargement des comptes
     setAccountsLoading(true);
     setError(null);
+    
+    console.log("Chargement des comptes Google Analytics...");
+    
     fetchGoogleAnalyticsAccounts().then(
       (accountsData) => {
+        console.log(`${accountsData.length} comptes récupérés`);
         setAccounts(accountsData || []);
         if (accountsData.length === 0) {
           toast.info("Aucun compte Google Analytics trouvé.");
         }
       }
     ).catch(err => {
+      console.error("Erreur lors du chargement des comptes:", err);
       setError(err.message || "Problème lors de la récupération des comptes Google Analytics.");
       toast.error(err.message || "Erreur lors du chargement des comptes Analytics.");
-    }).finally(() => setAccountsLoading(false));
+    }).finally(() => {
+      console.log("Fin du chargement des comptes");
+      setAccountsLoading(false);
+    });
   }, [connectionStatus, accessToken]);
 
   useEffect(() => {
@@ -153,7 +165,20 @@ const Integration = () => {
               )}
               {connectionStatus === "connected" && (
                 <div className="mt-4">
-                  {accounts.length > 0 && (
+                  {/* État de chargement des comptes */}
+                  {accountsLoading ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Skeleton className="h-4 w-36" />
+                        <Skeleton className="h-4 w-12" />
+                      </div>
+                      <Skeleton className="h-10 w-full" />
+                      <div className="pt-3">
+                        <Skeleton className="h-4 w-48 mb-2" />
+                        <Skeleton className="h-48 w-full" />
+                      </div>
+                    </div>
+                  ) : accounts.length > 0 && (
                     <div className="mb-4">
                       <label className="block mb-2 text-sm font-medium text-gray-700">Sélectionnez un compte</label>
                       <Select 
