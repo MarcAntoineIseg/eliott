@@ -14,7 +14,7 @@ const GoogleAuthButton = ({ clientId, onSuccess, onError }: GoogleAuthButtonProp
     // Clear any existing tokens before starting a new auth flow
     localStorage.removeItem("googleAccessToken");
     
-    // Redirection forcée vers l’URL exacte d’intégration
+    // Redirection forcée vers l'URL exacte d'intégration
     const redirectUri = REDIRECT_URI;
     
     // Utilisation des scopes corrects depuis le service
@@ -31,7 +31,7 @@ const GoogleAuthButton = ({ clientId, onSuccess, onError }: GoogleAuthButtonProp
       response_type: 'token',
       // Ajout d'un state pour la sécurité
       state: Math.random().toString(36).substring(2),
-      // Forcer la sélection du compte Google
+      // Forcer la sélection du compte Google et le consentement
       prompt: 'consent select_account',
       // Indiquer que nous voulons accéder aux ressources off-line
       access_type: 'online'
@@ -55,4 +55,3 @@ const GoogleAuthButton = ({ clientId, onSuccess, onError }: GoogleAuthButtonProp
 };
 
 export default GoogleAuthButton;
-
