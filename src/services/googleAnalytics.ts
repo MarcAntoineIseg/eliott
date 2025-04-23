@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 // Mise à jour de l'URL de base de l'API et du CLIENT_ID
