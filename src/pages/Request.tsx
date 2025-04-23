@@ -3,10 +3,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navbar from "@/components/Navbar";
 import { Search } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { sendToWebhook } from "@/services/webhook";
 
 const Request = () => {
-  const handleSubmit = (e: React.FormEvent) => {
+  const [query, setQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!query.trim()) {
+      toast.error("Veuillez saisir une question");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await sendToWebhook(query);
+      toast.success("Question envoyée avec succès");
+      setQuery("");
+    } catch (error) {
+      toast.error("Erreur lors de l'envoi de la question");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -19,12 +41,14 @@ const Request = () => {
           <div className="flex gap-3">
             <Input 
               type="text" 
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
               placeholder="Que puis-je faire pour vous ?"
               className="text-base"
             />
-            <Button type="submit" className="gap-2">
+            <Button type="submit" disabled={isLoading} className="gap-2">
               <Search className="size-4" />
-              Envoyer
+              {isLoading ? "Envoi..." : "Envoyer"}
             </Button>
           </div>
         </form>
