@@ -70,7 +70,7 @@ export const getGoogleAnalyticsAccounts = async () => {
 export const getGoogleAnalyticsAccountProperties = async (accountId: string) => {
   if (!accountId) throw new Error("accountId requis");
 
-  // Nous assurons que accountId est bien passé avec le bon nom de paramètre
+  // Ensure accountId is used, not parent
   console.log(`Getting properties for account ID: ${accountId}`);
   return await fetchGoogleAnalyticsAccountProperties(accountId);
 };
