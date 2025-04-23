@@ -93,7 +93,8 @@ const Integration = () => {
 
     console.log("Calling fetchGoogleAnalyticsAccountProperties with accountId:", selectedAccount);
     
-    // Assurons-nous que l'ID de compte est correctement passé
+    // Assurons-nous que l'identifiant du compte est bien passé sans transformation
+    // Le traitement de l'encodage sera géré dans la fonction fetchGoogleAnalyticsAccountProperties
     fetchGoogleAnalyticsAccountProperties(selectedAccount)
       .then(propertiesData => {
         const propsList = (propertiesData || []).map((prop: any) => ({
