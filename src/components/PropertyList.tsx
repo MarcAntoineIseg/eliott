@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { GoogleAnalyticsProperty } from "@/services/googleAnalytics";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,31 +21,43 @@ interface PropertyListProps {
 const PropertyList = ({ properties, isLoading, accessToken, error, selectedAccount, onSelectProperty }: PropertyListProps) => {
   const [selectedProperty, setSelectedProperty] = useState<string | null>(null);
   const [connectedPropertyId, setConnectedPropertyId] = useState<string | null>(null);
+  const [showConnectButton, setShowConnectButton] = useState<boolean>(false);
 
   useEffect(() => {
     // Load connected property from localStorage on component mount
     const savedPropertyId = localStorage.getItem("ga_property_id");
     if (savedPropertyId) {
       setConnectedPropertyId(savedPropertyId);
-      setSelectedProperty(savedPropertyId);
     }
   }, []);
 
-  const handleConnectProperty = (property: GoogleAnalyticsProperty) => {
+  const handlePropertySelect = (property: GoogleAnalyticsProperty) => {
+    setSelectedProperty(property.id);
+    setShowConnectButton(true);
+  };
+
+  const handleConnectProperty = () => {
     if (!selectedAccount) {
       toast.error("Veuillez d'abord sélectionner un compte");
       return;
     }
 
+    const propertyToConnect = properties.find(p => p.id === selectedProperty);
+    if (!propertyToConnect) {
+      toast.error("Aucune propriété sélectionnée");
+      return;
+    }
+
     // Save to localStorage
-    localStorage.setItem("ga_property_id", property.id);
+    localStorage.setItem("ga_property_id", propertyToConnect.id);
     localStorage.setItem("ga_account_id", selectedAccount);
     
     // Update state
-    setConnectedPropertyId(property.id);
+    setConnectedPropertyId(propertyToConnect.id);
+    setShowConnectButton(false);
     
     // Call parent handler
-    onSelectProperty(property);
+    onSelectProperty(propertyToConnect);
     
     toast.success("Propriété connectée avec succès");
   };
@@ -137,7 +150,7 @@ const PropertyList = ({ properties, isLoading, accessToken, error, selectedAccou
   return (
     <div className="space-y-4">
       <div className="text-sm text-gray-500 mb-2">
-        {properties.length} propriété(s) trouvée(s). {properties.length > 1 && "Cliquez sur une propriété pour la sélectionner."}
+        {properties.length} propriété(s) trouvée(s). Cliquez sur une propriété pour la sélectionner.
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -147,7 +160,7 @@ const PropertyList = ({ properties, isLoading, accessToken, error, selectedAccou
             className={`cursor-pointer transition-all hover:shadow-md ${
               selectedProperty === property.id ? "ring-2 ring-blue-500" : ""
             }`}
-            onClick={() => setSelectedProperty(property.id)}
+            onClick={() => handlePropertySelect(property)}
           >
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
@@ -172,12 +185,12 @@ const PropertyList = ({ properties, isLoading, accessToken, error, selectedAccou
                       </a>
                     </Button>
                   )}
-                  {connectedPropertyId !== property.id && (
+                  {showConnectButton && selectedProperty === property.id && connectedPropertyId !== property.id && (
                     <Button 
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleConnectProperty(property);
+                        handleConnectProperty();
                       }}
                     >
                       Connecter la propriété
@@ -199,3 +212,4 @@ const PropertyList = ({ properties, isLoading, accessToken, error, selectedAccou
 };
 
 export default PropertyList;
+
