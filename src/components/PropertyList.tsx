@@ -35,11 +35,20 @@ const PropertyList = ({ properties, isLoading, accessToken, error }: PropertyLis
     
     setIsLoadingData(true);
     setDataError(null);
+
+    // Sauvegarde des IDs dans localStorage
+    localStorage.setItem("googlePropertyId", selectedProperty);
+    
+    // Récupère l'ID du compte parent
+    const selectedPropertyData = properties.find(p => p.id === selectedProperty);
+    if (selectedPropertyData?.accountId) {
+      localStorage.setItem("googleAccountId", selectedPropertyData.accountId);
+    }
     
     try {
       const data = await getGoogleAnalyticsData(accessToken, selectedProperty);
       setAnalyticsData(data);
-      toast.success("Données analytiques chargées avec succès");
+      toast.success("Propriété GA4 sélectionnée avec succès !");
     } catch (error: any) {
       console.error("Erreur lors du chargement des données:", error);
       setDataError(error.message || "Erreur lors du chargement des données analytiques");

@@ -13,6 +13,7 @@ const Request = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const [userContext, setUserContext] = useState<{
+    accountId: string;
     propertyId: string;
     accessToken: string;
   } | null>(null);
@@ -20,11 +21,13 @@ const Request = () => {
   useEffect(() => {
     const loadUserContext = async () => {
       const token = getStoredAccessToken();
-      const propertyId = localStorage.getItem("ga_property_id") || "";
+      const accountId = localStorage.getItem("googleAccountId") || "";
+      const propertyId = localStorage.getItem("googlePropertyId") || "";
 
-      if (!token || !propertyId) return;
+      if (!token || !accountId || !propertyId) return;
 
       setUserContext({
+        accountId,
         propertyId,
         accessToken: token,
       });
