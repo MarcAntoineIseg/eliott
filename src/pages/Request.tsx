@@ -11,7 +11,11 @@ const Request = () => {
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const [userContext, setUserContext: any] = useState(null);
+  const [userContext, setUserContext] = useState<{
+    propertyId: string;
+    accountId: string;
+    accessToken: string;
+  } | null>(null);
 
   useEffect(() => {
     const loadUserContext = async () => {
