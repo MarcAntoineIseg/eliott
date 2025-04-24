@@ -19,26 +19,30 @@ const Request = () => {
   } | null>(null);
 
   useEffect(() => {
-  const token = localStorage.getItem("googleAccessToken");
-  const propertyId = localStorage.getItem("ga_property_id");
-  const accountId = "accounts/123456789"; // 🔁 à rendre dynamique plus tard si nécessaire
+  const loadUserContext = async () => {
+    const token = getStoredAccessToken();
+    const accountId = localStorage.getItem("ga_account_id") || "";
+    const propertyId = localStorage.getItem("ga_property_id") || "";
 
-  if (!token || !propertyId || !accountId) {
-    console.warn("❌ Données incomplètes :", { token, propertyId, accountId });
-    return;
-  }
+    if (!token || !accountId || !propertyId) {
+      console.warn("User context incomplet:", {
+        token,
+        accountId,
+        propertyId
+      });
+      return;
+    }
 
-  setUserContext({
-    uid: "anonymous", // ou récupérable depuis un autre endroit
-    accountId,
-    propertyId,
-    accessToken: token,
-  });
+    setUserContext({
+      accountId,
+      propertyId,
+      accessToken: token,
+    });
+  };
+
+  loadUserContext();
 }, []);
 
-
-    loadUserContext();
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
