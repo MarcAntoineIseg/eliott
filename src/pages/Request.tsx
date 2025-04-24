@@ -13,36 +13,25 @@ const Request = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const [userContext, setUserContext] = useState<{
-    accountId: string;
     propertyId: string;
     accessToken: string;
   } | null>(null);
 
   useEffect(() => {
-  const loadUserContext = async () => {
-    const token = getStoredAccessToken();
-    const accountId = localStorage.getItem("ga_account_id") || "";
-    const propertyId = localStorage.getItem("ga_property_id") || "";
+    const loadUserContext = async () => {
+      const token = getStoredAccessToken();
+      const propertyId = localStorage.getItem("ga_property_id") || "";
 
-    if (!token || !accountId || !propertyId) {
-      console.warn("User context incomplet:", {
-        token,
-        accountId,
-        propertyId
+      if (!token || !propertyId) return;
+
+      setUserContext({
+        propertyId,
+        accessToken: token,
       });
-      return;
-    }
+    };
 
-    setUserContext({
-      accountId,
-      propertyId,
-      accessToken: token,
-    });
-  };
-
-  loadUserContext();
-}, []);
-
+    loadUserContext();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
