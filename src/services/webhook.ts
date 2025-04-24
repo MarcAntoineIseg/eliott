@@ -1,35 +1,40 @@
+
 // Type du payload envoyé à N8N via le webhook
 interface WebhookPayload {
-  uid: string;
+  uid?: string;
   query: string;
-  googleAnalytics: {
+  googleAnalytics?: {
     accountId: string;
     propertyId: string;
     accessToken: string;
   };
 }
 
-// Type du contexte utilisateur, tel qu’il est reçu depuis le frontend
+// Type du contexte utilisateur, tel qu'il est reçu depuis le frontend
 interface UserContext {
   accountId: string;
   propertyId: string;
   accessToken: string;
+  uid?: string;
 }
 
 // Fonction qui envoie la requête de l'utilisateur à N8N
 export const sendToWebhook = async (
   query: string,
-  userContext: UserContext
+  userContext?: UserContext
 ): Promise<any> => {
   const payload: WebhookPayload = {
-    uid: "anonymous", // Peut être remplacé plus tard par un vrai identifiant utilisateur
     query,
-    googleAnalytics: {
+  };
+
+  if (userContext) {
+    payload.uid = userContext.uid || "anonymous";
+    payload.googleAnalytics = {
       accountId: userContext.accountId,
       propertyId: userContext.propertyId,
       accessToken: userContext.accessToken,
-    },
-  };
+    };
+  }
 
   console.log("🚀 Envoi webhook avec payload :", payload); // Debug (à retirer en prod)
 
