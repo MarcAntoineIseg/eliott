@@ -1,8 +1,6 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import Navbar from "@/components/Navbar";
 import GoogleAuthButton from "@/components/GoogleAuthButton";
 import PropertyList from "@/components/PropertyList";
 import { toast } from "@/components/ui/sonner";
@@ -170,7 +168,6 @@ const Integration = () => {
 
   return (
     <div className="min-h-screen w-full bg-[#f4f6f9]">
-      <Navbar />
       <main className="container py-8">
         <h1 className="text-4xl font-extrabold mb-8 text-gray-800">Intégrations</h1>
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">

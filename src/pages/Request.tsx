@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import Navbar from "@/components/Navbar";
 import { Search } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -79,7 +78,6 @@ const Request = () => {
 
   return (
     <div className="min-h-screen w-full bg-[#f4f6f9]">
-      <Navbar />
       <main className="container py-8">
         <h1 className="text-4xl font-extrabold mb-8 text-gray-800">Hey Eliott! 👋</h1>
 
