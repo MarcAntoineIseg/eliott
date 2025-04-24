@@ -39,7 +39,7 @@ const Layout = ({ children }: LayoutProps) => {
         <Sidebar>
           <SidebarHeader className="border-b border-border/5">
             <div className="flex items-center gap-2 px-4 py-2">
-              <img src="/lovable-uploads/9af4c223-3363-4b97-b833-1fe95c1c9993.png" alt="Logo" className="w-8 h-8" />
+              <img src="/lovable-uploads/e05ae0d2-62b8-4d50-8a6c-02959677f424.png" alt="Logo" className="w-8 h-8" />
               <span className="font-semibold">AnalyConnect</span>
             </div>
           </SidebarHeader>
