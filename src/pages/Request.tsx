@@ -6,10 +6,20 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { sendToWebhook } from "@/services/webhook";
 import { getStoredAccessToken } from "@/services/googleAnalytics";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 const Request = () => {
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [chartData, setChartData] = useState<any[]>([]);
 
   const [userContext, setUserContext] = useState<{
     propertyId: string;
@@ -50,9 +60,16 @@ const Request = () => {
 
     setIsLoading(true);
     try {
-      await sendToWebhook(query, userContext);
+      const response = await sendToWebhook(query, userContext);
       toast.success("Question envoyée avec succès");
       setQuery("");
+
+      // Traitement des données de sessions par date
+      const parsed = (response.rows || []).map((row: any) => ({
+        date: row.dimensionValues[0]?.value,
+        sessions: parseInt(row.metricValues[0]?.value, 10),
+      }));
+      setChartData(parsed);
     } catch (error) {
       toast.error("Erreur lors de l'envoi de la question");
     } finally {
@@ -81,6 +98,21 @@ const Request = () => {
             </Button>
           </div>
         </form>
+
+        {chartData.length > 0 && (
+          <div className="mt-10">
+            <h2 className="text-2xl font-semibold text-gray-700 mb-4">Évolution du trafic</h2>
+            <ResponsiveContainer width="100%" height={400}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="sessions" stroke="#8884d8" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </main>
     </div>
   );
