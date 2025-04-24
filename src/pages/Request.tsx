@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navbar from "@/components/Navbar";
@@ -12,20 +11,19 @@ const Request = () => {
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const [userContext, setUserContext] = useState<{
-    propertyId: string;
-    accessToken: string;
-  } | null>(null);
+  const [userContext, setUserContext: any] = useState(null);
 
   useEffect(() => {
     const loadUserContext = async () => {
       const token = getStoredAccessToken();
       const propertyId = localStorage.getItem("ga_property_id") || "";
+      const accountId = localStorage.getItem("ga_account_id") || "";
 
-      if (!token || !propertyId) return;
+      if (!token || !propertyId || !accountId) return;
 
       setUserContext({
         propertyId,
+        accountId,
         accessToken: token,
       });
     };

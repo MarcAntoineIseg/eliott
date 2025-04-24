@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { GoogleAnalyticsProperty } from "@/services/googleAnalytics";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,9 +36,14 @@ const PropertyList = ({ properties, isLoading, accessToken, error }: PropertyLis
     setDataError(null);
     
     try {
+      // Récupérer et sauvegarder les IDs
+      const accountId = selectedAccount || "";
+      localStorage.setItem("ga_account_id", accountId);
+      localStorage.setItem("ga_property_id", selectedProperty);
+      
       const data = await getGoogleAnalyticsData(accessToken, selectedProperty);
       setAnalyticsData(data);
-      toast.success("Données analytiques chargées avec succès");
+      toast.success("Configuration sauvegardée et données analytiques chargées !");
     } catch (error: any) {
       console.error("Erreur lors du chargement des données:", error);
       setDataError(error.message || "Erreur lors du chargement des données analytiques");
