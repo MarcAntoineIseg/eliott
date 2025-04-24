@@ -1,58 +1,52 @@
-
 import { useState, useEffect } from "react";
 import { GoogleAnalyticsProperty } from "@/services/googleAnalytics";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Link, BarChart } from "lucide-react";
-import { getGoogleAnalyticsData } from "@/services/api";
-import { toast } from "@/components/ui/sonner";
+import { Link, CheckCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/sonner";
 
 interface PropertyListProps {
   properties: GoogleAnalyticsProperty[];
   isLoading: boolean;
   accessToken?: string | null;
   error?: string | null;
-  selectedAccount?: string | null;
+  selectedAccount: string | null;
+  onSelectProperty: (property: GoogleAnalyticsProperty) => void;
 }
 
-const PropertyList = ({ properties, isLoading, accessToken, error, selectedAccount }: PropertyListProps) => {
+const PropertyList = ({ properties, isLoading, accessToken, error, selectedAccount, onSelectProperty }: PropertyListProps) => {
   const [selectedProperty, setSelectedProperty] = useState<string | null>(null);
-  const [isLoadingData, setIsLoadingData] = useState<boolean>(false);
-  const [analyticsData, setAnalyticsData] = useState<any | null>(null);
-  const [dataError, setDataError] = useState<string | null>(null);
-  
-  // Auto-select first property if there's only one
-  useEffect(() => {
-    if (properties.length === 1 && !selectedProperty) {
-      setSelectedProperty(properties[0].id);
-    }
-  }, [properties, selectedProperty]);
+  const [connectedPropertyId, setConnectedPropertyId] = useState<string | null>(null);
 
-  const handleLoadData = async () => {
-    if (!selectedProperty || !accessToken) return;
-    
-    setIsLoadingData(true);
-    setDataError(null);
-    
-    try {
-      // Récupérer et sauvegarder les IDs
-      const accountId = selectedAccount || "";
-      localStorage.setItem("ga_account_id", accountId);
-      localStorage.setItem("ga_property_id", selectedProperty);
-      
-      const data = await getGoogleAnalyticsData(accessToken, selectedProperty);
-      setAnalyticsData(data);
-      toast.success("Configuration sauvegardée et données analytiques chargées !");
-    } catch (error: any) {
-      console.error("Erreur lors du chargement des données:", error);
-      setDataError(error.message || "Erreur lors du chargement des données analytiques");
-      toast.error(error.message || "Erreur lors du chargement des données analytiques");
-    } finally {
-      setIsLoadingData(false);
+  useEffect(() => {
+    // Load connected property from localStorage on component mount
+    const savedPropertyId = localStorage.getItem("ga_property_id");
+    if (savedPropertyId) {
+      setConnectedPropertyId(savedPropertyId);
+      setSelectedProperty(savedPropertyId);
     }
+  }, []);
+
+  const handleConnectProperty = (property: GoogleAnalyticsProperty) => {
+    if (!selectedAccount) {
+      toast.error("Veuillez d'abord sélectionner un compte");
+      return;
+    }
+
+    // Save to localStorage
+    localStorage.setItem("ga_property_id", property.id);
+    localStorage.setItem("ga_account_id", selectedAccount);
+    
+    // Update state
+    setConnectedPropertyId(property.id);
+    
+    // Call parent handler
+    onSelectProperty(property);
+    
+    toast.success("Propriété connectée avec succès");
   };
 
   if (isLoading) {
@@ -143,7 +137,7 @@ const PropertyList = ({ properties, isLoading, accessToken, error, selectedAccou
   return (
     <div className="space-y-4">
       <div className="text-sm text-gray-500 mb-2">
-        {properties.length} propriété(s) trouvée(s). {properties.length > 1 && "Cliquez sur une propriété pour afficher ses données."}
+        {properties.length} propriété(s) trouvée(s). {properties.length > 1 && "Cliquez sur une propriété pour la sélectionner."}
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -157,7 +151,9 @@ const PropertyList = ({ properties, isLoading, accessToken, error, selectedAccou
           >
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
-                <BarChart size={16} className="text-blue-500" />
+                {connectedPropertyId === property.id && (
+                  <CheckCircle className="text-green-500 h-5 w-5" />
+                )}
                 {property.name}
               </CardTitle>
               <CardDescription>ID: {property.id}</CardDescription>
@@ -167,70 +163,37 @@ const PropertyList = ({ properties, isLoading, accessToken, error, selectedAccou
                 <div className="text-sm text-gray-500">
                   {property.createdAt ? new Date(property.createdAt).toLocaleDateString() : "Date inconnue"}
                 </div>
-                {property.url && (
-                  <Button variant="ghost" size="sm" asChild>
-                    <a href={property.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
-                      <Link size={14} />
-                      Voir dans GA
-                    </a>
-                  </Button>
-                )}
+                <div className="flex gap-2 items-center">
+                  {property.url && (
+                    <Button variant="ghost" size="sm" asChild>
+                      <a href={property.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
+                        <Link size={14} />
+                        Voir dans GA
+                      </a>
+                    </Button>
+                  )}
+                  {connectedPropertyId !== property.id && (
+                    <Button 
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleConnectProperty(property);
+                      }}
+                    >
+                      Connecter la propriété
+                    </Button>
+                  )}
+                  {connectedPropertyId === property.id && (
+                    <span className="text-sm text-green-600 flex items-center gap-1">
+                      ✅ Propriété connectée
+                    </span>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
-      
-      {selectedProperty && (
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle>
-              Données pour la propriété sélectionnée
-            </CardTitle>
-            <CardDescription>
-              ID de propriété: {selectedProperty}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {dataError && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Erreur</AlertTitle>
-                <AlertDescription>{dataError}</AlertDescription>
-              </Alert>
-            )}
-            
-            {!analyticsData ? (
-              <>
-                <p className="text-sm text-gray-500 mb-4">
-                  Cliquez sur le bouton ci-dessous pour charger les données analytiques de cette propriété.
-                </p>
-                <Button 
-                  onClick={handleLoadData} 
-                  disabled={isLoadingData}
-                  className="w-full md:w-auto"
-                >
-                  {isLoadingData ? (
-                    <>
-                      <span className="animate-spin mr-2">⟳</span>
-                      Chargement...
-                    </>
-                  ) : (
-                    "Charger les données analytiques"
-                  )}
-                </Button>
-              </>
-            ) : (
-              <div className="space-y-4">
-                <p className="font-medium">Données analytiques chargées avec succès!</p>
-                <div className="bg-gray-50 p-4 rounded-md">
-                  <pre className="text-xs overflow-auto">{JSON.stringify(analyticsData, null, 2)}</pre>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
