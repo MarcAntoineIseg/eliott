@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { GoogleAnalyticsProperty } from "@/services/googleAnalytics";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,9 +15,10 @@ interface PropertyListProps {
   isLoading: boolean;
   accessToken?: string | null;
   error?: string | null;
+  selectedAccount?: string | null;
 }
 
-const PropertyList = ({ properties, isLoading, accessToken, error }: PropertyListProps) => {
+const PropertyList = ({ properties, isLoading, accessToken, error, selectedAccount }: PropertyListProps) => {
   const [selectedProperty, setSelectedProperty] = useState<string | null>(null);
   const [isLoadingData, setIsLoadingData] = useState<boolean>(false);
   const [analyticsData, setAnalyticsData] = useState<any | null>(null);

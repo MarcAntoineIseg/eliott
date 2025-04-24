@@ -229,6 +229,7 @@ const Integration = () => {
                       isLoading={isLoading} 
                       accessToken={accessToken}
                       error={error}
+                      selectedAccount={selectedAccount}
                     />
                   </div>
                 </>
