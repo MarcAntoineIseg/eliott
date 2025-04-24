@@ -11,9 +11,9 @@ const Index = () => {
         {/* Hero Section */}
         <section className="py-20 bg-gradient-to-br from-blue-600 to-indigo-700 text-white">
           <div className="container text-center px-4">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">Pilotez vos analytics plus efficacement</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">L'analytics propulsé par l'IA</h1>
             <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-              Connectez votre Google Analytics et obtenez des insights puissants pour optimiser vos performances.
+              Interrogez vos bases de données et obtenez des insights instantannément
             </p>
             <Link to="/dashboard">
               <Button size="lg" className="bg-white text-blue-700 hover:bg-gray-100">
