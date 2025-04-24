@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +23,14 @@ const Integration = () => {
   const [error, setError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
   const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
+
+  // Load saved account when component mounts
+  useEffect(() => {
+    const savedAccountId = localStorage.getItem("ga_account_id");
+    if (savedAccountId) {
+      setSelectedAccount(savedAccountId);
+    }
+  }, []);
 
   useEffect(() => {
     const clearUrlAndProcessToken = async () => {
@@ -79,7 +88,17 @@ const Integration = () => {
       const accountsData = await fetchGoogleAnalyticsAccounts();
       setAccounts(accountsData || []);
 
-      if (accountsData.length === 1) {
+      // Check for saved account ID
+      const savedAccountId = localStorage.getItem("ga_account_id");
+      if (savedAccountId) {
+        // Verify the saved account exists in the returned accounts
+        const accountExists = accountsData.some(acc => acc.name === savedAccountId);
+        if (accountExists) {
+          setSelectedAccount(savedAccountId);
+        } else if (accountsData.length === 1) {
+          setSelectedAccount(accountsData[0].name);
+        }
+      } else if (accountsData.length === 1) {
         setSelectedAccount(accountsData[0].name);
       } else if (accountsData.length === 0) {
         toast.info("Aucun compte Google Analytics trouvé.");
@@ -128,8 +147,8 @@ const Integration = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("googleAccessToken");
-    localStorage.removeItem("googlePropertyId");
-    localStorage.removeItem("googleAccountId");
+    localStorage.removeItem("ga_property_id");
+    localStorage.removeItem("ga_account_id");
     setAccessToken(null);
     setAccounts([]);
     setSelectedAccount(null);
@@ -144,8 +163,8 @@ const Integration = () => {
       return;
     }
 
-    localStorage.setItem("googlePropertyId", property.id);
-    localStorage.setItem("googleAccountId", selectedAccount);
+    localStorage.setItem("ga_property_id", property.id);
+    localStorage.setItem("ga_account_id", selectedAccount);
     toast.success("Propriété sélectionnée enregistrée avec succès !");
   };
 

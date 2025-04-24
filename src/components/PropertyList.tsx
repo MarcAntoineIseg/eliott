@@ -212,4 +212,3 @@ const PropertyList = ({ properties, isLoading, accessToken, error, selectedAccou
 };
 
 export default PropertyList;
-
