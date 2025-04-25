@@ -24,30 +24,28 @@ const Request = () => {
     propertyId: string;
     accountId: string;
     accessToken: string;
+    refreshToken: string;
   } | null>(null);
 
   useEffect(() => {
-  const loadUserContext = async () => {
-    const accessToken = getStoredAccessToken();
-    const propertyId = localStorage.getItem("ga_property_id") || "";
-    const accountId = localStorage.getItem("ga_account_id") || "";
-    const refreshToken = localStorage.getItem("ga_refresh_token") || ""; // 👈 ici
+    const loadUserContext = async () => {
+      const accessToken = getStoredAccessToken();
+      const propertyId = localStorage.getItem("ga_property_id") || "";
+      const accountId = localStorage.getItem("ga_account_id") || "";
+      const refreshToken = localStorage.getItem("ga_refresh_token") || "";
 
-    if (!accessToken || !propertyId || !accountId || !refreshToken) return;
+      if (!accessToken || !propertyId || !accountId || !refreshToken) return;
 
-    const refreshToken = localStorage.getItem("ga_refresh_token") || "";
+      setUserContext({
+        propertyId,
+        accountId,
+        accessToken,
+        refreshToken,
+      });
+    };
 
-setUserContext({
-  propertyId,
-  accountId,
-  accessToken: token,
-  refreshToken, // ✅ on ajoute bien le refreshToken ici
-});
-
-  };
-
-  loadUserContext();
-}, []);
+    loadUserContext();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
