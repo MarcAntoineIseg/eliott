@@ -2,31 +2,27 @@ interface UserContext {
   accountId: string;
   propertyId: string;
   accessToken: string;
-  refreshToken: string; // 👈 On ajoute le refreshToken
+  refreshToken: string;
 }
 
 interface WebhookPayload {
   query: string;
-  googleAnalytics: {
-    accountId: string;
-    propertyId: string;
-    accessToken: string;
-    refreshToken: string; // 👈 On ajoute le refreshToken dans la requête
-  };
+  googleAnalytics: UserContext;
 }
 
 export const sendToWebhook = async (
-  query: string,
-  userContext: UserContext
+  query: string
 ): Promise<any> => {
+  const userContext: UserContext = {
+    accountId: localStorage.getItem("ga_account_id") || "",
+    propertyId: localStorage.getItem("ga_property_id") || "",
+    accessToken: localStorage.getItem("ga_access_token") || "",
+    refreshToken: localStorage.getItem("ga_refresh_token") || "",
+  };
+
   const payload: WebhookPayload = {
     query,
-    googleAnalytics: {
-      accountId: userContext.accountId,
-      propertyId: userContext.propertyId,
-      accessToken: userContext.accessToken,
-      refreshToken: userContext.refreshToken, // 👈 On ajoute ici aussi
-    },
+    googleAnalytics: userContext,
   };
 
   console.log("🚀 Envoi webhook avec payload :", payload);
