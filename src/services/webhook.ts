@@ -1,3 +1,4 @@
+
 interface UserContext {
   accountId: string;
   propertyId: string;
@@ -11,15 +12,9 @@ interface WebhookPayload {
 }
 
 export const sendToWebhook = async (
-  query: string
+  query: string,
+  userContext: UserContext
 ): Promise<any> => {
-  const userContext: UserContext = {
-    accountId: localStorage.getItem("ga_account_id") || "",
-    propertyId: localStorage.getItem("ga_property_id") || "",
-    accessToken: localStorage.getItem("ga_access_token") || "",
-    refreshToken: localStorage.getItem("ga_refresh_token") || "",
-  };
-
   const payload: WebhookPayload = {
     query,
     googleAnalytics: userContext,
