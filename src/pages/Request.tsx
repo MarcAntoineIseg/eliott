@@ -27,22 +27,24 @@ const Request = () => {
   } | null>(null);
 
   useEffect(() => {
-    const loadUserContext = async () => {
-      const token = getStoredAccessToken();
-      const propertyId = localStorage.getItem("ga_property_id") || "";
-      const accountId = localStorage.getItem("ga_account_id") || "";
+  const loadUserContext = async () => {
+    const accessToken = getStoredAccessToken();
+    const propertyId = localStorage.getItem("ga_property_id") || "";
+    const accountId = localStorage.getItem("ga_account_id") || "";
+    const refreshToken = localStorage.getItem("ga_refresh_token") || ""; // 👈 ici
 
-      if (!token || !propertyId || !accountId) return;
+    if (!accessToken || !propertyId || !accountId || !refreshToken) return;
 
-      setUserContext({
-        propertyId,
-        accountId,
-        accessToken: token,
-      });
-    };
+    setUserContext({
+      propertyId,
+      accountId,
+      accessToken,
+      refreshToken, // 👈 et là
+    });
+  };
 
-    loadUserContext();
-  }, []);
+  loadUserContext();
+}, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
