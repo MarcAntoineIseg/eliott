@@ -35,12 +35,15 @@ const Request = () => {
 
     if (!accessToken || !propertyId || !accountId || !refreshToken) return;
 
-    setUserContext({
-      propertyId,
-      accountId,
-      accessToken,
-      refreshToken, // 👈 et là
-    });
+    const refreshToken = localStorage.getItem("ga_refresh_token") || "";
+
+setUserContext({
+  propertyId,
+  accountId,
+  accessToken: token,
+  refreshToken, // ✅ on ajoute bien le refreshToken ici
+});
+
   };
 
   loadUserContext();
