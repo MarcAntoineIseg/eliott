@@ -1,8 +1,8 @@
-
 interface UserContext {
   accountId: string;
   propertyId: string;
   accessToken: string;
+  refreshToken: string; // 👈 On ajoute le refreshToken
 }
 
 interface WebhookPayload {
@@ -11,6 +11,7 @@ interface WebhookPayload {
     accountId: string;
     propertyId: string;
     accessToken: string;
+    refreshToken: string; // 👈 On ajoute le refreshToken dans la requête
   };
 }
 
@@ -24,6 +25,7 @@ export const sendToWebhook = async (
       accountId: userContext.accountId,
       propertyId: userContext.propertyId,
       accessToken: userContext.accessToken,
+      refreshToken: userContext.refreshToken, // 👈 On ajoute ici aussi
     },
   };
 
