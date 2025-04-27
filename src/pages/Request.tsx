@@ -36,8 +36,8 @@ const Request = () => {
 
       console.log("Loaded from localStorage:", { accessToken, refreshToken, propertyId, accountId });
 
-      if (!accessToken || !propertyId || !accountId || !refreshToken) {
-        console.error("❌ Contexte incomplet pour userContext !");
+      if (!accessToken || !propertyId || !accountId) {
+        console.error("❌ Contexte utilisateur incomplet !");
         return;
       }
 
@@ -45,7 +45,7 @@ const Request = () => {
         propertyId,
         accountId,
         accessToken,
-        refreshToken,
+        refreshToken: refreshToken || "", // refreshToken devient optionnel
       });
     };
 
@@ -114,7 +114,8 @@ const Request = () => {
 
         {chartData.length > 0 && (
           <div className="mt-10">
-            <h2 className="text-2xl font-semibold text-gray-700 mb-4">Évolution du trafic
+            <h2 className="text-2xl font-semibold text-gray-700 mb-4">
+              Évolution du trafic
             </h2>
             <ResponsiveContainer width="100%" height={400}>
               <LineChart data={chartData}>
