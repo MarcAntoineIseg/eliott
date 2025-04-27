@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
@@ -30,12 +29,17 @@ const Request = () => {
 
   useEffect(() => {
     const loadUserContext = async () => {
-      const accessToken = getStoredAccessToken();
+      const accessToken = localStorage.getItem("googleAccessToken") || "";
+      const refreshToken = localStorage.getItem("ga_refresh_token") || "";
       const propertyId = localStorage.getItem("ga_property_id") || "";
       const accountId = localStorage.getItem("ga_account_id") || "";
-      const refreshToken = localStorage.getItem("ga_refresh_token") || "";
 
-      if (!accessToken || !propertyId || !accountId || !refreshToken) return;
+      console.log("Loaded from localStorage:", { accessToken, refreshToken, propertyId, accountId });
+
+      if (!accessToken || !propertyId || !accountId || !refreshToken) {
+        console.error("❌ Contexte incomplet pour userContext !");
+        return;
+      }
 
       setUserContext({
         propertyId,
@@ -67,7 +71,6 @@ const Request = () => {
       toast.success("Question envoyée avec succès");
       setQuery("");
 
-      // Traitement des données de sessions par date
       const parsed = (response.rows || []).map((row: any) => ({
         date: row.dimensionValues[0]?.value,
         sessions: parseInt(row.metricValues[0]?.value, 10),
@@ -79,6 +82,14 @@ const Request = () => {
       setIsLoading(false);
     }
   };
+
+  if (!userContext) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center text-lg">
+        Chargement du contexte utilisateur...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full bg-[#f4f6f9]">
@@ -103,7 +114,8 @@ const Request = () => {
 
         {chartData.length > 0 && (
           <div className="mt-10">
-            <h2 className="text-2xl font-semibold text-gray-700 mb-4">Évolution du trafic</h2>
+            <h2 className="text-2xl font-semibold text-gray-700 mb-4">Évolution du trafic
+            </h2>
             <ResponsiveContainer width="100%" height={400}>
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
