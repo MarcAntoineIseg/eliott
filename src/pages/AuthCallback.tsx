@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -6,16 +5,26 @@ const AuthCallback = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fragment = new URLSearchParams(window.location.hash.substring(1));
-    const accessToken = fragment.get("access_token");
-    const refreshToken = fragment.get("refresh_token"); // rare mais parfois présent
+    const params = new URLSearchParams(window.location.search);
+    const accessToken = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
+    const expiresIn = params.get("expires_in");
 
     if (accessToken) {
       localStorage.setItem("googleAccessToken", accessToken);
+      console.log("✅ Access token stocké avec succès.");
+
       if (refreshToken) {
         localStorage.setItem("ga_refresh_token", refreshToken);
+        console.log("✅ Refresh token stocké avec succès.");
       }
-      console.log("✅ Token(s) stockés avec succès.");
+
+      if (expiresIn) {
+        const expirationDate = new Date();
+        expirationDate.setSeconds(expirationDate.getSeconds() + parseInt(expiresIn));
+        localStorage.setItem("ga_token_expires_at", expirationDate.toISOString());
+        console.log("✅ Expiration du token stockée avec succès.");
+      }
 
       navigate("/request"); // ➔ Redirige vers ta page principale
     } else {
