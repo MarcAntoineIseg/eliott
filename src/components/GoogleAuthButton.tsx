@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Cloud } from "lucide-react";
 import { GOOGLE_ANALYTICS_SCOPES, REDIRECT_URI } from "@/services/googleAnalytics";
@@ -13,34 +12,30 @@ const GoogleAuthButton = ({ clientId, onSuccess, onError }: GoogleAuthButtonProp
   const handleGoogleAuth = () => {
     // Clear any existing tokens before starting a new auth flow
     localStorage.removeItem("googleAccessToken");
-    
-    // Redirection forcée vers l'URL exacte d'intégration
+    localStorage.removeItem("ga_refresh_token");
+    localStorage.removeItem("ga_account_id");
+    localStorage.removeItem("ga_property_id");
+
     const redirectUri = REDIRECT_URI;
-    
-    // Utilisation des scopes corrects depuis le service
     const scope = GOOGLE_ANALYTICS_SCOPES.join(" ");
-    
+
     console.log("Redirecting to Google Auth with scopes:", scope);
     console.log("Using redirect_uri:", redirectUri);
-    
-    // Garantir que tous les paramètres sont correctement encodés
+
+    // Construire les bons paramètres pour forcer le refresh_token
     const params = new URLSearchParams({
       client_id: clientId,
       redirect_uri: redirectUri,
       scope: scope,
-      response_type: 'token',
-      // Ajout d'un state basé sur timestamp pour forcer un nouveau token
-      state: `${Math.random().toString(36).substring(2)}_${Date.now()}`,
-      // Forcer la sélection du compte Google et empêcher le cache
-      prompt: 'consent select_account',
-      // Indiquer que nous voulons accéder aux ressources en ligne uniquement
-      access_type: 'online'
-      // Le paramètre nonce a été supprimé car il cause l'erreur 400
+      response_type: 'code', // ✅ Pas 'token', mais 'code'
+      access_type: 'offline', // ✅ pour obtenir un refresh_token
+      prompt: 'consent select_account', // ✅ pour forcer l'affichage du choix de compte et demander un nouveau consentement
+      state: `${Math.random().toString(36).substring(2)}_${Date.now()}`
     });
-    
+
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
     console.log("Auth URL:", authUrl);
-    
+
     window.location.href = authUrl;
   };
 
