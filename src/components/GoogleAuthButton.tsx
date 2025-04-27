@@ -23,13 +23,14 @@ const GoogleAuthButton = ({ clientId }: GoogleAuthButtonProps) => {
       client_id: clientId,
       redirect_uri: redirectUri,
       scope: scope,
-      response_type: 'token', // ✅ on reste sur token pour accès immédiat
-      access_type: 'offline', // ✅ pour essayer d'obtenir un refresh_token
-      prompt: 'consent select_account', // ✅ pour forcer l'écran de choix + consentement
+      response_type: 'token', // ✅ on reste sur 'token' pour recevoir l'access_token directement
+      prompt: 'consent select_account', // ✅ pour forcer l'utilisateur à rechoisir son compte et donner son consentement
       state: `${Math.random().toString(36).substring(2)}_${Date.now()}`
     });
 
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+    console.log("🔗 Redirection vers:", authUrl);
+
     window.location.href = authUrl;
   };
 
