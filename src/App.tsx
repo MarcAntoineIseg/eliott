@@ -9,6 +9,7 @@ import Request from "./pages/Request";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
 import AuthCallback from "./pages/AuthCallback";
+import PrivacyPolicy from "./pages/PrivacyPolicy"; // Add this import
 
 const queryClient = new QueryClient();
 
