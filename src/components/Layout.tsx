@@ -9,9 +9,10 @@ import {
   SidebarMenuButton,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarFooter,
 } from "@/components/ui/sidebar"
-import { FileText, Settings } from "lucide-react"
-import { Link, useLocation } from "react-router-dom"
+import { FileText, Settings, Link } from "lucide-react"
+import { Link as RouterLink, useLocation } from "react-router-dom"
 
 interface LayoutProps {
   children: React.ReactNode
@@ -53,10 +54,10 @@ const Layout = ({ children }: LayoutProps) => {
                         asChild
                         isActive={location.pathname === item.path}
                       >
-                        <Link to={item.path}>
+                        <RouterLink to={item.path}>
                           <item.icon className="shrink-0" />
                           <span>{item.title}</span>
-                        </Link>
+                        </RouterLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
@@ -64,6 +65,21 @@ const Layout = ({ children }: LayoutProps) => {
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
+          <SidebarFooter className="mt-auto p-2 border-t">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  asChild
+                  className="text-xs text-gray-500 hover:text-gray-700"
+                >
+                  <RouterLink to="/privacy-policy" className="flex items-center gap-2">
+                    <Link className="w-4 h-4" />
+                    <span>Politique de confidentialité</span>
+                  </RouterLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarFooter>
         </Sidebar>
         <main className="flex-1 overflow-x-hidden">
           {children}
