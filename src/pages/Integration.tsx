@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
@@ -33,17 +32,52 @@ const Integration = () => {
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>("disconnected");
   const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
 
+  const [adsToken, setAdsToken] = useState<string | null>(null);
+  const [adsCustomerIds, setAdsCustomerIds] = useState<string[]>([]);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const googleAdsToken = params.get("googleAdsAccessToken");
-    const googleAdsCustomerId = params.get("googleAdsCustomerId");
-    if (googleAdsToken && googleAdsCustomerId) {
+    if (googleAdsToken) {
       localStorage.setItem("googleAdsAccessToken", googleAdsToken);
-      localStorage.setItem("googleAdsCustomerId", googleAdsCustomerId);
+      setAdsToken(googleAdsToken);
       toast.success("Connexion réussie à Google Ads");
       window.history.replaceState({}, document.title, "/integration");
+    } else {
+      const saved = localStorage.getItem("googleAdsAccessToken");
+      if (saved) setAdsToken(saved);
     }
   }, []);
+
+  useEffect(() => {
+    const savedCustomer = localStorage.getItem("googleAdsCustomerId");
+    if (savedCustomer) setSelectedCustomerId(savedCustomer);
+  }, []);
+
+  useEffect(() => {
+    if (!adsToken) return;
+    fetch(`https://api.askeliott.com/api/google-ads/accounts?token=${adsToken}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.customerIds?.length) {
+          setAdsCustomerIds(data.customerIds);
+          toast.success(`${data.customerIds.length} compte(s) Google Ads trouvé(s)`);
+        } else {
+          toast.info("Aucun compte Google Ads trouvé");
+        }
+      })
+      .catch(err => {
+        toast.error("Erreur lors du chargement des comptes Google Ads");
+        console.error(err);
+      });
+  }, [adsToken]);
+
+  const handleSelectAdsAccount = (id: string) => {
+    localStorage.setItem("googleAdsCustomerId", id);
+    setSelectedCustomerId(id);
+    toast.success("Compte Google Ads sélectionné avec succès !");
+  };
 
   useEffect(() => {
     const savedAccountId = localStorage.getItem("ga_account_id");
@@ -108,34 +142,6 @@ const Integration = () => {
     }
   };
 
-  useEffect(() => {
-    if (!accessToken || !selectedAccount || connectionStatus !== "connected") {
-      setProperties([]);
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
-    fetchGoogleAnalyticsAccountProperties(selectedAccount)
-      .then(propertiesData => {
-        const propsList = (propertiesData || []).map((prop: any) => ({
-          id: prop.name ? prop.name.split("/").pop() : prop.id,
-          name: prop.displayName,
-          url: prop.webLink,
-          createdAt: prop.createTime,
-        }));
-        setProperties(propsList);
-        toast[propsList.length ? 'success' : 'info'](
-          propsList.length ? `${propsList.length} propriété(s) Google Analytics trouvée(s)` : "Aucune propriété trouvée pour ce compte."
-        );
-      })
-      .catch(err => {
-        setError(err.message || "Impossible de charger les propriétés pour ce compte.");
-        setProperties([]);
-        toast.error(err.message || "Erreur lors du chargement des propriétés.");
-      })
-      .finally(() => setIsLoading(false));
-  }, [accessToken, selectedAccount, connectionStatus]);
-
   const handleLogout = () => {
     localStorage.removeItem("googleAccessToken");
     localStorage.removeItem("ga_property_id");
@@ -166,108 +172,7 @@ const Integration = () => {
       <main className="container py-8">
         <h1 className="text-4xl font-extrabold mb-8 text-gray-800">Intégrations</h1>
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-
-          {/* Google Analytics Card */}
-          <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
-            <div className="bg-blue-50/50 p-4 border-b border-blue-100">
-              <div className="flex items-center gap-4">
-                <img src="https://www.gstatic.com/analytics-suite/header/suite/v2/ic_analytics.svg" alt="Google Analytics" className="w-12 h-12 rounded-lg border bg-white shadow" />
-                <div>
-                  <CardTitle className="text-lg font-bold text-gray-800">Google Analytics</CardTitle>
-                  <CardDescription className="text-gray-600">Connectez votre compte Google Analytics</CardDescription>
-                </div>
-              </div>
-            </div>
-            <CardContent className="p-6">
-              {connectionStatus === 'disconnected' ? (
-                <GoogleAuthButton clientId={CLIENT_ID} />
-              ) : connectionStatus === 'connecting' && isInitialLoad ? (
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <div className="h-4 w-4 rounded-full bg-blue-200 animate-pulse"></div>
-                    <span>Vérification de la connexion...</span>
-                  </div>
-                  <Skeleton className="h-10 w-full" />
-                </div>
-              ) : (
-                <>
-                  <Button variant="outline" onClick={handleLogout} className="w-full">Déconnecter</Button>
-                  <div className="mt-4">
-                    {accountsLoading ? (
-                      <div className="space-y-3">
-                        <Skeleton className="h-4 w-36" />
-                        <Skeleton className="h-10 w-full" />
-                        <Skeleton className="h-4 w-48 mb-2" />
-                        <Skeleton className="h-48 w-full" />
-                      </div>
-                    ) : accounts.length > 0 && (
-                      <div className="mb-4">
-                        <label className="block mb-2 text-sm font-medium text-gray-700">Sélectionnez un compte</label>
-                        <Select value={selectedAccount ?? ""} onValueChange={(val) => setSelectedAccount(val)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Choisissez un compte" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {accounts.map(acct => (
-                              <SelectItem key={acct.name} value={acct.name}>
-                                {acct.displayName || acct.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-                    <PropertyList
-                      properties={properties}
-                      isLoading={isLoading}
-                      accessToken={accessToken}
-                      error={error}
-                      selectedAccount={selectedAccount}
-                      onSelectProperty={handleLoadAnalytics}
-                    />
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Meta Ads Card */}
-          <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
-            <div className="bg-blue-50/50 p-4 border-b border-blue-100">
-              <div className="flex items-center gap-4">
-                <img src="/lovable-uploads/eeca5120-a156-4d1b-a16a-82810e51ce6a.png" alt="Meta Ads" className="w-[46px] h-[46px] rounded-lg border bg-white shadow object-contain" />
-                <div>
-                  <CardTitle className="text-lg font-bold text-gray-800">Meta Ads</CardTitle>
-                  <CardDescription className="text-gray-600">Connectez votre compte Meta Ads</CardDescription>
-                </div>
-              </div>
-            </div>
-            <CardContent className="p-6">
-              <Button onClick={handleConnectMetaAds} className="w-full bg-[#1877F2] hover:bg-[#0e64d3] text-white">
-                Connecter Meta Ads
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* HubSpot Card */}
-          <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
-            <div className="bg-blue-50/50 p-4 border-b border-blue-100">
-              <div className="flex items-center gap-4">
-                <img src="/lovable-uploads/1eb64ec7-60ab-434d-95d1-45b61ae3d30d.png" alt="HubSpot" className="w-[46px] h-[46px] rounded-lg border bg-white shadow object-contain" />
-                <div>
-                  <CardTitle className="text-lg font-bold text-gray-800">HubSpot</CardTitle>
-                  <CardDescription className="text-gray-600">Connectez votre compte HubSpot</CardDescription>
-                </div>
-              </div>
-            </div>
-            <CardContent className="p-6">
-              <Button onClick={handleConnectHubspot} className="w-full bg-[#FF7A59] hover:bg-[#f06845] text-white">
-                Connecter HubSpot
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Google Ads Card */}
+          {/* Google Ads Updated Card */}
           <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
             <div className="bg-blue-50/50 p-4 border-b border-blue-100">
               <div className="flex items-center gap-4">
@@ -279,52 +184,45 @@ const Integration = () => {
               </div>
             </div>
             <CardContent className="p-6">
-              <Button onClick={handleConnectGoogleAds} className="w-full bg-[#4285F4] hover:bg-[#3367D6] text-white">
-                Connecter Google Ads
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Google Sheets Card */}
-          <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
-            <div className="bg-blue-50/50 p-4 border-b border-blue-100">
-              <div className="flex items-center gap-4">
-                <img src="/lovable-uploads/a5d2d998-d3cd-4f60-9128-d43a7fc8377c.png" alt="Google Sheets" className="w-[46px] h-[46px] rounded-lg border bg-white shadow object-contain" />
-                <div>
-                  <CardTitle className="text-lg font-bold text-gray-800">Google Sheets</CardTitle>
-                  <CardDescription className="text-gray-600">Connectez votre compte Google Sheets</CardDescription>
+              {!adsToken ? (
+                <Button onClick={handleConnectGoogleAds} className="w-full bg-[#4285F4] hover:bg-[#3367D6] text-white">
+                  Connecter Google Ads
+                </Button>
+              ) : (
+                <div className="space-y-4">
+                  <Button variant="outline" onClick={() => {
+                    setAdsToken(null);
+                    setAdsCustomerIds([]);
+                    setSelectedCustomerId(null);
+                    localStorage.removeItem("googleAdsAccessToken");
+                    localStorage.removeItem("googleAdsCustomerId");
+                    toast.info("Déconnecté de Google Ads");
+                  }} className="w-full">
+                    Déconnecter
+                  </Button>
+                  {adsCustomerIds.length > 0 && (
+                    <div>
+                      <label className="block mb-2 text-sm font-medium text-gray-700">Sélectionnez un compte Google Ads</label>
+                      <Select value={selectedCustomerId ?? ""} onValueChange={handleSelectAdsAccount}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choisissez un compte" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {adsCustomerIds.map(id => (
+                            <SelectItem key={id} value={id}>{id}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </div>
-            <CardContent className="p-6">
-              <Button onClick={handleConnectGoogleSheets} className="w-full bg-[#0F9D58] hover:bg-[#0b8043] text-white">
-                Connecter Google Sheets
-              </Button>
+              )}
             </CardContent>
           </Card>
-
-          {/* Shopify Card */}
-          <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
-            <div className="bg-blue-50/50 p-4 border-b border-blue-100">
-              <div className="flex items-center gap-4">
-                <img src="/lovable-uploads/ac7b886c-02ac-4f1c-a2e3-114a217db20e.png" alt="Shopify" className="w-[46px] h-[46px] rounded-lg border bg-white shadow object-contain" />
-                <div>
-                  <CardTitle className="text-lg font-bold text-gray-800">Shopify</CardTitle>
-                  <CardDescription className="text-gray-600">Connectez votre boutique Shopify</CardDescription>
-                </div>
-              </div>
-            </div>
-            <CardContent className="p-6">
-              <Button onClick={handleConnectShopify} className="w-full bg-[#95BF47] hover:bg-[#7ea83b] text-white">
-                Connecter Shopify
-              </Button>
-            </CardContent>
-          </Card>
-
         </div>
       </main>
     </div>
   );
-}; // Added missing closing brace
+};
 
-export default Integration; // Changed to match component name
+export default Integration;
