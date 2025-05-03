@@ -166,11 +166,16 @@ const Integration = () => {
     toast.success("Propriété sélectionnée enregistrée avec succès !");
   };
 
+  const handleConnectMetaAds = () => {
+    toast.info("La connexion à Meta Ads n'est pas encore implémentée");
+  };
+
   return (
     <div className="min-h-screen w-full bg-[#f4f6f9]">
       <main className="container py-8">
         <h1 className="text-4xl font-extrabold mb-8 text-gray-800">Intégrations</h1>
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          {/* Google Analytics Card */}
           <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
             <div className="bg-blue-50/50 p-4 border-b border-blue-100">
               <div className="flex items-center gap-4">
@@ -238,6 +243,41 @@ const Integration = () => {
                   </div>
                 </>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Meta Ads Card */}
+          <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
+            <div className="bg-blue-50/50 p-4 border-b border-blue-100">
+              <div className="flex items-center gap-4">
+                <img src="https://img.freepik.com/free-vector/meta-social-media-design_23-2150333030.jpg" alt="Meta Ads" className="w-12 h-12 rounded-lg border bg-white shadow object-cover" />
+                <div>
+                  <CardTitle className="text-lg font-bold text-gray-800">Meta Ads</CardTitle>
+                  <CardDescription className="text-gray-600">Connectez votre compte Meta Ads</CardDescription>
+                </div>
+              </div>
+            </div>
+            <CardContent className="p-6">
+              <Button onClick={handleConnectMetaAds} className="w-full bg-[#1877F2] hover:bg-[#0e64d3] text-white">
+                Connecter Meta Ads
+              </Button>
+              <div className="mt-4 text-center text-sm text-gray-500">
+                <p>Visualisez et analysez vos campagnes publicitaires Meta</p>
+                <div className="flex justify-center gap-4 mt-4">
+                  <div className="flex flex-col items-center">
+                    <BarChart3 className="h-8 w-8 text-gray-400" />
+                    <span className="text-xs mt-1">Statistiques</span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <LineChart className="h-8 w-8 text-gray-400" />
+                    <span className="text-xs mt-1">Performance</span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <Presentation className="h-8 w-8 text-gray-400" />
+                    <span className="text-xs mt-1">Campagnes</span>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
