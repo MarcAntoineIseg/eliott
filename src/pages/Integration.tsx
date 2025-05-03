@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -250,7 +251,11 @@ const Integration = () => {
           <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
             <div className="bg-blue-50/50 p-4 border-b border-blue-100">
               <div className="flex items-center gap-4">
-                <img src="https://img.freepik.com/free-vector/meta-social-media-design_23-2150333030.jpg" alt="Meta Ads" className="w-12 h-12 rounded-lg border bg-white shadow object-cover" />
+                <img 
+                  src="/lovable-uploads/eeca5120-a156-4d1b-a16a-82810e51ce6a.png" 
+                  alt="Meta Ads" 
+                  className="w-[46px] h-[46px] rounded-lg border bg-white shadow object-contain" 
+                />
                 <div>
                   <CardTitle className="text-lg font-bold text-gray-800">Meta Ads</CardTitle>
                   <CardDescription className="text-gray-600">Connectez votre compte Meta Ads</CardDescription>
