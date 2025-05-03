@@ -180,7 +180,7 @@ const Integration = () => {
   };
 
   const handleConnectMetaAds = () => {
-    window.location.href = "https://app.askeliott.com/api/auth/meta";
+    window.location.href = "https://api.askeliott.com/auth/meta";
   };
 
   return (
