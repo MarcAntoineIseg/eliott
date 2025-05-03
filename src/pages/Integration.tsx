@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
@@ -183,6 +184,10 @@ const Integration = () => {
     window.location.href = "https://api.askeliott.com/auth/meta";
   };
 
+  const handleConnectHubspot = () => {
+    window.location.href = "https://api.askeliott.com/auth/hubspot";
+  };
+
   return (
     <div className="min-h-screen w-full bg-[#f4f6f9]">
       <main className="container py-8">
@@ -279,6 +284,28 @@ const Integration = () => {
             <CardContent className="p-6">
               <Button onClick={handleConnectMetaAds} className="w-full bg-[#1877F2] hover:bg-[#0e64d3] text-white">
                 Connecter Meta Ads
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* HubSpot Card */}
+          <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
+            <div className="bg-blue-50/50 p-4 border-b border-blue-100">
+              <div className="flex items-center gap-4">
+                <img
+                  src="/lovable-uploads/1eb64ec7-60ab-434d-95d1-45b61ae3d30d.png"
+                  alt="HubSpot"
+                  className="w-[46px] h-[46px] rounded-lg border bg-white shadow object-contain"
+                />
+                <div>
+                  <CardTitle className="text-lg font-bold text-gray-800">HubSpot</CardTitle>
+                  <CardDescription className="text-gray-600">Connectez votre compte HubSpot</CardDescription>
+                </div>
+              </div>
+            </div>
+            <CardContent className="p-6">
+              <Button onClick={handleConnectHubspot} className="w-full bg-[#FF7A59] hover:bg-[#f06845] text-white">
+                Connecter HubSpot
               </Button>
             </CardContent>
           </Card>
