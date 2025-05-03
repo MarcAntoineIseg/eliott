@@ -162,55 +162,63 @@ const Integration = () => {
   const handleConnectGoogleAds = () => window.location.href = "https://api.askeliott.com/auth/google-ads";
 
   return (
-    <div className="p-10">
-      <h1 className="text-3xl font-bold mb-6">Intégrations</h1>
+    <div className="min-h-screen w-full bg-[#f4f6f9]">
+      <main className="container py-8">
+        <h1 className="text-4xl font-extrabold mb-8 text-gray-800">Intégrations</h1>
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
 
-      <Card className="border rounded-lg shadow mb-6">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-4 mb-4">
-            <img src="/lovable-uploads/20f2b0c9-e4ee-4bf1-92e5-5431fb8fec91.png" className="w-12 h-12" alt="Google Ads" />
-            <div>
-              <CardTitle>Google Ads</CardTitle>
-              <CardDescription>Connectez votre compte Google Ads</CardDescription>
-            </div>
-          </div>
-
-          {!googleAdsToken ? (
-            <Button onClick={handleConnectGoogleAds} className="w-full bg-blue-600 text-white">
-              Connecter Google Ads
-            </Button>
-          ) : (
-            <>
-              <Button onClick={() => {
-                setGoogleAdsToken(null);
-                setGoogleAdsCustomerIds([]);
-                setSelectedGoogleAdsCustomerId(null);
-                localStorage.removeItem("googleAdsAccessToken");
-                localStorage.removeItem("googleAdsCustomerId");
-                toast.info("Déconnecté de Google Ads");
-              }} className="w-full mb-4">
-                Déconnecter
-              </Button>
-
-              {googleAdsCustomerIds.length > 0 && (
+          {/* Carte Google Ads */}
+          <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
+            <div className="bg-blue-50/50 p-4 border-b border-blue-100">
+              <div className="flex items-center gap-4">
+                <img src="/lovable-uploads/20f2b0c9-e4ee-4bf1-92e5-5431fb8fec91.png" alt="Google Ads" className="w-[46px] h-[46px] rounded-lg border bg-white shadow object-contain" />
                 <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">Sélectionnez un compte</label>
-                  <Select value={selectedGoogleAdsCustomerId ?? ""} onValueChange={handleGoogleAdsSelect}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choisissez un compte Google Ads" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {googleAdsCustomerIds.map(id => (
-                        <SelectItem key={id} value={id}>{id}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <CardTitle className="text-lg font-bold text-gray-800">Google Ads</CardTitle>
+                  <CardDescription className="text-gray-600">Connectez votre compte Google Ads</CardDescription>
                 </div>
+              </div>
+            </div>
+            <CardContent className="p-6">
+              {!googleAdsToken ? (
+                <Button onClick={handleConnectGoogleAds} className="w-full bg-[#4285F4] hover:bg-[#3367D6] text-white">
+                  Connecter Google Ads
+                </Button>
+              ) : (
+                <>
+                  <Button onClick={() => {
+                    setGoogleAdsToken(null);
+                    setGoogleAdsCustomerIds([]);
+                    setSelectedGoogleAdsCustomerId(null);
+                    localStorage.removeItem("googleAdsAccessToken");
+                    localStorage.removeItem("googleAdsCustomerId");
+                    toast.info("Déconnecté de Google Ads");
+                  }} className="w-full mb-4">
+                    Déconnecter
+                  </Button>
+                  {googleAdsCustomerIds.length > 0 && (
+                    <div>
+                      <label className="block mb-2 text-sm font-medium text-gray-700">Sélectionnez un compte</label>
+                      <Select value={selectedGoogleAdsCustomerId ?? ""} onValueChange={handleGoogleAdsSelect}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choisissez un compte Google Ads" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {googleAdsCustomerIds.map(id => (
+                            <SelectItem key={id} value={id}>{id}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </>
               )}
-            </>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+
+          {/* 👉 Tu peux réintégrer ici les autres cartes comme Meta Ads, HubSpot, etc. */}
+
+        </div>
+      </main>
     </div>
   );
 };
