@@ -160,6 +160,10 @@ const Integration = () => {
   };
 
   const handleConnectGoogleAds = () => window.location.href = "https://api.askeliott.com/auth/google-ads";
+  const handleConnectMetaAds = () => window.location.href = "https://api.askeliott.com/auth/meta";
+  const handleConnectHubspot = () => window.location.href = "https://api.askeliott.com/auth/hubspot";
+  const handleConnectGoogleSheets = () => window.location.href = "https://api.askeliott.com/auth/google-sheets";
+  const handleConnectShopify = () => window.location.href = "https://api.askeliott.com/auth/shopify";
 
   return (
     <div className="min-h-screen w-full bg-[#f4f6f9]">
@@ -167,20 +171,20 @@ const Integration = () => {
         <h1 className="text-4xl font-extrabold mb-8 text-gray-800">Intégrations</h1>
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
 
-          {/* Carte Google Ads */}
+          {/* Google Ads */}
           <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
             <div className="bg-blue-50/50 p-4 border-b border-blue-100">
               <div className="flex items-center gap-4">
-                <img src="/lovable-uploads/20f2b0c9-e4ee-4bf1-92e5-5431fb8fec91.png" alt="Google Ads" className="w-[46px] h-[46px] rounded-lg border bg-white shadow object-contain" />
+                <img src="/lovable-uploads/20f2b0c9-e4ee-4bf1-92e5-5431fb8fec91.png" className="w-12 h-12" alt="Google Ads" />
                 <div>
-                  <CardTitle className="text-lg font-bold text-gray-800">Google Ads</CardTitle>
-                  <CardDescription className="text-gray-600">Connectez votre compte Google Ads</CardDescription>
+                  <CardTitle>Google Ads</CardTitle>
+                  <CardDescription>Connectez votre compte Google Ads</CardDescription>
                 </div>
               </div>
             </div>
             <CardContent className="p-6">
               {!googleAdsToken ? (
-                <Button onClick={handleConnectGoogleAds} className="w-full bg-[#4285F4] hover:bg-[#3367D6] text-white">
+                <Button onClick={handleConnectGoogleAds} className="w-full bg-blue-600 text-white">
                   Connecter Google Ads
                 </Button>
               ) : (
@@ -215,7 +219,77 @@ const Integration = () => {
             </CardContent>
           </Card>
 
-          {/* 👉 Tu peux réintégrer ici les autres cartes comme Meta Ads, HubSpot, etc. */}
+          {/* Meta Ads */}
+          <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
+            <div className="bg-blue-50/50 p-4 border-b border-blue-100">
+              <div className="flex items-center gap-4">
+                <img src="/lovable-uploads/eeca5120-a156-4d1b-a16a-82810e51ce6a.png" alt="Meta Ads" className="w-[46px] h-[46px] rounded-lg border bg-white shadow object-contain" />
+                <div>
+                  <CardTitle className="text-lg font-bold text-gray-800">Meta Ads</CardTitle>
+                  <CardDescription className="text-gray-600">Connectez votre compte Meta Ads</CardDescription>
+                </div>
+              </div>
+            </div>
+            <CardContent className="p-6">
+              <Button onClick={handleConnectMetaAds} className="w-full bg-[#1877F2] hover:bg-[#0e64d3] text-white">
+                Connecter Meta Ads
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Hubspot */}
+          <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
+            <div className="bg-blue-50/50 p-4 border-b border-blue-100">
+              <div className="flex items-center gap-4">
+                <img src="/lovable-uploads/1eb64ec7-60ab-434d-95d1-45b61ae3d30d.png" alt="HubSpot" className="w-[46px] h-[46px] rounded-lg border bg-white shadow object-contain" />
+                <div>
+                  <CardTitle className="text-lg font-bold text-gray-800">HubSpot</CardTitle>
+                  <CardDescription className="text-gray-600">Connectez votre compte HubSpot</CardDescription>
+                </div>
+              </div>
+            </div>
+            <CardContent className="p-6">
+              <Button onClick={handleConnectHubspot} className="w-full bg-[#FF7A59] hover:bg-[#f06845] text-white">
+                Connecter HubSpot
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Google Sheets */}
+          <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
+            <div className="bg-blue-50/50 p-4 border-b border-blue-100">
+              <div className="flex items-center gap-4">
+                <img src="/lovable-uploads/a5d2d998-d3cd-4f60-9128-d43a7fc8377c.png" alt="Google Sheets" className="w-[46px] h-[46px] rounded-lg border bg-white shadow object-contain" />
+                <div>
+                  <CardTitle className="text-lg font-bold text-gray-800">Google Sheets</CardTitle>
+                  <CardDescription className="text-gray-600">Connectez votre compte Google Sheets</CardDescription>
+                </div>
+              </div>
+            </div>
+            <CardContent className="p-6">
+              <Button onClick={handleConnectGoogleSheets} className="w-full bg-[#0F9D58] hover:bg-[#0b8043] text-white">
+                Connecter Google Sheets
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Shopify */}
+          <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
+            <div className="bg-blue-50/50 p-4 border-b border-blue-100">
+              <div className="flex items-center gap-4">
+                <img src="/lovable-uploads/ac7b886c-02ac-4f1c-a2e3-114a217db20e.png" alt="Shopify" className="w-[46px] h-[46px] rounded-lg border bg-white shadow object-contain" />
+                <div>
+                  <CardTitle className="text-lg font-bold text-gray-800">Shopify</CardTitle>
+                  <CardDescription className="text-gray-600">Connectez votre boutique Shopify</CardDescription>
+                </div>
+              </div>
+            </div>
+            <CardContent className="p-6">
+              <Button onClick={handleConnectShopify} className="w-full bg-[#95BF47] hover:bg-[#7ea83b] text-white">
+                Connecter Shopify
+              </Button>
+            </CardContent>
+          </Card>
 
         </div>
       </main>
