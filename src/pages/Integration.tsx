@@ -110,33 +110,29 @@ const Integration = () => {
     clearUrlAndProcessToken();
   }, []);
 
-  useEffect(() => {
-    if (!accessToken || !selectedAccount || connectionStatus !== "connected") {
-      setProperties([]);
-      return;
-    }
-    setIsLoading(true);
+  const loadAccounts = async (token: string) => {
+    if (!token) return;
+    setAccountsLoading(true);
     setError(null);
-    fetchGoogleAnalyticsAccountProperties(selectedAccount)
-      .then(propertiesData => {
-        const propsList = (propertiesData || []).map((prop: any) => ({
-          id: prop.name ? prop.name.split("/").pop() : prop.id,
-          name: prop.displayName,
-          url: prop.webLink,
-          createdAt: prop.createTime,
-        }));
-        setProperties(propsList);
-        toast[propsList.length ? 'success' : 'info'](
-          propsList.length ? `${propsList.length} propriété(s) Google Analytics trouvée(s)` : "Aucune propriété trouvée pour ce compte."
-        );
-      })
-      .catch(err => {
-        setError(err.message || "Impossible de charger les propriétés pour ce compte.");
-        setProperties([]);
-        toast.error(err.message || "Erreur lors du chargement des propriétés.");
-      })
-      .finally(() => setIsLoading(false));
-  }, [accessToken, selectedAccount, connectionStatus]);
+    try {
+      const accountsData = await fetchGoogleAnalyticsAccounts();
+      setAccounts(accountsData || []);
+      const savedAccountId = localStorage.getItem("ga_account_id");
+      if (savedAccountId && accountsData.some(acc => acc.name === savedAccountId)) {
+        setSelectedAccount(savedAccountId);
+      } else if (accountsData.length === 1) {
+        setSelectedAccount(accountsData[0].name);
+      } else if (accountsData.length === 0) {
+        toast.info("Aucun compte Google Analytics trouvé.");
+      }
+    } catch (err: any) {
+      console.error("Erreur lors du chargement des comptes:", err);
+      setError(err.message || "Problème lors de la récupération des comptes Google Analytics.");
+      toast.error(err.message || "Erreur lors du chargement des comptes Analytics.");
+    } finally {
+      setAccountsLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("googleAccessToken");
@@ -164,6 +160,10 @@ const Integration = () => {
   };
 
   const handleConnectGoogleAds = () => window.location.href = "https://api.askeliott.com/auth/google-ads";
+  const handleConnectMeta = () => window.location.href = "https://api.askeliott.com/auth/meta";
+  const handleConnectHubspot = () => window.location.href = "https://api.askeliott.com/auth/hubspot";
+  const handleConnectSheets = () => window.location.href = "https://api.askeliott.com/auth/google-sheets";
+  const handleConnectShopify = () => window.location.href = "https://api.askeliott.com/auth/shopify";
 
   return (
     <div className="p-10">
@@ -173,7 +173,7 @@ const Integration = () => {
       <Card className="border rounded-lg shadow mb-6">
         <CardContent className="p-4">
           <div className="flex items-center gap-4 mb-4">
-            <img src="https://www.gstatic.com/analytics-suite/header/suite/v2/ic_analytics.svg" className="w-12 h-12" alt="Google Analytics" />
+            <img src="https://www.gstatic.com/analytics-suite/header/suite/v2/ic_analytics.svg" className="w-12 h-12" alt="GA" />
             <div>
               <CardTitle>Google Analytics</CardTitle>
               <CardDescription>Connectez votre compte Google Analytics</CardDescription>
@@ -183,19 +183,11 @@ const Integration = () => {
           {connectionStatus === 'disconnected' ? (
             <GoogleAuthButton clientId={CLIENT_ID} />
           ) : connectionStatus === 'connecting' && isInitialLoad ? (
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <div className="h-4 w-4 rounded-full bg-blue-200 animate-pulse"></div>
-                <span>Vérification de la connexion...</span>
-              </div>
-              <Skeleton className="h-10 w-full" />
-            </div>
+            <Skeleton className="h-10 w-full" />
           ) : (
             <>
               <Button variant="outline" onClick={handleLogout} className="w-full mb-4">Déconnecter</Button>
-              {accountsLoading ? (
-                <Skeleton className="h-10 w-full mb-4" />
-              ) : accounts.length > 0 && (
+              {accounts.length > 0 && (
                 <div className="mb-4">
                   <label className="block mb-2 text-sm font-medium text-gray-700">Sélectionnez un compte</label>
                   <Select value={selectedAccount ?? ""} onValueChange={(val) => setSelectedAccount(val)}>
@@ -204,9 +196,7 @@ const Integration = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {accounts.map(acct => (
-                        <SelectItem key={acct.name} value={acct.name}>
-                          {acct.displayName || acct.name}
-                        </SelectItem>
+                        <SelectItem key={acct.name} value={acct.name}>{acct.displayName || acct.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -224,6 +214,117 @@ const Integration = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Google Ads */}
+      <Card className="border rounded-lg shadow mb-6">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-4 mb-4">
+            <img src="/lovable-uploads/20f2b0c9-e4ee-4bf1-92e5-5431fb8fec91.png" className="w-12 h-12" alt="Google Ads" />
+            <div>
+              <CardTitle>Google Ads</CardTitle>
+              <CardDescription>Connectez votre compte Google Ads</CardDescription>
+            </div>
+          </div>
+
+          {!googleAdsToken ? (
+            <Button onClick={handleConnectGoogleAds} className="w-full bg-blue-600 text-white">
+              Connecter Google Ads
+            </Button>
+          ) : (
+            <>
+              <Button onClick={() => {
+                setGoogleAdsToken(null);
+                setGoogleAdsCustomerIds([]);
+                setSelectedGoogleAdsCustomerId(null);
+                localStorage.removeItem("googleAdsAccessToken");
+                localStorage.removeItem("googleAdsCustomerId");
+                toast.info("Déconnecté de Google Ads");
+              }} className="w-full mb-4">
+                Déconnecter
+              </Button>
+
+              {googleAdsCustomerIds.length > 0 && (
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">Sélectionnez un compte</label>
+                  <Select value={selectedGoogleAdsCustomerId ?? ""} onValueChange={handleGoogleAdsSelect}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisissez un compte Google Ads" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {googleAdsCustomerIds.map(id => (
+                        <SelectItem key={id} value={id}>{id}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Autres cartes */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card className="border rounded-lg shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4 mb-4">
+              <img src="/lovable-uploads/eeca5120-a156-4d1b-a16a-82810e51ce6a.png" className="w-12 h-12" alt="Meta" />
+              <div>
+                <CardTitle>Meta Ads</CardTitle>
+                <CardDescription>Connectez votre compte Meta Ads</CardDescription>
+              </div>
+            </div>
+            <Button onClick={handleConnectMeta} className="w-full bg-[#1877F2] text-white">
+              Connecter Meta Ads
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="border rounded-lg shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4 mb-4">
+              <img src="/lovable-uploads/1eb64ec7-60ab-434d-95d1-45b61ae3d30d.png" className="w-12 h-12" alt="Hubspot" />
+              <div>
+                <CardTitle>HubSpot</CardTitle>
+                <CardDescription>Connectez votre compte HubSpot</CardDescription>
+              </div>
+            </div>
+            <Button onClick={handleConnectHubspot} className="w-full bg-[#FF7A59] text-white">
+              Connecter HubSpot
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="border rounded-lg shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4 mb-4">
+              <img src="/lovable-uploads/a5d2d998-d3cd-4f60-9128-d43a7fc8377c.png" className="w-12 h-12" alt="Sheets" />
+              <div>
+                <CardTitle>Google Sheets</CardTitle>
+                <CardDescription>Connectez votre compte Google Sheets</CardDescription>
+              </div>
+            </div>
+            <Button onClick={handleConnectSheets} className="w-full bg-[#0F9D58] text-white">
+              Connecter Google Sheets
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="border rounded-lg shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4 mb-4">
+              <img src="/lovable-uploads/ac7b886c-02ac-4f1c-a2e3-114a217db20e.png" className="w-12 h-12" alt="Shopify" />
+              <div>
+                <CardTitle>Shopify</CardTitle>
+                <CardDescription>Connectez votre boutique Shopify</CardDescription>
+              </div>
+            </div>
+            <Button onClick={handleConnectShopify} className="w-full bg-[#95BF47] text-white">
+              Connecter Shopify
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
