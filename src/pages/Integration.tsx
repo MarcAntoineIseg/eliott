@@ -320,7 +320,10 @@ const Integration = () => {
             </CardContent>
           </Card>
 
-        </div>
+        </div> {/* 👈 ferme le div.grid qui contient toutes les cartes */}
       </main>
     </div>
   );
+};
+
+export default Integration;
