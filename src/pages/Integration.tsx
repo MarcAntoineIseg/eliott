@@ -195,6 +195,10 @@ const Integration = () => {
   const handleConnectGoogleSheets = () => {
     window.location.href = "https://api.askeliott.com/auth/google-sheets";
   };
+  
+  const handleConnectShopify = () => {
+    window.location.href = "https://api.askeliott.com/auth/shopify";
+  };
 
   return (
     <div className="min-h-screen w-full bg-[#f4f6f9]">
@@ -358,6 +362,28 @@ const Integration = () => {
             <CardContent className="p-6">
               <Button onClick={handleConnectGoogleSheets} className="w-full bg-[#0F9D58] hover:bg-[#0b8043] text-white">
                 Connecter Google Sheets
+              </Button>
+            </CardContent>
+          </Card>
+          
+          {/* Shopify Card */}
+          <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
+            <div className="bg-blue-50/50 p-4 border-b border-blue-100">
+              <div className="flex items-center gap-4">
+                <img
+                  src="/lovable-uploads/ac7b886c-02ac-4f1c-a2e3-114a217db20e.png"
+                  alt="Shopify"
+                  className="w-[46px] h-[46px] rounded-lg border bg-white shadow object-contain"
+                />
+                <div>
+                  <CardTitle className="text-lg font-bold text-gray-800">Shopify</CardTitle>
+                  <CardDescription className="text-gray-600">Connectez votre boutique Shopify</CardDescription>
+                </div>
+              </div>
+            </div>
+            <CardContent className="p-6">
+              <Button onClick={handleConnectShopify} className="w-full bg-[#95BF47] hover:bg-[#7ea83b] text-white">
+                Connecter Shopify
               </Button>
             </CardContent>
           </Card>
