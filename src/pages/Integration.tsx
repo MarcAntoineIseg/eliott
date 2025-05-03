@@ -167,7 +167,7 @@ const Integration = () => {
   };
 
   const handleConnectMetaAds = () => {
-    toast.info("La connexion à Meta Ads n'est pas encore implémentée");
+    window.location.href = "https://app.askeliott.com/auth/meta";
   };
 
   return (
