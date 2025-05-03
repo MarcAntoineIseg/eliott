@@ -160,139 +160,171 @@ const Integration = () => {
   };
 
   const handleConnectGoogleAds = () => window.location.href = "https://api.askeliott.com/auth/google-ads";
-  const handleConnectMetaAds = () => window.location.href = "https://api.askeliott.com/auth/meta";
+  const handleConnectMeta = () => window.location.href = "https://api.askeliott.com/auth/meta";
   const handleConnectHubspot = () => window.location.href = "https://api.askeliott.com/auth/hubspot";
-  const handleConnectGoogleSheets = () => window.location.href = "https://api.askeliott.com/auth/google-sheets";
+  const handleConnectSheets = () => window.location.href = "https://api.askeliott.com/auth/google-sheets";
   const handleConnectShopify = () => window.location.href = "https://api.askeliott.com/auth/shopify";
 
   return (
-    <div className="min-h-screen w-full bg-[#f4f6f9]">
-      <main className="container py-8">
-        <h1 className="text-4xl font-extrabold mb-8 text-gray-800">Intégrations</h1>
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+    <div className="p-10">
+      <h1 className="text-3xl font-bold mb-6">Intégrations</h1>
 
-          {/* Google Ads */}
-          <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
-            <div className="bg-blue-50/50 p-4 border-b border-blue-100">
-              <div className="flex items-center gap-4">
-                <img src="/lovable-uploads/20f2b0c9-e4ee-4bf1-92e5-5431fb8fec91.png" className="w-12 h-12" alt="Google Ads" />
-                <div>
-                  <CardTitle>Google Ads</CardTitle>
-                  <CardDescription>Connectez votre compte Google Ads</CardDescription>
-                </div>
-              </div>
+      {/* Google Analytics */}
+      <Card className="border rounded-lg shadow mb-6">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-4 mb-4">
+            <img src="https://www.gstatic.com/analytics-suite/header/suite/v2/ic_analytics.svg" className="w-12 h-12" alt="GA" />
+            <div>
+              <CardTitle>Google Analytics</CardTitle>
+              <CardDescription>Connectez votre compte Google Analytics</CardDescription>
             </div>
-            <CardContent className="p-6">
-              {!googleAdsToken ? (
-                <Button onClick={handleConnectGoogleAds} className="w-full bg-blue-600 text-white">
-                  Connecter Google Ads
-                </Button>
-              ) : (
-                <>
-                  <Button onClick={() => {
-                    setGoogleAdsToken(null);
-                    setGoogleAdsCustomerIds([]);
-                    setSelectedGoogleAdsCustomerId(null);
-                    localStorage.removeItem("googleAdsAccessToken");
-                    localStorage.removeItem("googleAdsCustomerId");
-                    toast.info("Déconnecté de Google Ads");
-                  }} className="w-full mb-4">
-                    Déconnecter
-                  </Button>
-                  {googleAdsCustomerIds.length > 0 && (
-                    <div>
-                      <label className="block mb-2 text-sm font-medium text-gray-700">Sélectionnez un compte</label>
-                      <Select value={selectedGoogleAdsCustomerId ?? ""} onValueChange={handleGoogleAdsSelect}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choisissez un compte Google Ads" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {googleAdsCustomerIds.map(id => (
-                            <SelectItem key={id} value={id}>{id}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                </>
+          </div>
+
+          {connectionStatus === 'disconnected' ? (
+            <GoogleAuthButton clientId={CLIENT_ID} />
+          ) : connectionStatus === 'connecting' && isInitialLoad ? (
+            <Skeleton className="h-10 w-full" />
+          ) : (
+            <>
+              <Button variant="outline" onClick={handleLogout} className="w-full mb-4">Déconnecter</Button>
+              {accounts.length > 0 && (
+                <div className="mb-4">
+                  <label className="block mb-2 text-sm font-medium text-gray-700">Sélectionnez un compte</label>
+                  <Select value={selectedAccount ?? ""} onValueChange={(val) => setSelectedAccount(val)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisissez un compte" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {accounts.map(acct => (
+                        <SelectItem key={acct.name} value={acct.name}>{acct.displayName || acct.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
-            </CardContent>
-          </Card>
+              <PropertyList
+                properties={properties}
+                isLoading={isLoading}
+                accessToken={accessToken}
+                error={error}
+                selectedAccount={selectedAccount}
+                onSelectProperty={handleLoadAnalytics}
+              />
+            </>
+          )}
+        </CardContent>
+      </Card>
 
-          {/* Meta Ads */}
-          <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
-            <div className="bg-blue-50/50 p-4 border-b border-blue-100">
-              <div className="flex items-center gap-4">
-                <img src="/lovable-uploads/eeca5120-a156-4d1b-a16a-82810e51ce6a.png" alt="Meta Ads" className="w-[46px] h-[46px] rounded-lg border bg-white shadow object-contain" />
+      {/* Google Ads */}
+      <Card className="border rounded-lg shadow mb-6">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-4 mb-4">
+            <img src="/lovable-uploads/20f2b0c9-e4ee-4bf1-92e5-5431fb8fec91.png" className="w-12 h-12" alt="Google Ads" />
+            <div>
+              <CardTitle>Google Ads</CardTitle>
+              <CardDescription>Connectez votre compte Google Ads</CardDescription>
+            </div>
+          </div>
+
+          {!googleAdsToken ? (
+            <Button onClick={handleConnectGoogleAds} className="w-full bg-blue-600 text-white">
+              Connecter Google Ads
+            </Button>
+          ) : (
+            <>
+              <Button onClick={() => {
+                setGoogleAdsToken(null);
+                setGoogleAdsCustomerIds([]);
+                setSelectedGoogleAdsCustomerId(null);
+                localStorage.removeItem("googleAdsAccessToken");
+                localStorage.removeItem("googleAdsCustomerId");
+                toast.info("Déconnecté de Google Ads");
+              }} className="w-full mb-4">
+                Déconnecter
+              </Button>
+
+              {googleAdsCustomerIds.length > 0 && (
                 <div>
-                  <CardTitle className="text-lg font-bold text-gray-800">Meta Ads</CardTitle>
-                  <CardDescription className="text-gray-600">Connectez votre compte Meta Ads</CardDescription>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">Sélectionnez un compte</label>
+                  <Select value={selectedGoogleAdsCustomerId ?? ""} onValueChange={handleGoogleAdsSelect}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisissez un compte Google Ads" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {googleAdsCustomerIds.map(id => (
+                        <SelectItem key={id} value={id}>{id}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Autres cartes */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card className="border rounded-lg shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4 mb-4">
+              <img src="/lovable-uploads/eeca5120-a156-4d1b-a16a-82810e51ce6a.png" className="w-12 h-12" alt="Meta" />
+              <div>
+                <CardTitle>Meta Ads</CardTitle>
+                <CardDescription>Connectez votre compte Meta Ads</CardDescription>
               </div>
             </div>
-            <CardContent className="p-6">
-              <Button onClick={handleConnectMetaAds} className="w-full bg-[#1877F2] hover:bg-[#0e64d3] text-white">
-                Connecter Meta Ads
-              </Button>
-            </CardContent>
-          </Card>
+            <Button onClick={handleConnectMeta} className="w-full bg-[#1877F2] text-white">
+              Connecter Meta Ads
+            </Button>
+          </CardContent>
+        </Card>
 
-          {/* Hubspot */}
-          <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
-            <div className="bg-blue-50/50 p-4 border-b border-blue-100">
-              <div className="flex items-center gap-4">
-                <img src="/lovable-uploads/1eb64ec7-60ab-434d-95d1-45b61ae3d30d.png" alt="HubSpot" className="w-[46px] h-[46px] rounded-lg border bg-white shadow object-contain" />
-                <div>
-                  <CardTitle className="text-lg font-bold text-gray-800">HubSpot</CardTitle>
-                  <CardDescription className="text-gray-600">Connectez votre compte HubSpot</CardDescription>
-                </div>
+        <Card className="border rounded-lg shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4 mb-4">
+              <img src="/lovable-uploads/1eb64ec7-60ab-434d-95d1-45b61ae3d30d.png" className="w-12 h-12" alt="Hubspot" />
+              <div>
+                <CardTitle>HubSpot</CardTitle>
+                <CardDescription>Connectez votre compte HubSpot</CardDescription>
               </div>
             </div>
-            <CardContent className="p-6">
-              <Button onClick={handleConnectHubspot} className="w-full bg-[#FF7A59] hover:bg-[#f06845] text-white">
-                Connecter HubSpot
-              </Button>
-            </CardContent>
-          </Card>
+            <Button onClick={handleConnectHubspot} className="w-full bg-[#FF7A59] text-white">
+              Connecter HubSpot
+            </Button>
+          </CardContent>
+        </Card>
 
-          {/* Google Sheets */}
-          <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
-            <div className="bg-blue-50/50 p-4 border-b border-blue-100">
-              <div className="flex items-center gap-4">
-                <img src="/lovable-uploads/a5d2d998-d3cd-4f60-9128-d43a7fc8377c.png" alt="Google Sheets" className="w-[46px] h-[46px] rounded-lg border bg-white shadow object-contain" />
-                <div>
-                  <CardTitle className="text-lg font-bold text-gray-800">Google Sheets</CardTitle>
-                  <CardDescription className="text-gray-600">Connectez votre compte Google Sheets</CardDescription>
-                </div>
+        <Card className="border rounded-lg shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4 mb-4">
+              <img src="/lovable-uploads/a5d2d998-d3cd-4f60-9128-d43a7fc8377c.png" className="w-12 h-12" alt="Sheets" />
+              <div>
+                <CardTitle>Google Sheets</CardTitle>
+                <CardDescription>Connectez votre compte Google Sheets</CardDescription>
               </div>
             </div>
-            <CardContent className="p-6">
-              <Button onClick={handleConnectGoogleSheets} className="w-full bg-[#0F9D58] hover:bg-[#0b8043] text-white">
-                Connecter Google Sheets
-              </Button>
-            </CardContent>
-          </Card>
+            <Button onClick={handleConnectSheets} className="w-full bg-[#0F9D58] text-white">
+              Connecter Google Sheets
+            </Button>
+          </CardContent>
+        </Card>
 
-          {/* Shopify */}
-          <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
-            <div className="bg-blue-50/50 p-4 border-b border-blue-100">
-              <div className="flex items-center gap-4">
-                <img src="/lovable-uploads/ac7b886c-02ac-4f1c-a2e3-114a217db20e.png" alt="Shopify" className="w-[46px] h-[46px] rounded-lg border bg-white shadow object-contain" />
-                <div>
-                  <CardTitle className="text-lg font-bold text-gray-800">Shopify</CardTitle>
-                  <CardDescription className="text-gray-600">Connectez votre boutique Shopify</CardDescription>
-                </div>
+        <Card className="border rounded-lg shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4 mb-4">
+              <img src="/lovable-uploads/ac7b886c-02ac-4f1c-a2e3-114a217db20e.png" className="w-12 h-12" alt="Shopify" />
+              <div>
+                <CardTitle>Shopify</CardTitle>
+                <CardDescription>Connectez votre boutique Shopify</CardDescription>
               </div>
             </div>
-            <CardContent className="p-6">
-              <Button onClick={handleConnectShopify} className="w-full bg-[#95BF47] hover:bg-[#7ea83b] text-white">
-                Connecter Shopify
-              </Button>
-            </CardContent>
-          </Card>
-
-        </div>
-      </main>
+            <Button onClick={handleConnectShopify} className="w-full bg-[#95BF47] text-white">
+              Connecter Shopify
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
