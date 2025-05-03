@@ -14,15 +14,20 @@ const GoogleAdsIntegration = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("googleAdsAccessToken");
+    const customerId = params.get("googleAdsCustomerId");
     if (token) {
       setAdsToken(token);
       localStorage.setItem("googleAdsAccessToken", token);
       toast.success("Connexion Google Ads réussie");
-      window.history.replaceState({}, document.title, "/integration");
     } else {
       const saved = localStorage.getItem("googleAdsAccessToken");
       if (saved) setAdsToken(saved);
     }
+    if (customerId) {
+      localStorage.setItem("googleAdsCustomerId", customerId);
+      setSelectedCustomerId(customerId);
+    }
+    window.history.replaceState({}, document.title, "/integration");
   }, []);
 
   useEffect(() => {
