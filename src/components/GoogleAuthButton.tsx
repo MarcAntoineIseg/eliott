@@ -1,6 +1,5 @@
 
 import { Button } from "@/components/ui/button";
-import { Cloud } from "lucide-react";
 import { GOOGLE_ANALYTICS_SCOPES, REDIRECT_URI } from "@/services/googleAnalytics";
 
 interface GoogleAuthButtonProps {
@@ -40,7 +39,6 @@ const GoogleAuthButton = ({ clientId }: GoogleAuthButtonProps) => {
       onClick={handleGoogleAuth}
       className="w-full bg-[#f9ab00] hover:bg-[#e09600] text-white"
     >
-      <Cloud size={20} />
       <span>Connecter Google Analytics</span>
     </Button>
   );
