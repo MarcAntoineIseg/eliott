@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
@@ -188,6 +187,10 @@ const Integration = () => {
     window.location.href = "https://api.askeliott.com/auth/hubspot";
   };
 
+  const handleConnectGoogleAds = () => {
+    window.location.href = "https://api.askeliott.com/auth/google-ads";
+  };
+
   return (
     <div className="min-h-screen w-full bg-[#f4f6f9]">
       <main className="container py-8">
@@ -306,6 +309,28 @@ const Integration = () => {
             <CardContent className="p-6">
               <Button onClick={handleConnectHubspot} className="w-full bg-[#FF7A59] hover:bg-[#f06845] text-white">
                 Connecter HubSpot
+              </Button>
+            </CardContent>
+          </Card>
+          
+          {/* Google Ads Card */}
+          <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
+            <div className="bg-blue-50/50 p-4 border-b border-blue-100">
+              <div className="flex items-center gap-4">
+                <img
+                  src="/lovable-uploads/20f2b0c9-e4ee-4bf1-92e5-5431fb8fec91.png"
+                  alt="Google Ads"
+                  className="w-[46px] h-[46px] rounded-lg border bg-white shadow object-contain"
+                />
+                <div>
+                  <CardTitle className="text-lg font-bold text-gray-800">Google Ads</CardTitle>
+                  <CardDescription className="text-gray-600">Connectez votre compte Google Ads</CardDescription>
+                </div>
+              </div>
+            </div>
+            <CardContent className="p-6">
+              <Button onClick={handleConnectGoogleAds} className="w-full bg-[#4285F4] hover:bg-[#3367D6] text-white">
+                Connecter Google Ads
               </Button>
             </CardContent>
           </Card>
