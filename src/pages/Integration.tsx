@@ -261,23 +261,6 @@ const Integration = () => {
               <Button onClick={handleConnectMetaAds} className="w-full bg-[#1877F2] hover:bg-[#0e64d3] text-white">
                 Connecter Meta Ads
               </Button>
-              <div className="mt-4 text-center text-sm text-gray-500">
-                <p>Visualisez et analysez vos campagnes publicitaires Meta</p>
-                <div className="flex justify-center gap-4 mt-4">
-                  <div className="flex flex-col items-center">
-                    <BarChart3 className="h-8 w-8 text-gray-400" />
-                    <span className="text-xs mt-1">Statistiques</span>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <LineChart className="h-8 w-8 text-gray-400" />
-                    <span className="text-xs mt-1">Performance</span>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <Presentation className="h-8 w-8 text-gray-400" />
-                    <span className="text-xs mt-1">Campagnes</span>
-                  </div>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </div>
