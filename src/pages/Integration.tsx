@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
@@ -190,6 +191,10 @@ const Integration = () => {
   const handleConnectGoogleAds = () => {
     window.location.href = "https://api.askeliott.com/auth/google-ads";
   };
+  
+  const handleConnectGoogleSheets = () => {
+    window.location.href = "https://api.askeliott.com/auth/google-sheets";
+  };
 
   return (
     <div className="min-h-screen w-full bg-[#f4f6f9]">
@@ -331,6 +336,28 @@ const Integration = () => {
             <CardContent className="p-6">
               <Button onClick={handleConnectGoogleAds} className="w-full bg-[#4285F4] hover:bg-[#3367D6] text-white">
                 Connecter Google Ads
+              </Button>
+            </CardContent>
+          </Card>
+          
+          {/* Google Sheets Card */}
+          <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
+            <div className="bg-blue-50/50 p-4 border-b border-blue-100">
+              <div className="flex items-center gap-4">
+                <img
+                  src="/lovable-uploads/a5d2d998-d3cd-4f60-9128-d43a7fc8377c.png"
+                  alt="Google Sheets"
+                  className="w-[46px] h-[46px] rounded-lg border bg-white shadow object-contain"
+                />
+                <div>
+                  <CardTitle className="text-lg font-bold text-gray-800">Google Sheets</CardTitle>
+                  <CardDescription className="text-gray-600">Connectez votre compte Google Sheets</CardDescription>
+                </div>
+              </div>
+            </div>
+            <CardContent className="p-6">
+              <Button onClick={handleConnectGoogleSheets} className="w-full bg-[#0F9D58] hover:bg-[#0b8043] text-white">
+                Connecter Google Sheets
               </Button>
             </CardContent>
           </Card>
