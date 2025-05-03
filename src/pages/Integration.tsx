@@ -10,14 +10,15 @@ import {
   getAccessTokenFromUrl,
   fetchGoogleAnalyticsAccounts,
   fetchGoogleAnalyticsAccountProperties,
-  checkTokenValidity
+  checkTokenValidity,
 } from "@/services/googleAnalytics";
+import { fetchGoogleAdsCustomerInfo } from "@/services/googleAds";
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
-  SelectItem
+  SelectItem,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -32,16 +33,35 @@ const Integration = () => {
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>("disconnected");
   const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
 
-  // 🔄 Gérer la redirection Google Ads (stocke token dans le localStorage)
+  const [googleAdsConnected, setGoogleAdsConnected] = useState(false);
+  const [googleAdsCustomerId, setGoogleAdsCustomerId] = useState<string | null>(null);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const googleAdsToken = params.get("googleAdsAccessToken");
-    const googleAdsCustomerId = params.get("googleAdsCustomerId");
-    if (googleAdsToken && googleAdsCustomerId) {
-      localStorage.setItem("googleAdsAccessToken", googleAdsToken);
-      localStorage.setItem("googleAdsCustomerId", googleAdsCustomerId);
-      toast.success("Connexion réussie à Google Ads");
+
+    if (googleAdsToken) {
+      fetchGoogleAdsCustomerInfo(googleAdsToken)
+        .then((customerId) => {
+          if (customerId) {
+            localStorage.setItem("googleAdsAccessToken", googleAdsToken);
+            localStorage.setItem("googleAdsCustomerId", customerId);
+            setGoogleAdsCustomerId(customerId);
+            setGoogleAdsConnected(true);
+            toast.success("Connexion réussie à Google Ads");
+          } else {
+            toast.error("Aucun compte Google Ads trouvé.");
+          }
+        })
+        .catch(() => toast.error("Erreur lors de la récupération des données Google Ads"));
+
       window.history.replaceState({}, document.title, "/integration");
+    } else {
+      const savedId = localStorage.getItem("googleAdsCustomerId");
+      if (savedId) {
+        setGoogleAdsCustomerId(savedId);
+        setGoogleAdsConnected(true);
+      }
     }
   }, []);
 
@@ -187,17 +207,56 @@ const Integration = () => {
     toast.success("Propriété sélectionnée enregistrée avec succès !");
   };
 
-  const handleConnectMetaAds = () => window.location.href = "https://api.askeliott.com/auth/meta";
-  const handleConnectGoogleAds = () => window.location.href = "https://api.askeliott.com/auth/google-ads";
-  const handleConnectHubspot = () => window.location.href = "https://api.askeliott.com/auth/hubspot";
-  const handleConnectGoogleSheets = () => window.location.href = "https://api.askeliott.com/auth/google-sheets";
-  const handleConnectShopify = () => window.location.href = "https://api.askeliott.com/auth/shopify";
-
   return (
     <div className="min-h-screen w-full bg-[#f4f6f9]">
       <main className="container py-8">
         <h1 className="text-4xl font-extrabold mb-8 text-gray-800">Intégrations</h1>
-        {/* 👉 les cards sont déjà en place dans le reste de ton fichier */}
+
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          {/* Google Ads Card */}
+          <Card className="border-2 border-blue-50 hover:border-blue-100 transition-all duration-300 shadow-lg hover:shadow-xl rounded-2xl overflow-hidden">
+            <div className="bg-blue-50/50 p-4 border-b border-blue-100">
+              <div className="flex items-center gap-4">
+                <img
+                  src="/lovable-uploads/20f2b0c9-e4ee-4bf1-92e5-5431fb8fec91.png"
+                  alt="Google Ads"
+                  className="w-[46px] h-[46px] rounded-lg border bg-white shadow object-contain"
+                />
+                <div>
+                  <CardTitle className="text-lg font-bold text-gray-800">Google Ads</CardTitle>
+                  <CardDescription className="text-gray-600">Connectez votre compte Google Ads</CardDescription>
+                </div>
+              </div>
+            </div>
+            <CardContent className="p-6">
+              {googleAdsConnected && googleAdsCustomerId ? (
+                <>
+                  <p className="text-green-700 mb-4">Connecté (ID : {googleAdsCustomerId})</p>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      localStorage.removeItem("googleAdsAccessToken");
+                      localStorage.removeItem("googleAdsCustomerId");
+                      setGoogleAdsConnected(false);
+                      setGoogleAdsCustomerId(null);
+                      toast.info("Déconnecté de Google Ads");
+                    }}
+                    className="w-full"
+                  >
+                    Déconnecter
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  onClick={() => window.location.href = "https://api.askeliott.com/auth/google-ads"}
+                  className="w-full bg-[#4285F4] hover:bg-[#3367D6] text-white"
+                >
+                  Connecter Google Ads
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </main>
     </div>
   );
