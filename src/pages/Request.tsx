@@ -4,7 +4,6 @@ import { Search } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { sendToWebhook } from "@/services/webhook";
-import { getStoredAccessToken } from "@/services/googleAnalytics";
 import {
   LineChart,
   Line,
@@ -15,38 +14,56 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+type UserContext = {
+  accessToken: string;
+  refreshToken: string;
+  propertyId: string; // GA propertyId ou Google Sheets fileId
+  accountId: string;  // "sheets" ou ID GA
+};
+
 const Request = () => {
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [chartData, setChartData] = useState<any[]>([]);
+  const [userContext, setUserContext] = useState<UserContext | null>(null);
 
-  const [userContext, setUserContext] = useState<{
-    propertyId: string;
-    accountId: string;
-    accessToken: string;
-    refreshToken: string;
-  } | null>(null);
-
+  // Chargement dynamique du contexte utilisateur (Analytics ou Sheets)
   useEffect(() => {
-    const loadUserContext = async () => {
-      const accessToken = localStorage.getItem("googleAccessToken") || "";
-      const refreshToken = localStorage.getItem("ga_refresh_token") || "";
-      const propertyId = localStorage.getItem("ga_property_id") || "";
-      const accountId = localStorage.getItem("ga_account_id") || "";
+    const loadUserContext = () => {
+      // Google Analytics
+      const gaAccessToken = localStorage.getItem("googleAccessToken");
+      const gaRefreshToken = localStorage.getItem("ga_refresh_token") || "";
+      const gaPropertyId = localStorage.getItem("ga_property_id");
+      const gaAccountId = localStorage.getItem("ga_account_id");
 
-      console.log("Loaded from localStorage:", { accessToken, refreshToken, propertyId, accountId });
+      // Google Sheets
+      const sheetsAccessToken = localStorage.getItem("googleSheetsAccessToken");
+      const sheetsFileId = localStorage.getItem("googleSheetsFileId");
 
-      if (!accessToken || !propertyId || !accountId) {
-        console.error("❌ Contexte utilisateur incomplet !");
+      console.log("GA Context:", { gaAccessToken, gaPropertyId, gaAccountId });
+      console.log("Sheets Context:", { sheetsAccessToken, sheetsFileId });
+
+      if (gaAccessToken && gaPropertyId && gaAccountId) {
+        setUserContext({
+          accessToken: gaAccessToken,
+          refreshToken: gaRefreshToken,
+          propertyId: gaPropertyId,
+          accountId: gaAccountId,
+        });
         return;
       }
 
-      setUserContext({
-        propertyId,
-        accountId,
-        accessToken,
-        refreshToken: refreshToken || "", // refreshToken devient optionnel
-      });
+      if (sheetsAccessToken && sheetsFileId) {
+        setUserContext({
+          accessToken: sheetsAccessToken,
+          refreshToken: "",
+          propertyId: sheetsFileId,
+          accountId: "sheets",
+        });
+        return;
+      }
+
+      console.error("❌ Contexte utilisateur incomplet !");
     };
 
     loadUserContext();
@@ -67,15 +84,23 @@ const Request = () => {
 
     setIsLoading(true);
     try {
-      const response = await sendToWebhook(query, userContext);
+      const webhookUrl =
+        userContext.accountId === "sheets"
+          ? process.env.NEXT_PUBLIC_WEBHOOK_SHEETS
+          : process.env.NEXT_PUBLIC_WEBHOOK_ANALYTICS;
+
+      const response = await sendToWebhook(query, userContext, webhookUrl);
       toast.success("Question envoyée avec succès");
       setQuery("");
 
-      const parsed = (response.rows || []).map((row: any) => ({
-        date: row.dimensionValues[0]?.value,
-        sessions: parseInt(row.metricValues[0]?.value, 10),
-      }));
-      setChartData(parsed);
+      // Affichage seulement si GA (tu peux adapter ça si tu veux afficher un autre type de graphique pour Sheets)
+      if (userContext.accountId !== "sheets" && response?.rows) {
+        const parsed = response.rows.map((row: any) => ({
+          date: row.dimensionValues[0]?.value,
+          sessions: parseInt(row.metricValues[0]?.value, 10),
+        }));
+        setChartData(parsed);
+      }
     } catch (error) {
       toast.error("Erreur lors de l'envoi de la question");
     } finally {
