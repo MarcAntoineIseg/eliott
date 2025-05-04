@@ -1,7 +1,7 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
-import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { sendToWebhook } from "@/services/webhook";
 import {
@@ -14,101 +14,93 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-type UserContext = {
-  accessToken: string;
-  refreshToken: string;
-  propertyId: string; // GA propertyId ou Google Sheets fileId
-  accountId: string;  // "sheets" ou ID GA
-};
-
 const Request = () => {
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [chartData, setChartData] = useState<any[]>([]);
-  const [userContext, setUserContext] = useState<UserContext | null>(null);
 
-  // Chargement dynamique du contexte utilisateur (Analytics ou Sheets)
+  const [userContext, setUserContext] = useState<{
+    googleAnalytics: {
+      accountId: string;
+      propertyId: string;
+      accessToken: string;
+      refreshToken: string;
+    } | null;
+    googleSheets: {
+      accessToken: string;
+      refreshToken: string;
+      fileId: string;
+    } | null;
+  }>({
+    googleAnalytics: null,
+    googleSheets: null,
+  });
+
   useEffect(() => {
-    const loadUserContext = () => {
+    const loadContext = () => {
       // Google Analytics
-      const gaAccessToken = localStorage.getItem("googleAccessToken");
+      const gaAccessToken = localStorage.getItem("googleAccessToken") || "";
       const gaRefreshToken = localStorage.getItem("ga_refresh_token") || "";
-      const gaPropertyId = localStorage.getItem("ga_property_id");
-      const gaAccountId = localStorage.getItem("ga_account_id");
+      const gaPropertyId = localStorage.getItem("ga_property_id") || "";
+      const gaAccountId = localStorage.getItem("ga_account_id") || "";
 
       // Google Sheets
-      const sheetsAccessToken = localStorage.getItem("googleSheetsAccessToken");
-      const sheetsFileId = localStorage.getItem("googleSheetsFileId");
+      const sheetsAccessToken = localStorage.getItem("googleSheetsAccessToken") || "";
+      const sheetsRefreshToken = localStorage.getItem("googleSheetsRefreshToken") || "";
+      const sheetsFileId = localStorage.getItem("googleSheetsFileId") || "";
 
-      console.log("GA Context:", { gaAccessToken, gaPropertyId, gaAccountId });
-      console.log("Sheets Context:", { sheetsAccessToken, sheetsFileId });
+      console.log("📦 GA Context:", { gaAccessToken, gaAccountId, gaPropertyId });
+      console.log("📦 Sheets Context:", { sheetsAccessToken, sheetsRefreshToken, sheetsFileId });
 
-      if (gaAccessToken && gaPropertyId && gaAccountId) {
-        setUserContext({
-          accessToken: gaAccessToken,
-          refreshToken: gaRefreshToken,
-          propertyId: gaPropertyId,
-          accountId: gaAccountId,
-        });
-        return;
-      }
-
-      if (sheetsAccessToken && sheetsFileId) {
-        setUserContext({
-          accessToken: sheetsAccessToken,
-          refreshToken: "",
-          propertyId: sheetsFileId,
-          accountId: "sheets",
-        });
-        return;
-      }
-
-      console.error("❌ Contexte utilisateur incomplet !");
+      setUserContext({
+        googleAnalytics: gaAccessToken && gaAccountId && gaPropertyId
+          ? {
+              accessToken: gaAccessToken,
+              refreshToken: gaRefreshToken,
+              accountId: gaAccountId,
+              propertyId: gaPropertyId,
+            }
+          : null,
+        googleSheets: sheetsAccessToken && sheetsFileId
+          ? {
+              accessToken: sheetsAccessToken,
+              refreshToken: sheetsRefreshToken,
+              fileId: sheetsFileId,
+            }
+          : null,
+      });
     };
 
-    loadUserContext();
+    loadContext();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!query.trim()) {
-      toast.error("Veuillez saisir une question");
-      return;
-    }
-
-    if (!userContext) {
-      toast.error("Contexte utilisateur manquant !");
-      return;
+    if (!query.trim()) return toast.error("Veuillez saisir une question");
+    if (!userContext.googleSheets && !userContext.googleAnalytics) {
+      return toast.error("Aucune source connectée !");
     }
 
     setIsLoading(true);
     try {
-      const webhookUrl =
-        userContext.accountId === "sheets"
-          ? process.env.NEXT_PUBLIC_WEBHOOK_SHEETS
-          : process.env.NEXT_PUBLIC_WEBHOOK_ANALYTICS;
-
-      const response = await sendToWebhook(query, userContext, webhookUrl);
-      toast.success("Question envoyée avec succès");
+      const response = await sendToWebhook(query, userContext);
+      toast.success("Requête envoyée à Eliott ✅");
       setQuery("");
 
-      // Affichage seulement si GA (tu peux adapter ça si tu veux afficher un autre type de graphique pour Sheets)
-      if (userContext.accountId !== "sheets" && response?.rows) {
-        const parsed = response.rows.map((row: any) => ({
-          date: row.dimensionValues[0]?.value,
-          sessions: parseInt(row.metricValues[0]?.value, 10),
-        }));
-        setChartData(parsed);
-      }
+      const parsed = (response.rows || []).map((row: any) => ({
+        date: row.dimensionValues?.[0]?.value,
+        sessions: parseInt(row.metricValues?.[0]?.value || "0", 10),
+      }));
+      setChartData(parsed);
     } catch (error) {
-      toast.error("Erreur lors de l'envoi de la question");
+      console.error("❌ Erreur:", error);
+      toast.error("Erreur lors de l'envoi de la requête");
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (!userContext) {
+  if (!userContext.googleAnalytics && !userContext.googleSheets) {
     return (
       <div className="h-screen w-full flex items-center justify-center text-lg">
         Chargement du contexte utilisateur...
@@ -139,9 +131,7 @@ const Request = () => {
 
         {chartData.length > 0 && (
           <div className="mt-10">
-            <h2 className="text-2xl font-semibold text-gray-700 mb-4">
-              Évolution du trafic
-            </h2>
+            <h2 className="text-2xl font-semibold text-gray-700 mb-4">Évolution du trafic</h2>
             <ResponsiveContainer width="100%" height={400}>
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
