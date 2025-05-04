@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
@@ -33,38 +34,81 @@ const Integration = () => {
   const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
   const [googleAdsToken, setGoogleAdsToken] = useState<string | null>(null);
   const [googleAdsCustomerIds, setGoogleAdsCustomerIds] = useState<string[]>([]);
+  const [googleSheetsFiles, setGoogleSheetsFiles] = useState<any[]>([]);
+  const [selectedSheetId, setSelectedSheetId] = useState<string | null>(null);
 
+  // Google Ads token handling
   useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  const googleAdsToken = params.get("googleAdsAccessToken");
-  if (googleAdsToken) {
-    localStorage.setItem("googleAdsAccessToken", googleAdsToken);
-    setGoogleAdsToken(googleAdsToken);
-    toast.success("Connexion réussie à Google Ads");
-    window.history.replaceState({}, document.title, "/integration");
+    const params = new URLSearchParams(window.location.search);
+    const googleAdsToken = params.get("googleAdsAccessToken");
+    if (googleAdsToken) {
+      localStorage.setItem("googleAdsAccessToken", googleAdsToken);
+      setGoogleAdsToken(googleAdsToken);
+      toast.success("Connexion réussie à Google Ads");
+      window.history.replaceState({}, document.title, "/integration");
     }
   }, []);
 
+  // Google Sheets token handling
   useEffect(() => {
-  const fetchGoogleAdsAccounts = async () => {
-    if (!googleAdsToken) return;
-    try {
-      const res = await fetch(`https://api.askeliott.com/api/google-ads/accounts?token=${googleAdsToken}`);
-      const data = await res.json();
-      if (data.customerIds?.length) {
-        setGoogleAdsCustomerIds(data.customerIds);
-        toast.success(`${data.customerIds.length} compte(s) Google Ads trouvé(s)`);
-      } else {
-        toast.info("Aucun compte Google Ads trouvé");
-      }
-    } catch (err) {
-      console.error("Erreur récupération comptes Google Ads:", err);
-      toast.error("Erreur Google Ads API");
+    const params = new URLSearchParams(window.location.search);
+    const googleSheetsToken = params.get("googleSheetsAccessToken");
+    if (googleSheetsToken) {
+      localStorage.setItem("googleSheetsAccessToken", googleSheetsToken);
+      toast.success("Connexion réussie à Google Sheets");
+      window.history.replaceState({}, document.title, "/integration");
     }
-  };
-  fetchGoogleAdsAccounts();
-}, [googleAdsToken]);
+  }, []);
 
+  // Fetch Google Sheets files
+  useEffect(() => {
+    const token = localStorage.getItem("googleSheetsAccessToken");
+    if (!token) return;
+
+    fetch(`https://api.askeliott.com/api/google-sheets/files?token=${token}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.files) {
+          setGoogleSheetsFiles(data.files);
+          toast.success(`${data.files.length} fichier(s) Google Sheets trouvé(s)`);
+          
+          // Check if we have a previously selected sheet
+          const savedSheetId = localStorage.getItem("googleSheetsFileId");
+          if (savedSheetId && data.files.some(file => file.id === savedSheetId)) {
+            setSelectedSheetId(savedSheetId);
+          }
+        } else {
+          toast.info("Aucun fichier Google Sheets trouvé");
+        }
+      })
+      .catch(err => {
+        console.error("Erreur chargement Google Sheets:", err);
+        toast.error("Erreur lors du chargement des fichiers Google Sheets");
+      });
+  }, []);
+
+  // Google Ads customers fetching
+  useEffect(() => {
+    const fetchGoogleAdsAccounts = async () => {
+      if (!googleAdsToken) return;
+      try {
+        const res = await fetch(`https://api.askeliott.com/api/google-ads/accounts?token=${googleAdsToken}`);
+        const data = await res.json();
+        if (data.customerIds?.length) {
+          setGoogleAdsCustomerIds(data.customerIds);
+          toast.success(`${data.customerIds.length} compte(s) Google Ads trouvé(s)`);
+        } else {
+          toast.info("Aucun compte Google Ads trouvé");
+        }
+      } catch (err) {
+        console.error("Erreur récupération comptes Google Ads:", err);
+        toast.error("Erreur Google Ads API");
+      }
+    };
+    fetchGoogleAdsAccounts();
+  }, [googleAdsToken]);
+
+  // Initialize Google Analytics connection
   useEffect(() => {
     const clearUrlAndProcessToken = async () => {
       const token = getAccessTokenFromUrl();
@@ -99,6 +143,7 @@ const Integration = () => {
     clearUrlAndProcessToken();
   }, []);
 
+  // Load Google Analytics accounts
   const loadAccounts = async (token: string) => {
     if (!token) return;
     setAccountsLoading(true);
@@ -123,6 +168,7 @@ const Integration = () => {
     }
   };
 
+  // Fetch Google Analytics properties when account is selected
   useEffect(() => {
     if (!accessToken || !selectedAccount || connectionStatus !== "connected") {
       setProperties([]);
@@ -297,6 +343,18 @@ const Integration = () => {
               <Button onClick={handleConnectGoogleAds} className="w-full bg-[#4285F4] hover:bg-[#3367D6] text-white">
                 Connecter Google Ads
               </Button>
+              {googleAdsCustomerIds.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="text-lg font-bold mb-2">Comptes disponibles :</h3>
+                  <ul className="list-disc pl-5">
+                    {googleAdsCustomerIds.map(id => (
+                      <li key={id}>
+                        {id}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -315,6 +373,28 @@ const Integration = () => {
               <Button onClick={handleConnectGoogleSheets} className="w-full bg-[#0F9D58] hover:bg-[#0b8043] text-white">
                 Connecter Google Sheets
               </Button>
+              {googleSheetsFiles.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="text-lg font-bold mb-2">Fichiers disponibles :</h3>
+                  <ul className="list-disc pl-5">
+                    {googleSheetsFiles.map(file => (
+                      <li
+                        key={file.id}
+                        className={`cursor-pointer py-1 px-2 rounded ${
+                          selectedSheetId === file.id ? 'bg-green-100 font-bold' : ''
+                        }`}
+                        onClick={() => {
+                          setSelectedSheetId(file.id);
+                          localStorage.setItem("googleSheetsFileId", file.id);
+                          toast.success(`Fichier sélectionné : ${file.name}`);
+                        }}
+                      >
+                        {file.name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </CardContent>
           </Card>
 
