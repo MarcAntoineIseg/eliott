@@ -34,21 +34,35 @@ const Integration = () => {
   const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const googleAdsToken = params.get("googleAdsAccessToken");
-    const googleAdsCustomerId = params.get("googleAdsCustomerId");
-    if (googleAdsToken && googleAdsCustomerId) {
-      localStorage.setItem("googleAdsAccessToken", googleAdsToken);
-      localStorage.setItem("googleAdsCustomerId", googleAdsCustomerId);
-      toast.success("Connexion réussie à Google Ads");
-      window.history.replaceState({}, document.title, "/integration");
+  const params = new URLSearchParams(window.location.search);
+  const googleAdsToken = params.get("googleAdsAccessToken");
+  if (googleAdsToken) {
+    localStorage.setItem("googleAdsAccessToken", googleAdsToken);
+    setGoogleAdsToken(googleAdsToken);
+    toast.success("Connexion réussie à Google Ads");
+    window.history.replaceState({}, document.title, "/integration");
     }
   }, []);
 
   useEffect(() => {
-    const savedAccountId = localStorage.getItem("ga_account_id");
-    if (savedAccountId) setSelectedAccount(savedAccountId);
-  }, []);
+  const fetchGoogleAdsAccounts = async () => {
+    if (!googleAdsToken) return;
+    try {
+      const res = await fetch(`https://api.askeliott.com/api/google-ads/accounts?token=${googleAdsToken}`);
+      const data = await res.json();
+      if (data.customerIds?.length) {
+        setGoogleAdsCustomerIds(data.customerIds);
+        toast.success(`${data.customerIds.length} compte(s) Google Ads trouvé(s)`);
+      } else {
+        toast.info("Aucun compte Google Ads trouvé");
+      }
+    } catch (err) {
+      console.error("Erreur récupération comptes Google Ads:", err);
+      toast.error("Erreur Google Ads API");
+    }
+  };
+  fetchGoogleAdsAccounts();
+}, [googleAdsToken]);
 
   useEffect(() => {
     const clearUrlAndProcessToken = async () => {
