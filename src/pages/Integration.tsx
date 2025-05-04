@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
@@ -32,6 +31,8 @@ const Integration = () => {
   const [error, setError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>("disconnected");
   const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
+  const [googleAdsToken, setGoogleAdsToken] = useState<string | null>(null);
+  const [googleAdsCustomerIds, setGoogleAdsCustomerIds] = useState<string[]>([]);
 
   useEffect(() => {
   const params = new URLSearchParams(window.location.search);
@@ -339,6 +340,6 @@ const Integration = () => {
       </main>
     </div>
   );
-}; // Added missing closing brace
+};
 
-export default Integration; // Changed to match component name
+export default Integration;
