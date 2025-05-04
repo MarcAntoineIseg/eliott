@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,14 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/sonner";
-
-export interface GoogleSheetsFile {
-  id: string;
-  name: string;
-  url?: string;
-  createdTime?: string;
-  modifiedTime?: string;
-}
+import { GoogleSheetsFile } from "@/services/googleSheets";
 
 interface SheetsFileListProps {
   files: GoogleSheetsFile[];

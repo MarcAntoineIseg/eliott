@@ -1,4 +1,12 @@
-import { GoogleSheetsFile } from "@/types";
+
+// Define the GoogleSheetsFile interface directly in this file
+export interface GoogleSheetsFile {
+  id: string;
+  name: string;
+  url?: string;
+  createdTime?: string;
+  modifiedTime?: string;
+}
 
 const GOOGLE_SHEETS_API_URL = "https://sheets.googleapis.com/v4/spreadsheets";
 
