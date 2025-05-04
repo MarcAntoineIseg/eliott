@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
@@ -6,6 +5,8 @@ import GoogleAuthButton from "@/components/GoogleAuthButton";
 import PropertyList from "@/components/PropertyList";
 import SheetsFileList from "@/components/SheetsFileList";
 import GoogleSheetsAuthButton from "@/components/GoogleSheetsAuthButton";
+import GoogleAdsAuthButton from "@/components/GoogleAdsAuthButton";
+import AdsAccountList from "@/components/AdsAccountList";
 import { toast } from "@/components/ui/sonner";
 import {
   CLIENT_ID,
@@ -22,6 +23,13 @@ import {
   checkSheetsTokenValidity,
   getStoredSheetsAccessToken
 } from "@/services/googleSheets";
+import {
+  GoogleAdsAccount,
+  getAdsAccessTokenFromUrl,
+  fetchGoogleAdsAccounts,
+  checkAdsTokenValidity,
+  getStoredAdsAccessToken
+} from "@/services/googleAds";
 import {
   Select,
   SelectTrigger,
@@ -45,7 +53,11 @@ const Integration = () => {
   
   // Google Ads states
   const [googleAdsToken, setGoogleAdsToken] = useState<string | null>(null);
-  const [googleAdsCustomerIds, setGoogleAdsCustomerIds] = useState<string[]>([]);
+  const [googleAdsAccounts, setGoogleAdsAccounts] = useState<GoogleAdsAccount[]>([]);
+  const [selectedAdsAccount, setSelectedAdsAccount] = useState<GoogleAdsAccount | null>(null);
+  const [adsLoading, setAdsLoading] = useState<boolean>(false);
+  const [adsError, setAdsError] = useState<string | null>(null);
+  const [adsConnectionStatus, setAdsConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>("disconnected");
   
   // Google Sheets states
   const [sheetsAccessToken, setSheetsAccessToken] = useState<string | null>(null);
@@ -57,15 +69,72 @@ const Integration = () => {
 
   // Google Ads token handling
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const googleAdsToken = params.get("googleAdsAccessToken");
-    if (googleAdsToken) {
-      localStorage.setItem("googleAdsAccessToken", googleAdsToken);
-      setGoogleAdsToken(googleAdsToken);
-      toast.success("Connexion réussie à Google Ads");
-      window.history.replaceState({}, document.title, "/integration");
-    }
+    const clearUrlAndProcessAdsToken = async () => {
+      const token = getAdsAccessTokenFromUrl();
+      if (token) {
+        window.history.replaceState({}, document.title, "/integration");
+        localStorage.setItem("googleAdsAccessToken", token);
+        setGoogleAdsToken(token);
+        setAdsConnectionStatus("connected");
+        toast.success("Connexion réussie à Google Ads");
+        loadAdsAccounts(token);
+      } else {
+        const storedToken = getStoredAdsAccessToken();
+        if (storedToken) {
+          setAdsConnectionStatus("connecting");
+          try {
+            const isValid = await checkAdsTokenValidity(storedToken);
+            if (isValid) {
+              setGoogleAdsToken(storedToken);
+              setAdsConnectionStatus("connected");
+              loadAdsAccounts(storedToken);
+            } else {
+              localStorage.removeItem("googleAdsAccessToken");
+              setGoogleAdsToken(null);
+              setAdsConnectionStatus("disconnected");
+            }
+          } catch (error) {
+            console.error("Erreur lors de la vérification du token Ads:", error);
+            localStorage.removeItem("googleAdsAccessToken");
+            setGoogleAdsToken(null);
+            setAdsConnectionStatus("disconnected");
+          }
+        }
+      }
+    };
+    clearUrlAndProcessAdsToken();
   }, []);
+
+  // Fetch Google Ads accounts
+  const loadAdsAccounts = async (token: string) => {
+    if (!token) return;
+    setAdsLoading(true);
+    setAdsError(null);
+    
+    try {
+      const accounts = await fetchGoogleAdsAccounts(token);
+      setGoogleAdsAccounts(accounts);
+      
+      // Check if we have a previously selected account
+      const savedAccountId = localStorage.getItem("googleAdsCustomerId");
+      if (savedAccountId && accounts.some(account => account.customerId === savedAccountId)) {
+        const savedAccount = accounts.find(account => account.customerId === savedAccountId);
+        if (savedAccount) setSelectedAdsAccount(savedAccount);
+      }
+      
+      if (accounts.length === 0) {
+        toast.info("Aucun compte Google Ads trouvé");
+      } else {
+        toast.success(`${accounts.length} compte(s) Google Ads trouvé(s)`);
+      }
+    } catch (err: any) {
+      console.error("Erreur lors du chargement des comptes Ads:", err);
+      setAdsError(err.message || "Problème lors de la récupération des comptes Google Ads.");
+      toast.error(err.message || "Erreur lors du chargement des comptes Ads.");
+    } finally {
+      setAdsLoading(false);
+    }
+  };
 
   // Google Sheets token handling
   useEffect(() => {
@@ -134,27 +203,6 @@ const Integration = () => {
       setSheetsLoading(false);
     }
   };
-
-  // Google Ads customers fetching
-  useEffect(() => {
-    const fetchGoogleAdsAccounts = async () => {
-      if (!googleAdsToken) return;
-      try {
-        const res = await fetch(`https://api.askeliott.com/api/google-ads/accounts?token=${googleAdsToken}`);
-        const data = await res.json();
-        if (data.customerIds?.length) {
-          setGoogleAdsCustomerIds(data.customerIds);
-          toast.success(`${data.customerIds.length} compte(s) Google Ads trouvé(s)`);
-        } else {
-          toast.info("Aucun compte Google Ads trouvé");
-        }
-      } catch (err) {
-        console.error("Erreur récupération comptes Google Ads:", err);
-        toast.error("Erreur Google Ads API");
-      }
-    };
-    fetchGoogleAdsAccounts();
-  }, [googleAdsToken]);
 
   // Initialize Google Analytics connection
   useEffect(() => {
@@ -267,6 +315,16 @@ const Integration = () => {
     toast.info("Déconnexion de Google Sheets réussie");
   };
 
+  const handleAdsLogout = () => {
+    localStorage.removeItem("googleAdsAccessToken");
+    localStorage.removeItem("googleAdsCustomerId");
+    setGoogleAdsToken(null);
+    setGoogleAdsAccounts([]);
+    setSelectedAdsAccount(null);
+    setAdsConnectionStatus("disconnected");
+    toast.info("Déconnexion de Google Ads réussie");
+  };
+
   const handleLoadAnalytics = (property: GoogleAnalyticsProperty) => {
     if (!property?.id || !selectedAccount) return toast.error("Propriété ou compte non défini");
     localStorage.setItem("ga_property_id", property.id);
@@ -278,6 +336,12 @@ const Integration = () => {
     setSelectedSheetId(file.id);
     localStorage.setItem("googleSheetsFileId", file.id);
     toast.success(`Fichier Google Sheets "${file.name}" connecté avec succès !`);
+  };
+
+  const handleSelectAdsAccount = (account: GoogleAdsAccount) => {
+    setSelectedAdsAccount(account);
+    localStorage.setItem("googleAdsCustomerId", account.customerId || account.id);
+    toast.success(`Compte Google Ads "${account.name}" connecté avec succès !`);
   };
 
   const handleConnectMetaAds = () => window.location.href = "https://api.askeliott.com/auth/meta";
@@ -403,20 +467,35 @@ const Integration = () => {
               </div>
             </div>
             <CardContent className="p-6">
-              <Button onClick={handleConnectGoogleAds} className="w-full bg-[#4285F4] hover:bg-[#3367D6] text-white">
-                Connecter Google Ads
-              </Button>
-              {googleAdsCustomerIds.length > 0 && (
-                <div className="mt-4">
-                  <h3 className="text-lg font-bold mb-2">Comptes disponibles :</h3>
-                  <ul className="list-disc pl-5">
-                    {googleAdsCustomerIds.map(id => (
-                      <li key={id}>
-                        {id}
-                      </li>
-                    ))}
-                  </ul>
+              {adsConnectionStatus === 'disconnected' ? (
+                <GoogleAdsAuthButton />
+              ) : adsConnectionStatus === 'connecting' ? (
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="h-4 w-4 rounded-full bg-blue-200 animate-pulse"></div>
+                    <span>Vérification de la connexion...</span>
+                  </div>
+                  <Skeleton className="h-10 w-full" />
                 </div>
+              ) : (
+                <>
+                  <Button variant="outline" onClick={handleAdsLogout} className="w-full">Déconnecter</Button>
+                  <div className="mt-4">
+                    <AdsAccountList
+                      accounts={googleAdsAccounts}
+                      isLoading={adsLoading}
+                      error={adsError}
+                      onSelectAccount={handleSelectAdsAccount}
+                    />
+                    {selectedAdsAccount && (
+                      <div className="mt-4 p-3 bg-green-50 border border-green-100 rounded-md">
+                        <p className="text-sm text-green-800">
+                          Compte connecté: <strong>{selectedAdsAccount.name}</strong>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
