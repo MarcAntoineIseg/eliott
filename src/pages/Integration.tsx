@@ -1,8 +1,11 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
 import GoogleAuthButton from "@/components/GoogleAuthButton";
 import PropertyList from "@/components/PropertyList";
+import SheetsFileList from "@/components/SheetsFileList";
+import GoogleSheetsAuthButton from "@/components/GoogleSheetsAuthButton";
 import { toast } from "@/components/ui/sonner";
 import {
   CLIENT_ID,
@@ -13,6 +16,13 @@ import {
   checkTokenValidity
 } from "@/services/googleAnalytics";
 import {
+  GoogleSheetsFile,
+  getSheetsAccessTokenFromUrl,
+  fetchGoogleSheetsFiles,
+  checkSheetsTokenValidity,
+  getStoredSheetsAccessToken
+} from "@/services/googleSheets";
+import {
   Select,
   SelectTrigger,
   SelectValue,
@@ -22,6 +32,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Integration = () => {
+  // Google Analytics states
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
@@ -31,10 +42,18 @@ const Integration = () => {
   const [error, setError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>("disconnected");
   const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
+  
+  // Google Ads states
   const [googleAdsToken, setGoogleAdsToken] = useState<string | null>(null);
   const [googleAdsCustomerIds, setGoogleAdsCustomerIds] = useState<string[]>([]);
-  const [googleSheetsFiles, setGoogleSheetsFiles] = useState<any[]>([]);
+  
+  // Google Sheets states
+  const [sheetsAccessToken, setSheetsAccessToken] = useState<string | null>(null);
+  const [googleSheetsFiles, setGoogleSheetsFiles] = useState<GoogleSheetsFile[]>([]);
   const [selectedSheetId, setSelectedSheetId] = useState<string | null>(null);
+  const [sheetsLoading, setSheetsLoading] = useState<boolean>(false);
+  const [sheetsError, setSheetsError] = useState<string | null>(null);
+  const [sheetsConnectionStatus, setSheetsConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>("disconnected");
 
   // Google Ads token handling
   useEffect(() => {
@@ -50,41 +69,71 @@ const Integration = () => {
 
   // Google Sheets token handling
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const googleSheetsToken = params.get("googleSheetsAccessToken");
-    if (googleSheetsToken) {
-      localStorage.setItem("googleSheetsAccessToken", googleSheetsToken);
-      toast.success("Connexion réussie à Google Sheets");
-      window.history.replaceState({}, document.title, "/integration");
-    }
+    const clearUrlAndProcessSheetsToken = async () => {
+      const token = getSheetsAccessTokenFromUrl();
+      if (token) {
+        window.history.replaceState({}, document.title, "/integration");
+        localStorage.setItem("googleSheetsAccessToken", token);
+        setSheetsAccessToken(token);
+        setSheetsConnectionStatus("connected");
+        toast.success("Connexion réussie à Google Sheets");
+        loadSheetsFiles(token);
+      } else {
+        const storedToken = getStoredSheetsAccessToken();
+        if (storedToken) {
+          setSheetsConnectionStatus("connecting");
+          try {
+            const isValid = await checkSheetsTokenValidity(storedToken);
+            if (isValid) {
+              setSheetsAccessToken(storedToken);
+              setSheetsConnectionStatus("connected");
+              loadSheetsFiles(storedToken);
+            } else {
+              localStorage.removeItem("googleSheetsAccessToken");
+              setSheetsAccessToken(null);
+              setSheetsConnectionStatus("disconnected");
+            }
+          } catch (error) {
+            console.error("Erreur lors de la vérification du token Sheets:", error);
+            localStorage.removeItem("googleSheetsAccessToken");
+            setSheetsAccessToken(null);
+            setSheetsConnectionStatus("disconnected");
+          }
+        }
+      }
+    };
+    clearUrlAndProcessSheetsToken();
   }, []);
 
   // Fetch Google Sheets files
-  useEffect(() => {
-    const token = localStorage.getItem("googleSheetsAccessToken");
+  const loadSheetsFiles = async (token: string) => {
     if (!token) return;
-
-    fetch(`https://api.askeliott.com/api/google-sheets/files?token=${token}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.files) {
-          setGoogleSheetsFiles(data.files);
-          toast.success(`${data.files.length} fichier(s) Google Sheets trouvé(s)`);
-          
-          // Check if we have a previously selected sheet
-          const savedSheetId = localStorage.getItem("googleSheetsFileId");
-          if (savedSheetId && data.files.some(file => file.id === savedSheetId)) {
-            setSelectedSheetId(savedSheetId);
-          }
-        } else {
-          toast.info("Aucun fichier Google Sheets trouvé");
-        }
-      })
-      .catch(err => {
-        console.error("Erreur chargement Google Sheets:", err);
-        toast.error("Erreur lors du chargement des fichiers Google Sheets");
-      });
-  }, []);
+    setSheetsLoading(true);
+    setSheetsError(null);
+    
+    try {
+      const files = await fetchGoogleSheetsFiles(token);
+      setGoogleSheetsFiles(files);
+      
+      // Check if we have a previously selected sheet
+      const savedSheetId = localStorage.getItem("googleSheetsFileId");
+      if (savedSheetId && files.some(file => file.id === savedSheetId)) {
+        setSelectedSheetId(savedSheetId);
+      }
+      
+      if (files.length === 0) {
+        toast.info("Aucun fichier Google Sheets trouvé");
+      } else {
+        toast.success(`${files.length} fichier(s) Google Sheets trouvé(s)`);
+      }
+    } catch (err: any) {
+      console.error("Erreur lors du chargement des fichiers Sheets:", err);
+      setSheetsError(err.message || "Problème lors de la récupération des fichiers Google Sheets.");
+      toast.error(err.message || "Erreur lors du chargement des fichiers Sheets.");
+    } finally {
+      setSheetsLoading(false);
+    }
+  };
 
   // Google Ads customers fetching
   useEffect(() => {
@@ -208,6 +257,16 @@ const Integration = () => {
     toast.info("Déconnexion réussie");
   };
 
+  const handleSheetsLogout = () => {
+    localStorage.removeItem("googleSheetsAccessToken");
+    localStorage.removeItem("googleSheetsFileId");
+    setSheetsAccessToken(null);
+    setGoogleSheetsFiles([]);
+    setSelectedSheetId(null);
+    setSheetsConnectionStatus("disconnected");
+    toast.info("Déconnexion de Google Sheets réussie");
+  };
+
   const handleLoadAnalytics = (property: GoogleAnalyticsProperty) => {
     if (!property?.id || !selectedAccount) return toast.error("Propriété ou compte non défini");
     localStorage.setItem("ga_property_id", property.id);
@@ -215,10 +274,15 @@ const Integration = () => {
     toast.success("Propriété sélectionnée enregistrée avec succès !");
   };
 
+  const handleSelectSheetsFile = (file: GoogleSheetsFile) => {
+    setSelectedSheetId(file.id);
+    localStorage.setItem("googleSheetsFileId", file.id);
+    toast.success(`Fichier Google Sheets "${file.name}" connecté avec succès !`);
+  };
+
   const handleConnectMetaAds = () => window.location.href = "https://api.askeliott.com/auth/meta";
   const handleConnectGoogleAds = () => window.location.href = "https://api.askeliott.com/auth/google-ads";
   const handleConnectHubspot = () => window.location.href = "https://api.askeliott.com/auth/hubspot";
-  const handleConnectGoogleSheets = () => window.location.href = "https://api.askeliott.com/auth/google-sheets";
   const handleConnectShopify = () => window.location.href = "https://api.askeliott.com/auth/shopify";
 
   return (
@@ -369,30 +433,28 @@ const Integration = () => {
               </div>
             </div>
             <CardContent className="p-6">
-              <Button onClick={handleConnectGoogleSheets} className="w-full bg-[#0F9D58] hover:bg-[#0b8043] text-white">
-                Connecter Google Sheets
-              </Button>
-              {googleSheetsFiles.length > 0 && (
-                <div className="mt-4">
-                  <h3 className="text-lg font-bold mb-2">Fichiers disponibles :</h3>
-                  <ul className="list-disc pl-5">
-                    {googleSheetsFiles.map(file => (
-                      <li
-                        key={file.id}
-                        className={`cursor-pointer py-1 px-2 rounded ${
-                          selectedSheetId === file.id ? 'bg-green-100 font-bold' : ''
-                        }`}
-                        onClick={() => {
-                          setSelectedSheetId(file.id);
-                          localStorage.setItem("googleSheetsFileId", file.id);
-                          toast.success(`Fichier sélectionné : ${file.name}`);
-                        }}
-                      >
-                        {file.name}
-                      </li>
-                    ))}
-                  </ul>
+              {sheetsConnectionStatus === 'disconnected' ? (
+                <GoogleSheetsAuthButton />
+              ) : sheetsConnectionStatus === 'connecting' ? (
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="h-4 w-4 rounded-full bg-green-200 animate-pulse"></div>
+                    <span>Vérification de la connexion...</span>
+                  </div>
+                  <Skeleton className="h-10 w-full" />
                 </div>
+              ) : (
+                <>
+                  <Button variant="outline" onClick={handleSheetsLogout} className="w-full">Déconnecter</Button>
+                  <div className="mt-4">
+                    <SheetsFileList
+                      files={googleSheetsFiles}
+                      isLoading={sheetsLoading}
+                      error={sheetsError}
+                      onSelectFile={handleSelectSheetsFile}
+                    />
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -414,7 +476,6 @@ const Integration = () => {
               </Button>
             </CardContent>
           </Card>
-
         </div>
       </main>
     </div>
