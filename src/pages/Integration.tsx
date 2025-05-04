@@ -21,7 +21,9 @@ import {
   getSheetsAccessTokenFromUrl,
   fetchGoogleSheetsFiles,
   checkSheetsTokenValidity,
-  getStoredSheetsAccessToken
+  getStoredSheetsAccessToken,
+  getStoredSheetsRefreshToken,
+  getSheetsRefreshTokenFromUrl
 } from "@/services/googleSheets";
 import {
   GoogleAdsAccount,
@@ -61,6 +63,7 @@ const Integration = () => {
   
   // Google Sheets states
   const [sheetsAccessToken, setSheetsAccessToken] = useState<string | null>(null);
+  const [sheetsRefreshToken, setSheetsRefreshToken] = useState<string | null>(null);
   const [googleSheetsFiles, setGoogleSheetsFiles] = useState<GoogleSheetsFile[]>([]);
   const [selectedSheetId, setSelectedSheetId] = useState<string | null>(null);
   const [sheetsLoading, setSheetsLoading] = useState<boolean>(false);
@@ -140,32 +143,48 @@ const Integration = () => {
   useEffect(() => {
     const clearUrlAndProcessSheetsToken = async () => {
       const token = getSheetsAccessTokenFromUrl();
+      const refreshToken = getSheetsRefreshTokenFromUrl();
+      
       if (token) {
         window.history.replaceState({}, document.title, "/integration");
         localStorage.setItem("googleSheetsAccessToken", token);
         setSheetsAccessToken(token);
+        
+        // Store the refresh token if available
+        if (refreshToken) {
+          localStorage.setItem("googleSheetsRefreshToken", refreshToken);
+          setSheetsRefreshToken(refreshToken);
+        }
+        
         setSheetsConnectionStatus("connected");
         toast.success("Connexion réussie à Google Sheets");
         loadSheetsFiles(token);
       } else {
         const storedToken = getStoredSheetsAccessToken();
+        const storedRefreshToken = getStoredSheetsRefreshToken();
+        
         if (storedToken) {
           setSheetsConnectionStatus("connecting");
           try {
             const isValid = await checkSheetsTokenValidity(storedToken);
             if (isValid) {
               setSheetsAccessToken(storedToken);
+              if (storedRefreshToken) setSheetsRefreshToken(storedRefreshToken);
               setSheetsConnectionStatus("connected");
               loadSheetsFiles(storedToken);
             } else {
               localStorage.removeItem("googleSheetsAccessToken");
+              localStorage.removeItem("googleSheetsRefreshToken");
               setSheetsAccessToken(null);
+              setSheetsRefreshToken(null);
               setSheetsConnectionStatus("disconnected");
             }
           } catch (error) {
             console.error("Erreur lors de la vérification du token Sheets:", error);
             localStorage.removeItem("googleSheetsAccessToken");
+            localStorage.removeItem("googleSheetsRefreshToken");
             setSheetsAccessToken(null);
+            setSheetsRefreshToken(null);
             setSheetsConnectionStatus("disconnected");
           }
         }
@@ -307,8 +326,10 @@ const Integration = () => {
 
   const handleSheetsLogout = () => {
     localStorage.removeItem("googleSheetsAccessToken");
+    localStorage.removeItem("googleSheetsRefreshToken");
     localStorage.removeItem("googleSheetsFileId");
     setSheetsAccessToken(null);
+    setSheetsRefreshToken(null);
     setGoogleSheetsFiles([]);
     setSelectedSheetId(null);
     setSheetsConnectionStatus("disconnected");

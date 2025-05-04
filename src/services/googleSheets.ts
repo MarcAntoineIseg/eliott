@@ -1,74 +1,55 @@
+import { GoogleSheetsFile } from "@/types";
 
-// API Base URL
-export const API_BASE_URL = "https://api.askeliott.com";
+const GOOGLE_SHEETS_API_URL = "https://sheets.googleapis.com/v4/spreadsheets";
 
-// Interface pour les fichiers Google Sheets
-export interface GoogleSheetsFile {
-  id: string;
-  name: string;
-  url?: string;
-  createdTime?: string;
-  modifiedTime?: string;
-}
+export const getSheetsAccessTokenFromUrl = (): string | null => {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('googleSheetsAccessToken');
+};
 
-// Vérifier la validité du token
-export const checkSheetsTokenValidity = async (token: string): Promise<boolean> => {
+export const getSheetsRefreshTokenFromUrl = (): string | null => {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('refreshToken');
+};
+
+export const getStoredSheetsAccessToken = (): string | null => {
+  return localStorage.getItem('googleSheetsAccessToken');
+};
+
+export const getStoredSheetsRefreshToken = (): string | null => {
+  return localStorage.getItem('googleSheetsRefreshToken');
+};
+
+export const fetchGoogleSheetsFiles = async (accessToken: string): Promise<GoogleSheetsFile[]> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/google-sheets/validate-token?token=${token}`);
+    const response = await fetch("https://www.googleapis.com/drive/v3/files?q=mimeType='application/vnd.google-apps.spreadsheet'&fields=files(id,name)", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      console.error("Erreur lors de la récupération des fichiers Google Sheets:", response);
+      throw new Error(`Erreur HTTP: ${response.status}`);
+    }
+
     const data = await response.json();
-    return data.valid === true;
+    return data.files.map((file: any) => ({
+      id: file.id,
+      name: file.name,
+    }));
+  } catch (error: any) {
+    console.error("Erreur lors de la récupération des fichiers Google Sheets:", error);
+    throw new Error(error.message || "Impossible de récupérer les fichiers Google Sheets.");
+  }
+};
+
+export const checkSheetsTokenValidity = async (accessToken: string): Promise<boolean> => {
+  try {
+    const response = await fetch('https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=' + accessToken);
+    return response.status === 200;
   } catch (error) {
     console.error("Erreur lors de la vérification du token Sheets:", error);
     return false;
   }
-};
-
-// Récupérer les fichiers Google Sheets
-export const fetchGoogleSheetsFiles = async (token: string): Promise<GoogleSheetsFile[]> => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/google-sheets/files?token=${token}`);
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.error || "Erreur lors de la récupération des fichiers Google Sheets");
-    }
-    
-    return data.files || [];
-  } catch (error: any) {
-    console.error("Erreur lors du chargement des fichiers Google Sheets:", error);
-    throw new Error(error.message || "Erreur lors de la récupération des fichiers Google Sheets");
-  }
-};
-
-// Récupérer les données d'une feuille spécifique
-export const fetchSheetData = async (token: string, fileId: string, sheetName?: string): Promise<any> => {
-  try {
-    const url = new URL(`${API_BASE_URL}/api/google-sheets/data`);
-    url.searchParams.append("token", token);
-    url.searchParams.append("fileId", fileId);
-    if (sheetName) url.searchParams.append("sheetName", sheetName);
-    
-    const response = await fetch(url.toString());
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.error || "Erreur lors de la récupération des données de la feuille");
-    }
-    
-    return data;
-  } catch (error: any) {
-    console.error("Erreur lors du chargement des données de la feuille:", error);
-    throw new Error(error.message || "Erreur lors de la récupération des données de la feuille");
-  }
-};
-
-// Extraire le token d'accès depuis l'URL
-export const getSheetsAccessTokenFromUrl = (): string | null => {
-  const params = new URLSearchParams(window.location.search);
-  return params.get("googleSheetsAccessToken");
-};
-
-// Récupérer le token stocké
-export const getStoredSheetsAccessToken = (): string | null => {
-  return localStorage.getItem("googleSheetsAccessToken");
 };
