@@ -18,7 +18,7 @@ const Request = () => {
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [chartData, setChartData] = useState<any[]>([]);
-  const [iaResponse, setIaResponse] = useState<string | null>(null); // ✅ ajout de la réponse IA
+  const [responseMessage, setResponseMessage] = useState<string | null>(null); // ✅ Ajout
 
   const [userContext, setUserContext] = useState<{
     googleAnalytics: {
@@ -39,19 +39,14 @@ const Request = () => {
 
   useEffect(() => {
     const loadContext = () => {
-      // Google Analytics
       const gaAccessToken = localStorage.getItem("googleAccessToken") || "";
       const gaRefreshToken = localStorage.getItem("ga_refresh_token") || "";
       const gaPropertyId = localStorage.getItem("ga_property_id") || "";
       const gaAccountId = localStorage.getItem("ga_account_id") || "";
 
-      // Google Sheets
       const sheetsAccessToken = localStorage.getItem("googleSheetsAccessToken") || "";
       const sheetsRefreshToken = localStorage.getItem("googleSheetsRefreshToken") || "";
       const sheetsFileId = localStorage.getItem("googleSheetsFileId") || "";
-
-      console.log("📦 GA Context:", { gaAccessToken, gaAccountId, gaPropertyId });
-      console.log("📦 Sheets Context:", { sheetsAccessToken, sheetsRefreshToken, sheetsFileId });
 
       setUserContext({
         googleAnalytics: gaAccessToken && gaAccountId && gaPropertyId
@@ -83,18 +78,17 @@ const Request = () => {
     }
 
     setIsLoading(true);
-    setIaResponse(null); // reset la réponse IA avant nouvel envoi
     try {
       const response = await sendToWebhook(query, userContext);
       toast.success("Requête envoyée à Eliott ✅");
       setQuery("");
 
-      // ✅ récupération de la réponse textuelle IA si disponible
+      // ✅ Gérer le message texte de l'IA
       if (response.message) {
-        setIaResponse(response.message);
+        setResponseMessage(response.message);
       }
 
-      // Parsing données de graphe si elles existent
+      // ✅ Gérer les données graphiques si présentes
       const parsed = (response.rows || []).map((row: any) => ({
         date: row.dimensionValues?.[0]?.value,
         sessions: parseInt(row.metricValues?.[0]?.value || "0", 10),
@@ -137,15 +131,14 @@ const Request = () => {
           </div>
         </form>
 
-        {/* ✅ Affichage réponse IA textuelle */}
-        {iaResponse && (
-          <div className="mt-6 bg-white p-6 rounded-lg shadow max-w-3xl">
-            <h2 className="text-lg font-semibold text-gray-700 mb-2">Réponse d’Eliott</h2>
-            <p className="text-gray-800 whitespace-pre-line">{iaResponse}</p>
+        {/* ✅ Affichage réponse IA */}
+        {responseMessage && (
+          <div className="mt-8 bg-white p-6 rounded-lg shadow text-gray-800 max-w-3xl">
+            <h2 className="text-xl font-semibold mb-2">Réponse d’Eliott</h2>
+            <p className="whitespace-pre-line">{responseMessage}</p>
           </div>
         )}
 
-        {/* ✅ Graphe si disponible */}
         {chartData.length > 0 && (
           <div className="mt-10">
             <h2 className="text-2xl font-semibold text-gray-700 mb-4">Évolution du trafic</h2>
