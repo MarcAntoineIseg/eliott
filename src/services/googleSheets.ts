@@ -28,6 +28,7 @@ export const getStoredSheetsRefreshToken = (): string | null => {
   return localStorage.getItem('googleSheetsRefreshToken');
 };
 
+// Get all connected Google Sheets files
 export const getConnectedSheetsFiles = (): GoogleSheetsFile[] => {
   const filesJson = localStorage.getItem('googleSheetsFiles');
   if (!filesJson) return [];
@@ -40,26 +41,54 @@ export const getConnectedSheetsFiles = (): GoogleSheetsFile[] => {
   }
 };
 
-export const saveConnectedSheetsFile = (file: GoogleSheetsFile): GoogleSheetsFile[] => {
-  const currentFiles = getConnectedSheetsFiles();
+// Get all individual Google Sheets file IDs from localStorage
+export const getConnectedSheetsFileIds = (): string[] => {
+  const fileIds: string[] = [];
   
-  // Vérifier si le fichier existe déjà
-  const exists = currentFiles.some(f => f.id === file.id);
-  
-  if (!exists) {
-    // Ajouter le nouveau fichier
-    const updatedFiles = [...currentFiles, file];
-    localStorage.setItem('googleSheetsFiles', JSON.stringify(updatedFiles));
-    return updatedFiles;
+  // Look for entries that start with 'googleSheetsFileId_'
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('googleSheetsFileId_')) {
+      const fileId = localStorage.getItem(key);
+      if (fileId) {
+        fileIds.push(fileId);
+      }
+    }
   }
   
-  return currentFiles;
+  return fileIds;
+};
+
+export const saveConnectedSheetsFile = (file: GoogleSheetsFile): GoogleSheetsFile[] => {
+  // Store the file in the array (for backward compatibility)
+  const currentFiles = getConnectedSheetsFiles();
+  
+  // Check if the file already exists
+  const exists = currentFiles.some(f => f.id === file.id);
+  
+  let updatedFiles = currentFiles;
+  
+  if (!exists) {
+    // Add the new file to the array
+    updatedFiles = [...currentFiles, file];
+    localStorage.setItem('googleSheetsFiles', JSON.stringify(updatedFiles));
+    
+    // Also store individual fileId in its own entry
+    localStorage.setItem(`googleSheetsFileId_${file.id}`, file.id);
+  }
+  
+  return updatedFiles;
 };
 
 export const removeConnectedSheetsFile = (fileId: string): GoogleSheetsFile[] => {
+  // Remove from array (for backward compatibility)
   const currentFiles = getConnectedSheetsFiles();
   const updatedFiles = currentFiles.filter(f => f.id !== fileId);
   localStorage.setItem('googleSheetsFiles', JSON.stringify(updatedFiles));
+  
+  // Also remove the individual fileId entry
+  localStorage.removeItem(`googleSheetsFileId_${fileId}`);
+  
   return updatedFiles;
 };
 

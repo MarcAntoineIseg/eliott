@@ -18,6 +18,7 @@ interface GoogleSheetsContext {
   accessToken: string;
   refreshToken: string;
   files: GoogleSheetsFile[];
+  fileIds?: string[]; // New field to store individual file IDs
 }
 
 interface WebhookPayload {
@@ -34,6 +35,7 @@ export const sendToWebhook = async (
       accessToken: string;
       refreshToken: string;
       files: GoogleSheetsFile[];
+      fileIds?: string[]; // New field
     } | null;
   }
 ): Promise<any> => {

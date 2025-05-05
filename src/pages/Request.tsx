@@ -14,7 +14,11 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { GoogleSheetsFile, getConnectedSheetsFiles } from "@/services/googleSheets";
+import { 
+  GoogleSheetsFile, 
+  getConnectedSheetsFiles,
+  getConnectedSheetsFileIds
+} from "@/services/googleSheets";
 
 const Request = () => {
   const [query, setQuery] = useState("");
@@ -33,6 +37,7 @@ const Request = () => {
       accessToken: string;
       refreshToken: string;
       files: GoogleSheetsFile[];
+      fileIds?: string[];
     } | null;
   }>({
     googleAnalytics: null,
@@ -49,6 +54,7 @@ const Request = () => {
       const sheetsAccessToken = localStorage.getItem("googleSheetsAccessToken") || "";
       const sheetsRefreshToken = localStorage.getItem("googleSheetsRefreshToken") || "";
       const sheetsFiles = getConnectedSheetsFiles();
+      const sheetsFileIds = getConnectedSheetsFileIds();
 
       console.log("📦 GA Context:", {
         gaAccessToken,
@@ -58,7 +64,8 @@ const Request = () => {
       console.log("📦 Sheets Context:", {
         sheetsAccessToken,
         sheetsRefreshToken,
-        sheetsFiles
+        sheetsFiles,
+        sheetsFileIds
       });
 
       setUserContext({
@@ -75,6 +82,7 @@ const Request = () => {
               accessToken: sheetsAccessToken,
               refreshToken: sheetsRefreshToken,
               files: sheetsFiles,
+              fileIds: sheetsFileIds,
             }
           : null,
       });

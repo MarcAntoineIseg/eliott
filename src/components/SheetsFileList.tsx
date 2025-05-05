@@ -7,7 +7,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { GoogleSheetsFile, saveConnectedSheetsFile, removeConnectedSheetsFile, getConnectedSheetsFiles } from "@/services/googleSheets";
+import { 
+  GoogleSheetsFile, 
+  saveConnectedSheetsFile, 
+  removeConnectedSheetsFile, 
+  getConnectedSheetsFiles,
+  getConnectedSheetsFileIds
+} from "@/services/googleSheets";
 import { Badge } from "@/components/ui/badge";
 
 interface SheetsFileListProps {
@@ -29,6 +35,10 @@ const SheetsFileList = ({ files, isLoading, error, onSelectFile, onRemoveFile }:
     if (savedFiles) {
       setConnectedFiles(savedFiles);
     }
+    
+    // Log both the array-based file list and individual IDs for debugging
+    console.log("Connected files (array):", savedFiles);
+    console.log("Connected file IDs (individual):", getConnectedSheetsFileIds());
   }, []);
 
   const handleFileSelect = (file: GoogleSheetsFile) => {
@@ -47,7 +57,7 @@ const SheetsFileList = ({ files, isLoading, error, onSelectFile, onRemoveFile }:
       return;
     }
 
-    // Save to localStorage
+    // Save to localStorage (both in array and as individual entry)
     const updatedFiles = saveConnectedSheetsFile(fileToConnect);
     setConnectedFiles(updatedFiles);
     
@@ -63,7 +73,7 @@ const SheetsFileList = ({ files, isLoading, error, onSelectFile, onRemoveFile }:
   const handleRemoveFile = (e: React.MouseEvent, fileId: string) => {
     e.stopPropagation();
     
-    // Remove from localStorage
+    // Remove from localStorage (both from array and individual entry)
     const updatedFiles = removeConnectedSheetsFile(fileId);
     setConnectedFiles(updatedFiles);
     
@@ -181,7 +191,12 @@ const SheetsFileList = ({ files, isLoading, error, onSelectFile, onRemoveFile }:
                     <CheckCircle className="text-green-500 h-5 w-5" />
                     {file.name}
                   </CardTitle>
-                  <CardDescription>ID: {file.id.substring(0, 20)}...</CardDescription>
+                  <CardDescription>
+                    ID: {file.id.substring(0, 20)}...
+                    <div className="text-xs text-green-700 mt-1">
+                      localStorage: googleSheetsFileId_{file.id.substring(0, 8)}...
+                    </div>
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex justify-between items-center">
