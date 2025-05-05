@@ -1,3 +1,4 @@
+
 interface GoogleAnalyticsContext {
   accountId: string;
   propertyId: string;
@@ -5,10 +6,18 @@ interface GoogleAnalyticsContext {
   refreshToken: string;
 }
 
+interface GoogleSheetsFile {
+  id: string;
+  name: string;
+  url?: string;
+  createdTime?: string;
+  modifiedTime?: string;
+}
+
 interface GoogleSheetsContext {
   accessToken: string;
   refreshToken: string;
-  fileId: string;
+  files: GoogleSheetsFile[];
 }
 
 interface WebhookPayload {
@@ -21,7 +30,11 @@ export const sendToWebhook = async (
   query: string,
   context: {
     googleAnalytics: GoogleAnalyticsContext | null;
-    googleSheets: GoogleSheetsContext | null;
+    googleSheets: {
+      accessToken: string;
+      refreshToken: string;
+      files: GoogleSheetsFile[];
+    } | null;
   }
 ): Promise<any> => {
   const payload: WebhookPayload = {

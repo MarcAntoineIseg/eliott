@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
@@ -7,7 +8,7 @@ import SheetsFileList from "@/components/SheetsFileList";
 import GoogleSheetsAuthButton from "@/components/GoogleSheetsAuthButton";
 import GoogleAdsAuthButton from "@/components/GoogleAdsAuthButton";
 import AdsAccountList from "@/components/AdsAccountList";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import {
   CLIENT_ID,
   GoogleAnalyticsProperty,
@@ -23,7 +24,10 @@ import {
   checkSheetsTokenValidity,
   getStoredSheetsAccessToken,
   getStoredSheetsRefreshToken,
-  getSheetsRefreshTokenFromUrl
+  getSheetsRefreshTokenFromUrl,
+  getConnectedSheetsFiles,
+  saveConnectedSheetsFile,
+  removeConnectedSheetsFile
 } from "@/services/googleSheets";
 import {
   GoogleAdsAccount,
@@ -65,7 +69,7 @@ const Integration = () => {
   const [sheetsAccessToken, setSheetsAccessToken] = useState<string | null>(null);
   const [sheetsRefreshToken, setSheetsRefreshToken] = useState<string | null>(null);
   const [googleSheetsFiles, setGoogleSheetsFiles] = useState<GoogleSheetsFile[]>([]);
-  const [selectedSheetId, setSelectedSheetId] = useState<string | null>(null);
+  const [connectedSheetsFiles, setConnectedSheetsFiles] = useState<GoogleSheetsFile[]>([]);
   const [sheetsLoading, setSheetsLoading] = useState<boolean>(false);
   const [sheetsError, setSheetsError] = useState<string | null>(null);
   const [sheetsConnectionStatus, setSheetsConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>("disconnected");
@@ -171,6 +175,11 @@ const Integration = () => {
               setSheetsAccessToken(storedToken);
               if (storedRefreshToken) setSheetsRefreshToken(storedRefreshToken);
               setSheetsConnectionStatus("connected");
+              
+              // Charger les fichiers connectés depuis localStorage
+              const savedFiles = getConnectedSheetsFiles();
+              setConnectedSheetsFiles(savedFiles);
+              
               loadSheetsFiles(storedToken);
             } else {
               localStorage.removeItem("googleSheetsAccessToken");
@@ -203,11 +212,9 @@ const Integration = () => {
       const files = await fetchGoogleSheetsFiles(token);
       setGoogleSheetsFiles(files);
       
-      // Check if we have a previously selected sheet
-      const savedSheetId = localStorage.getItem("googleSheetsFileId");
-      if (savedSheetId && files.some(file => file.id === savedSheetId)) {
-        setSelectedSheetId(savedSheetId);
-      }
+      // Charger les fichiers connectés depuis localStorage
+      const savedFiles = getConnectedSheetsFiles();
+      setConnectedSheetsFiles(savedFiles);
       
       if (files.length === 0) {
         toast.info("Aucun fichier Google Sheets trouvé");
@@ -327,11 +334,11 @@ const Integration = () => {
   const handleSheetsLogout = () => {
     localStorage.removeItem("googleSheetsAccessToken");
     localStorage.removeItem("googleSheetsRefreshToken");
-    localStorage.removeItem("googleSheetsFileId");
+    localStorage.removeItem("googleSheetsFiles");
     setSheetsAccessToken(null);
     setSheetsRefreshToken(null);
     setGoogleSheetsFiles([]);
-    setSelectedSheetId(null);
+    setConnectedSheetsFiles([]);
     setSheetsConnectionStatus("disconnected");
     toast.info("Déconnexion de Google Sheets réussie");
   };
@@ -354,9 +361,14 @@ const Integration = () => {
   };
 
   const handleSelectSheetsFile = (file: GoogleSheetsFile) => {
-    setSelectedSheetId(file.id);
-    localStorage.setItem("googleSheetsFileId", file.id);
+    const updatedFiles = saveConnectedSheetsFile(file);
+    setConnectedSheetsFiles(updatedFiles);
     toast.success(`Fichier Google Sheets "${file.name}" connecté avec succès !`);
+  };
+
+  const handleRemoveSheetsFile = (fileId: string) => {
+    const updatedFiles = removeConnectedSheetsFile(fileId);
+    setConnectedSheetsFiles(updatedFiles);
   };
 
   const handleSelectAdsAccount = (account: GoogleAdsAccount) => {
@@ -528,7 +540,7 @@ const Integration = () => {
                 <img src="/lovable-uploads/a5d2d998-d3cd-4f60-9128-d43a7fc8377c.png" alt="Google Sheets" className="w-[46px] h-[46px] rounded-lg border bg-white shadow object-contain" />
                 <div>
                   <CardTitle className="text-lg font-bold text-gray-800">Google Sheets</CardTitle>
-                  <CardDescription className="text-gray-600">Connectez votre compte Google Sheets</CardDescription>
+                  <CardDescription className="text-gray-600">Connectez vos fichiers Google Sheets</CardDescription>
                 </div>
               </div>
             </div>
@@ -545,13 +557,21 @@ const Integration = () => {
                 </div>
               ) : (
                 <>
-                  <Button variant="outline" onClick={handleSheetsLogout} className="w-full">Déconnecter</Button>
+                  <div className="flex justify-between items-center mb-4">
+                    <div>
+                      <span className="text-sm font-medium">
+                        {connectedSheetsFiles.length} fichier(s) connecté(s)
+                      </span>
+                    </div>
+                    <Button variant="outline" onClick={handleSheetsLogout}>Déconnecter</Button>
+                  </div>
                   <div className="mt-4">
                     <SheetsFileList
                       files={googleSheetsFiles}
                       isLoading={sheetsLoading}
                       error={sheetsError}
                       onSelectFile={handleSelectSheetsFile}
+                      onRemoveFile={handleRemoveSheetsFile}
                     />
                   </div>
                 </>

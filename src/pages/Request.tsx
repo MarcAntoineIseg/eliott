@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,12 +14,13 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { GoogleSheetsFile, getConnectedSheetsFiles } from "@/services/googleSheets";
 
 const Request = () => {
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [chartData, setChartData] = useState<any[]>([]);
-  const [responseMessage, setResponseMessage] = useState<string | null>(null); // ✅ Ajout
+  const [responseMessage, setResponseMessage] = useState<string | null>(null);
 
   const [userContext, setUserContext] = useState<{
     googleAnalytics: {
@@ -30,7 +32,7 @@ const Request = () => {
     googleSheets: {
       accessToken: string;
       refreshToken: string;
-      fileId: string;
+      files: GoogleSheetsFile[];
     } | null;
   }>({
     googleAnalytics: null,
@@ -46,7 +48,18 @@ const Request = () => {
 
       const sheetsAccessToken = localStorage.getItem("googleSheetsAccessToken") || "";
       const sheetsRefreshToken = localStorage.getItem("googleSheetsRefreshToken") || "";
-      const sheetsFileId = localStorage.getItem("googleSheetsFileId") || "";
+      const sheetsFiles = getConnectedSheetsFiles();
+
+      console.log("📦 GA Context:", {
+        gaAccessToken,
+        gaAccountId,
+        gaPropertyId
+      });
+      console.log("📦 Sheets Context:", {
+        sheetsAccessToken,
+        sheetsRefreshToken,
+        sheetsFiles
+      });
 
       setUserContext({
         googleAnalytics: gaAccessToken && gaAccountId && gaPropertyId
@@ -57,11 +70,11 @@ const Request = () => {
               propertyId: gaPropertyId,
             }
           : null,
-        googleSheets: sheetsAccessToken && sheetsFileId
+        googleSheets: sheetsAccessToken && sheetsFiles.length > 0
           ? {
               accessToken: sheetsAccessToken,
               refreshToken: sheetsRefreshToken,
-              fileId: sheetsFileId,
+              files: sheetsFiles,
             }
           : null,
       });
@@ -131,10 +144,27 @@ const Request = () => {
           </div>
         </form>
 
+        {/* Afficher un résumé des sources connectées */}
+        <div className="mt-4 space-y-2">
+          {userContext.googleAnalytics && (
+            <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
+              <span className="h-2 w-2 rounded-full bg-blue-500"></span>
+              Google Analytics connecté
+            </div>
+          )}
+          
+          {userContext.googleSheets && (
+            <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm ml-2">
+              <span className="h-2 w-2 rounded-full bg-green-500"></span>
+              {userContext.googleSheets.files.length} fichier(s) Google Sheets connecté(s)
+            </div>
+          )}
+        </div>
+
         {/* ✅ Affichage réponse IA */}
         {responseMessage && (
           <div className="mt-8 bg-white p-6 rounded-lg shadow text-gray-800 max-w-3xl">
-            <h2 className="text-xl font-semibold mb-2">Réponse d’Eliott</h2>
+            <h2 className="text-xl font-semibold mb-2">Réponse d'Eliott</h2>
             <p className="whitespace-pre-line">{responseMessage}</p>
           </div>
         )}

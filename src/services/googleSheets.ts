@@ -28,9 +28,44 @@ export const getStoredSheetsRefreshToken = (): string | null => {
   return localStorage.getItem('googleSheetsRefreshToken');
 };
 
+export const getConnectedSheetsFiles = (): GoogleSheetsFile[] => {
+  const filesJson = localStorage.getItem('googleSheetsFiles');
+  if (!filesJson) return [];
+  
+  try {
+    return JSON.parse(filesJson);
+  } catch (error) {
+    console.error("Erreur lors de la lecture des fichiers Google Sheets:", error);
+    return [];
+  }
+};
+
+export const saveConnectedSheetsFile = (file: GoogleSheetsFile): GoogleSheetsFile[] => {
+  const currentFiles = getConnectedSheetsFiles();
+  
+  // Vérifier si le fichier existe déjà
+  const exists = currentFiles.some(f => f.id === file.id);
+  
+  if (!exists) {
+    // Ajouter le nouveau fichier
+    const updatedFiles = [...currentFiles, file];
+    localStorage.setItem('googleSheetsFiles', JSON.stringify(updatedFiles));
+    return updatedFiles;
+  }
+  
+  return currentFiles;
+};
+
+export const removeConnectedSheetsFile = (fileId: string): GoogleSheetsFile[] => {
+  const currentFiles = getConnectedSheetsFiles();
+  const updatedFiles = currentFiles.filter(f => f.id !== fileId);
+  localStorage.setItem('googleSheetsFiles', JSON.stringify(updatedFiles));
+  return updatedFiles;
+};
+
 export const fetchGoogleSheetsFiles = async (accessToken: string): Promise<GoogleSheetsFile[]> => {
   try {
-    const response = await fetch("https://www.googleapis.com/drive/v3/files?q=mimeType='application/vnd.google-apps.spreadsheet'&fields=files(id,name)", {
+    const response = await fetch("https://www.googleapis.com/drive/v3/files?q=mimeType='application/vnd.google-apps.spreadsheet'&fields=files(id,name,modifiedTime)", {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -45,6 +80,8 @@ export const fetchGoogleSheetsFiles = async (accessToken: string): Promise<Googl
     return data.files.map((file: any) => ({
       id: file.id,
       name: file.name,
+      modifiedTime: file.modifiedTime,
+      url: `https://docs.google.com/spreadsheets/d/${file.id}/edit`
     }));
   } catch (error: any) {
     console.error("Erreur lors de la récupération des fichiers Google Sheets:", error);
