@@ -182,7 +182,6 @@ const Request = () => {
         {/* ✅ Affichage réponse IA */}
         {responseMessage && (
           <div className="mt-8 bg-white p-6 rounded-lg shadow text-gray-800 max-w-3xl">
-            <h2 className="text-xl font-semibold mb-2">Réponse d'Eliott</h2>
             <p className="whitespace-pre-line">{responseMessage}</p>
           </div>
         )}
