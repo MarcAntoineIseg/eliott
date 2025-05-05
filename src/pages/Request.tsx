@@ -18,6 +18,7 @@ const Request = () => {
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [chartData, setChartData] = useState<any[]>([]);
+  const [iaResponse, setIaResponse] = useState<string | null>(null); // ✅ ajout de la réponse IA
 
   const [userContext, setUserContext] = useState<{
     googleAnalytics: {
@@ -82,11 +83,18 @@ const Request = () => {
     }
 
     setIsLoading(true);
+    setIaResponse(null); // reset la réponse IA avant nouvel envoi
     try {
       const response = await sendToWebhook(query, userContext);
       toast.success("Requête envoyée à Eliott ✅");
       setQuery("");
 
+      // ✅ récupération de la réponse textuelle IA si disponible
+      if (response.message) {
+        setIaResponse(response.message);
+      }
+
+      // Parsing données de graphe si elles existent
       const parsed = (response.rows || []).map((row: any) => ({
         date: row.dimensionValues?.[0]?.value,
         sessions: parseInt(row.metricValues?.[0]?.value || "0", 10),
@@ -129,6 +137,15 @@ const Request = () => {
           </div>
         </form>
 
+        {/* ✅ Affichage réponse IA textuelle */}
+        {iaResponse && (
+          <div className="mt-6 bg-white p-6 rounded-lg shadow max-w-3xl">
+            <h2 className="text-lg font-semibold text-gray-700 mb-2">Réponse d’Eliott</h2>
+            <p className="text-gray-800 whitespace-pre-line">{iaResponse}</p>
+          </div>
+        )}
+
+        {/* ✅ Graphe si disponible */}
         {chartData.length > 0 && (
           <div className="mt-10">
             <h2 className="text-2xl font-semibold text-gray-700 mb-4">Évolution du trafic</h2>
