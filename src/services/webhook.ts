@@ -49,6 +49,7 @@ export const sendToWebhook = async (
 
   const response = await fetch("https://n8n.askeliott.com/webhook/ask", {
     method: "POST",
+    mode: "cors",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
