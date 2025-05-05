@@ -47,7 +47,7 @@ export const sendToWebhook = async (
 
   console.log("🚀 Envoi webhook avec payload :", payload);
 
-  const response = await fetch("https://n8n.askeliott.com:5678//webhook//ask", {
+  const response = await fetch("https://n8n.askeliott.com//webhook//ask", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
