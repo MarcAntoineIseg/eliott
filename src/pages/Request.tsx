@@ -106,7 +106,14 @@ const Request = () => {
 
       // ✅ Gérer le message texte de l'IA
       if (typeof response.message === "string" && response.message.trim().length > 0) {
-  setResponseMessage(response.message);
+  try {
+    const parsed = JSON.parse(response.message);
+    // Si c’est encore une string (double encodage), on la parse une 2e fois
+    setResponseMessage(typeof parsed === "string" ? JSON.parse(parsed) : parsed);
+  } catch {
+    // Si ce n’est pas du JSON, on affiche tel quel
+    setResponseMessage(response.message);
+  }
 } else {
   console.warn("❌ Réponse du webhook invalide :", response);
   setResponseMessage(null);
