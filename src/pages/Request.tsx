@@ -105,9 +105,12 @@ const Request = () => {
       setQuery("");
 
       // ✅ Gérer le message texte de l'IA
-      if (response.message) {
-        setResponseMessage(response.message);
-      }
+      if (typeof response.message === "string" && response.message.trim().length > 0) {
+  setResponseMessage(response.message);
+} else {
+  console.warn("❌ Réponse du webhook invalide :", response);
+  setResponseMessage(null);
+}
 
       // ✅ Gérer les données graphiques si présentes
       const parsed = (response.rows || []).map((row: any) => ({
