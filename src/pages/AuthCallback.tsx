@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -27,12 +26,12 @@ const AuthCallback = () => {
     if (gaAccessToken) {
       localStorage.setItem("googleAccessToken", gaAccessToken);
       console.log("✅ Access token Google Analytics stocké avec succès.");
-      
+
       if (gaRefreshToken) {
         localStorage.setItem("ga_refresh_token", gaRefreshToken);
         console.log("✅ Refresh token Google Analytics stocké avec succès.");
       }
-      
+
       if (gaExpiresIn) {
         const expirationDate = new Date();
         expirationDate.setSeconds(expirationDate.getSeconds() + parseInt(gaExpiresIn));
@@ -45,12 +44,12 @@ const AuthCallback = () => {
     if (sheetsAccessToken) {
       localStorage.setItem("googleSheetsAccessToken", sheetsAccessToken);
       console.log("✅ Access token Google Sheets stocké avec succès.");
-      
+
       if (sheetsRefreshToken) {
         localStorage.setItem("sheets_refresh_token", sheetsRefreshToken);
         console.log("✅ Refresh token Google Sheets stocké avec succès.");
       }
-      
+
       if (sheetsExpiresIn) {
         const expirationDate = new Date();
         expirationDate.setSeconds(expirationDate.getSeconds() + parseInt(sheetsExpiresIn));
@@ -63,12 +62,12 @@ const AuthCallback = () => {
     if (adsAccessToken) {
       localStorage.setItem("googleAdsAccessToken", adsAccessToken);
       console.log("✅ Access token Google Ads stocké avec succès.");
-      
+
       if (adsRefreshToken) {
         localStorage.setItem("ads_refresh_token", adsRefreshToken);
         console.log("✅ Refresh token Google Ads stocké avec succès.");
       }
-      
+
       if (adsExpiresIn) {
         const expirationDate = new Date();
         expirationDate.setSeconds(expirationDate.getSeconds() + parseInt(adsExpiresIn));
