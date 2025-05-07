@@ -15,9 +15,13 @@ const AuthCallback = () => {
 
     // Google Sheets
     const sheetsAccessToken = params.get("googleSheetsAccessToken");
+    const sheetsRefreshToken = params.get("sheetsRefreshToken");
+    const sheetsExpiresIn = params.get("sheetsExpiresIn");
 
     // Google Ads
     const adsAccessToken = params.get("googleAdsAccessToken");
+    const adsRefreshToken = params.get("adsRefreshToken");
+    const adsExpiresIn = params.get("adsExpiresIn");
 
     // ✅ Google Analytics
     if (gaAccessToken) {
@@ -42,9 +46,6 @@ const AuthCallback = () => {
       localStorage.setItem("googleSheetsAccessToken", sheetsAccessToken);
       console.log("✅ Access token Google Sheets stocké avec succès.");
       
-      const sheetsRefreshToken = params.get("refreshToken");
-      const sheetsExpiresIn = params.get("expiresIn");
-      
       if (sheetsRefreshToken) {
         localStorage.setItem("sheets_refresh_token", sheetsRefreshToken);
         console.log("✅ Refresh token Google Sheets stocké avec succès.");
@@ -62,9 +63,6 @@ const AuthCallback = () => {
     if (adsAccessToken) {
       localStorage.setItem("googleAdsAccessToken", adsAccessToken);
       console.log("✅ Access token Google Ads stocké avec succès.");
-      
-      const adsRefreshToken = params.get("refreshToken");
-      const adsExpiresIn = params.get("expiresIn");
       
       if (adsRefreshToken) {
         localStorage.setItem("ads_refresh_token", adsRefreshToken);
