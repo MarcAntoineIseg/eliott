@@ -18,13 +18,20 @@ interface GoogleSheetsContext {
   accessToken: string;
   refreshToken: string;
   files: GoogleSheetsFile[];
-  fileIds?: string[]; // New field to store individual file IDs
+  fileIds?: string[];
+}
+
+interface GoogleAdsContext {
+  accessToken: string;
+  refreshToken: string;
+  customerId: string;
 }
 
 interface WebhookPayload {
   query: string;
   googleAnalytics?: GoogleAnalyticsContext | null;
   googleSheets?: GoogleSheetsContext | null;
+  googleAds?: GoogleAdsContext | null;
 }
 
 export const sendToWebhook = async (
@@ -35,7 +42,12 @@ export const sendToWebhook = async (
       accessToken: string;
       refreshToken: string;
       files: GoogleSheetsFile[];
-      fileIds?: string[]; // New field
+      fileIds?: string[];
+    } | null;
+    googleAds?: {
+      accessToken: string;
+      refreshToken: string;
+      customerId: string;
     } | null;
   }
 ): Promise<any> => {
@@ -43,6 +55,7 @@ export const sendToWebhook = async (
     query,
     googleAnalytics: context.googleAnalytics,
     googleSheets: context.googleSheets,
+    googleAds: context.googleAds,
   };
 
   console.log("🚀 Envoi webhook avec payload :", payload);

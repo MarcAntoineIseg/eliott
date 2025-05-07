@@ -7,30 +7,79 @@ const AuthCallback = () => {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const accessToken = params.get("access_token");
-    const refreshToken = params.get("refresh_token");
-    const expiresIn = params.get("expires_in");
 
-    if (accessToken) {
-      localStorage.setItem("googleAccessToken", accessToken);
-      console.log("✅ Access token stocké avec succès.");
+    // Google Analytics
+    const gaAccessToken = params.get("access_token");
+    const gaRefreshToken = params.get("refresh_token");
+    const gaExpiresIn = params.get("expires_in");
 
-      if (refreshToken) {
-        localStorage.setItem("googleRefreshToken", refreshToken);
-        console.log("✅ Refresh token stocké avec succès.");
+    // Google Sheets
+    const sheetsAccessToken = params.get("googleSheetsAccessToken");
+
+    // Google Ads
+    const adsAccessToken = params.get("googleAdsAccessToken");
+
+    // ✅ Google Analytics
+    if (gaAccessToken) {
+      localStorage.setItem("googleAccessToken", gaAccessToken);
+      console.log("✅ Access token Google Analytics stocké avec succès.");
+      
+      if (gaRefreshToken) {
+        localStorage.setItem("ga_refresh_token", gaRefreshToken);
+        console.log("✅ Refresh token Google Analytics stocké avec succès.");
       }
-
-      if (expiresIn) {
+      
+      if (gaExpiresIn) {
         const expirationDate = new Date();
-        expirationDate.setSeconds(expirationDate.getSeconds() + parseInt(expiresIn));
+        expirationDate.setSeconds(expirationDate.getSeconds() + parseInt(gaExpiresIn));
         localStorage.setItem("ga_token_expires_at", expirationDate.toISOString());
-        console.log("✅ Expiration du token stockée avec succès.");
+        console.log("✅ Expiration du token Google Analytics stockée avec succès.");
       }
-
-      navigate("/request"); // ➔ Redirige vers ta page principale
-    } else {
-      console.error("❌ Aucun access_token trouvé !");
     }
+
+    // ✅ Google Sheets
+    if (sheetsAccessToken) {
+      localStorage.setItem("googleSheetsAccessToken", sheetsAccessToken);
+      console.log("✅ Access token Google Sheets stocké avec succès.");
+      
+      const sheetsRefreshToken = params.get("refreshToken");
+      const sheetsExpiresIn = params.get("expiresIn");
+      
+      if (sheetsRefreshToken) {
+        localStorage.setItem("sheets_refresh_token", sheetsRefreshToken);
+        console.log("✅ Refresh token Google Sheets stocké avec succès.");
+      }
+      
+      if (sheetsExpiresIn) {
+        const expirationDate = new Date();
+        expirationDate.setSeconds(expirationDate.getSeconds() + parseInt(sheetsExpiresIn));
+        localStorage.setItem("sheets_token_expires_at", expirationDate.toISOString());
+        console.log("✅ Expiration du token Google Sheets stockée avec succès.");
+      }
+    }
+
+    // ✅ Google Ads
+    if (adsAccessToken) {
+      localStorage.setItem("googleAdsAccessToken", adsAccessToken);
+      console.log("✅ Access token Google Ads stocké avec succès.");
+      
+      const adsRefreshToken = params.get("refreshToken");
+      const adsExpiresIn = params.get("expiresIn");
+      
+      if (adsRefreshToken) {
+        localStorage.setItem("ads_refresh_token", adsRefreshToken);
+        console.log("✅ Refresh token Google Ads stocké avec succès.");
+      }
+      
+      if (adsExpiresIn) {
+        const expirationDate = new Date();
+        expirationDate.setSeconds(expirationDate.getSeconds() + parseInt(adsExpiresIn));
+        localStorage.setItem("ads_token_expires_at", expirationDate.toISOString());
+        console.log("✅ Expiration du token Google Ads stockée avec succès.");
+      }
+    }
+
+    navigate("/request");
   }, [navigate]);
 
   return (

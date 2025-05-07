@@ -39,22 +39,35 @@ const Request = () => {
       files: GoogleSheetsFile[];
       fileIds?: string[];
     } | null;
+    googleAds: {
+      accessToken: string;
+      refreshToken: string;
+      customerId: string;
+    } | null;
   }>({
     googleAnalytics: null,
     googleSheets: null,
+    googleAds: null,
   });
 
   useEffect(() => {
     const loadContext = () => {
+      // Google Analytics tokens
       const gaAccessToken = localStorage.getItem("googleAccessToken") || "";
-      const gaRefreshToken = localStorage.getItem("googleRefreshToken") || "";
+      const gaRefreshToken = localStorage.getItem("ga_refresh_token") || "";
       const gaPropertyId = localStorage.getItem("ga_property_id") || "";
       const gaAccountId = localStorage.getItem("ga_account_id") || "";
 
+      // Google Sheets tokens
       const sheetsAccessToken = localStorage.getItem("googleSheetsAccessToken") || "";
-      const sheetsRefreshToken = localStorage.getItem("googleSheetsRefreshToken") || "";
+      const sheetsRefreshToken = localStorage.getItem("sheets_refresh_token") || "";
       const sheetsFiles = getConnectedSheetsFiles();
       const sheetsFileIds = getConnectedSheetsFileIds();
+      
+      // Google Ads tokens
+      const adsAccessToken = localStorage.getItem("googleAdsAccessToken") || "";
+      const adsRefreshToken = localStorage.getItem("ads_refresh_token") || "";
+      const adsCustomerId = localStorage.getItem("googleAdsCustomerId") || "";
 
       console.log("📦 GA Context:", {
         gaAccessToken,
@@ -62,11 +75,18 @@ const Request = () => {
         gaAccountId,
         gaPropertyId
       });
+      
       console.log("📦 Sheets Context:", {
         sheetsAccessToken,
         sheetsRefreshToken,
         sheetsFiles,
         sheetsFileIds
+      });
+      
+      console.log("📦 Ads Context:", {
+        adsAccessToken,
+        adsRefreshToken,
+        adsCustomerId
       });
 
       setUserContext({
@@ -84,6 +104,13 @@ const Request = () => {
               refreshToken: sheetsRefreshToken,
               files: sheetsFiles,
               fileIds: sheetsFileIds,
+            }
+          : null,
+        googleAds: adsAccessToken && adsCustomerId
+          ? {
+              accessToken: adsAccessToken,
+              refreshToken: adsRefreshToken,
+              customerId: adsCustomerId,
             }
           : null,
       });
@@ -176,6 +203,13 @@ const Request = () => {
             <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm ml-2">
               <span className="h-2 w-2 rounded-full bg-green-500"></span>
               {userContext.googleSheets.files.length} fichier(s) Google Sheets connecté(s)
+            </div>
+          )}
+          
+          {userContext.googleAds && (
+            <div className="inline-flex items-center gap-2 bg-red-50 text-red-700 px-3 py-1 rounded-full text-sm ml-2">
+              <span className="h-2 w-2 rounded-full bg-red-500"></span>
+              Google Ads connecté
             </div>
           )}
         </div>
