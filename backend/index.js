@@ -67,8 +67,9 @@ app.get('/auth/google', (req, res) => {
 app.get('/auth/google/callback', async (req, res) => {
   try {
     const { tokens } = await oauth2Client.getToken(req.query.code);
+    console.log("🔐 Tokens récupérés de Google Analytics:", tokens);
     const { access_token, refresh_token, expires_in } = tokens;
-    res.redirect(`https://app.askeliott.com/integration?access_token=${access_token}&refresh_token=${refresh_token || ''}&expires_in=${expires_in}`);
+    res.redirect(`https://app.askeliott.com/authcallback?access_token=${access_token}&refresh_token=${refresh_token || ''}&expires_in=${expires_in}`);
   } catch (err) {
     console.error('Google Analytics callback error:', err.message);
     res.status(500).send('OAuth error');
