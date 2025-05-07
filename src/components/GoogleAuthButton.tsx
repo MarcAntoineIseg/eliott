@@ -12,7 +12,7 @@ const GoogleAuthButton = ({ clientId }: GoogleAuthButtonProps) => {
   const handleGoogleAuth = () => {
     // Clear existing tokens
     localStorage.removeItem("googleAccessToken");
-    localStorage.removeItem("ga_refresh_token");
+    localStorage.removeItem("googleRefreshToken");
     localStorage.removeItem("ga_account_id");
     localStorage.removeItem("ga_property_id");
 

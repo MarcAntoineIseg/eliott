@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
@@ -13,6 +12,7 @@ import {
   CLIENT_ID,
   GoogleAnalyticsProperty,
   getAccessTokenFromUrl,
+  getRefreshTokenFromUrl,
   fetchGoogleAnalyticsAccounts,
   fetchGoogleAnalyticsAccountProperties,
   checkTokenValidity
@@ -234,20 +234,34 @@ const Integration = () => {
   useEffect(() => {
     const clearUrlAndProcessToken = async () => {
       const token = getAccessTokenFromUrl();
+      const refreshToken = getRefreshTokenFromUrl();
+      
       window.history.replaceState({}, document.title, "/integration");
       const tokenToUse = token || localStorage.getItem("googleAccessToken");
+      
       if (!tokenToUse) return setConnectionStatus("disconnected");
+      
       setConnectionStatus("connecting");
+      
       try {
         const isValid = await checkTokenValidity(tokenToUse);
         if (isValid) {
-          if (token) localStorage.setItem("googleAccessToken", token);
+          if (token) {
+            localStorage.setItem("googleAccessToken", token);
+            
+            // Store the refresh token if available
+            if (refreshToken) {
+              localStorage.setItem("googleRefreshToken", refreshToken);
+            }
+          }
+          
           setAccessToken(tokenToUse);
           setConnectionStatus("connected");
           toast.success(token ? "Connexion réussie à Google Analytics" : "Session restaurée");
           loadAccounts(tokenToUse);
         } else {
           localStorage.removeItem("googleAccessToken");
+          localStorage.removeItem("googleRefreshToken");
           setAccessToken(null);
           setConnectionStatus("disconnected");
           toast.error(token ? "Échec de connexion : token invalide" : "Session expirée. Veuillez vous reconnecter.");
@@ -255,6 +269,7 @@ const Integration = () => {
       } catch (error) {
         console.error("Erreur lors de la vérification du token:", error);
         localStorage.removeItem("googleAccessToken");
+        localStorage.removeItem("googleRefreshToken");
         setAccessToken(null);
         setConnectionStatus("disconnected");
         toast.error("Erreur lors de la connexion");
@@ -321,6 +336,7 @@ const Integration = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("googleAccessToken");
+    localStorage.removeItem("googleRefreshToken");
     localStorage.removeItem("ga_property_id");
     localStorage.removeItem("ga_account_id");
     setAccessToken(null);

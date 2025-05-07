@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -15,7 +16,7 @@ const AuthCallback = () => {
       console.log("✅ Access token stocké avec succès.");
 
       if (refreshToken) {
-        localStorage.setItem("ga_refresh_token", refreshToken);
+        localStorage.setItem("googleRefreshToken", refreshToken);
         console.log("✅ Refresh token stocké avec succès.");
       }
 

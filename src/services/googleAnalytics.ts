@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 // Mise à jour de l'URL de base de l'API et du CLIENT_ID
@@ -59,6 +60,11 @@ export const getStoredAccessToken = (): string | null => {
   return localStorage.getItem("googleAccessToken");
 };
 
+// Fonction pour récupérer le refresh token stocké
+export const getStoredRefreshToken = (): string | null => {
+  return localStorage.getItem("googleRefreshToken");
+};
+
 // Fonction pour extraire le token d'accès de l'URL (après redirection OAuth)
 export const getAccessTokenFromUrl = (): string | null => {
   if (typeof window === 'undefined') return null;
@@ -70,6 +76,22 @@ export const getAccessTokenFromUrl = (): string | null => {
   if (accessToken) {
     console.log("Token extrait de l'URL:", accessToken.substring(0, 10) + "...");
     return accessToken;
+  }
+  
+  return null;
+};
+
+// Fonction pour extraire le refresh token de l'URL
+export const getRefreshTokenFromUrl = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  
+  const hash = window.location.hash.substring(1);
+  const params = new URLSearchParams(hash);
+  const refreshToken = params.get("refresh_token");
+  
+  if (refreshToken) {
+    console.log("Refresh token extrait de l'URL");
+    return refreshToken;
   }
   
   return null;

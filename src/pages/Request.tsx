@@ -47,7 +47,7 @@ const Request = () => {
   useEffect(() => {
     const loadContext = () => {
       const gaAccessToken = localStorage.getItem("googleAccessToken") || "";
-      const gaRefreshToken = localStorage.getItem("ga_refresh_token") || "";
+      const gaRefreshToken = localStorage.getItem("googleRefreshToken") || "";
       const gaPropertyId = localStorage.getItem("ga_property_id") || "";
       const gaAccountId = localStorage.getItem("ga_account_id") || "";
 
@@ -58,6 +58,7 @@ const Request = () => {
 
       console.log("📦 GA Context:", {
         gaAccessToken,
+        gaRefreshToken,
         gaAccountId,
         gaPropertyId
       });
