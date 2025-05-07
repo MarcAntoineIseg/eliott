@@ -3,6 +3,12 @@ const { google } = require('googleapis');
 const { OAuth2Client } = require('google-auth-library');
 const fetch = require('node-fetch');
 const app = express();
+const cors = require('cors');
+
+app.use(cors({
+  origin: 'https://app.askeliott.com',
+  credentials: true
+}));
 
 // === ENV ===
 const client_id = process.env.GOOGLE_CLIENT_ID;
