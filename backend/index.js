@@ -1,3 +1,4 @@
+// index.js
 
 const express = require('express');
 const { google } = require('googleapis');
@@ -11,64 +12,62 @@ app.use(cors({
   credentials: true
 }));
 
-// === ENV ===
-const rawClientId       = process.env.GOOGLE_CLIENT_ID     || '';
-const rawClientSecret   = process.env.GOOGLE_CLIENT_SECRET || '';
+// === ENV & SANITIZE ===
+const rawClientId     = process.env.GOOGLE_CLIENT_ID     || '';
+const rawClientSecret = process.env.GOOGLE_CLIENT_SECRET || '';
 
-// Debug des codes caractères pour détecter tout parasite
+// Debug char codes to catch hidden chars
 console.log(
-  "🧩 Char codes du rawClientId       :",
-  rawClientId.split("").map(c => c.charCodeAt(0))
+  '🧩 Char codes rawClientId     :',
+  rawClientId.split('').map(c => c.charCodeAt(0))
 );
 console.log(
-  "🧩 Char codes du rawClientSecret   :",
-  rawClientSecret.split("").map(c => c.charCodeAt(0))
+  '🧩 Char codes rawClientSecret :',
+  rawClientSecret.split('').map(c => c.charCodeAt(0))
 );
 
-// On ne garde que lettres, chiffres, underscore, point et tiret
-const client_id       = rawClientId.replace(/[^\w\.-]/g, "");
-const client_secret   = rawClientSecret.replace(/[^\w\.-]/g, "");
+// Keep only alphanumerics, underscore, dot, dash
+const client_id     = rawClientId.replace(/[^\w\.-]/g, '');
+const client_secret = rawClientSecret.replace(/[^\w\.-]/g, '');
 
-console.log(`🧹 Client ID après sanitize       : [${client_id}] (length: ${client_id.length})`);
-console.log(`🧹 Client secret après sanitize   : (length: ${client_secret.length})`);
+console.log(`🧹 Client ID sanitized     : [${client_id}] (length: ${client_id.length})`);
+console.log(`🧹 Client Secret sanitized : (length: ${client_secret.length})`);
 
-const redirect_uri = 'https://api.askeliott.com/auth/google/callback';
-const oauth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uri);
+// === OAuth2 Clients ===
+const redirectUriGA    = 'https://api.askeliott.com/auth/google/callback';
+const oauth2ClientGA   = new google.auth.OAuth2(client_id, client_secret, redirectUriGA);
 
-// Google Sheets
-const sheetsRedirectUri = 'https://api.askeliott.com/auth/google-sheets/callback';
-const sheetsClient = new google.auth.OAuth2(client_id, client_secret, sheetsRedirectUri);
+const redirectUriSheets  = 'https://api.askeliott.com/auth/google-sheets/callback';
+const oauth2ClientSheets = new google.auth.OAuth2(client_id, client_secret, redirectUriSheets);
 
-// Meta Ads
-const metaClientId = process.env.META_CLIENT_ID;
+const metaClientId     = process.env.META_CLIENT_ID;
 const metaClientSecret = process.env.META_CLIENT_SECRET;
-const metaRedirectUri = 'https://app.askeliott.com/auth/meta/callback';
+const redirectUriMeta  = 'https://app.askeliott.com/auth/meta/callback';
 
-// Google Ads
-const googleAdsClientId = process.env.GOOGLE_ADS_CLIENT_ID;
-const googleAdsClientSecret = process.env.GOOGLE_ADS_CLIENT_SECRET;
-const googleAdsRedirectUri = 'https://api.askeliott.com/auth/google-ads/callback';
-const googleAdsOAuth2Client = new OAuth2Client(googleAdsClientId, googleAdsClientSecret, googleAdsRedirectUri);
+const adsClientId       = process.env.GOOGLE_ADS_CLIENT_ID;
+const adsClientSecret   = process.env.GOOGLE_ADS_CLIENT_SECRET;
+const redirectUriAds    = 'https://api.askeliott.com/auth/google-ads/callback';
+const oauth2ClientAds   = new OAuth2Client(adsClientId, adsClientSecret, redirectUriAds);
 
-// === UTILS ===
-const checkTokenValidity = async (token) => {
+// === UTILITIES ===
+const checkTokenValidity = async token => {
   try {
     const res = await fetch(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${token}`);
     const data = await res.json();
     return !data.error;
   } catch (err) {
-    console.error("Token check error:", err.message);
+    console.error('Token check error:', err.message);
     return false;
   }
 };
 
 // === ROUTES ===
 
-// Google Analytics OAuth - Modified to always request a refresh token
+// -- Google Analytics ---
 app.get('/auth/google', (req, res) => {
-  const url = oauth2Client.generateAuthUrl({
+  const url = oauth2ClientGA.generateAuthUrl({
     access_type: 'offline',
-    prompt: 'consent',  // Force to show the consent screen to get refresh token
+    prompt: 'consent',
     include_granted_scopes: true,
     scope: [
       'https://www.googleapis.com/auth/analytics.readonly',
@@ -80,33 +79,35 @@ app.get('/auth/google', (req, res) => {
       'openid'
     ]
   });
-  console.log("🔗 Google Analytics auth URL:", url);
+  console.log('🔗 GA auth URL:', url);
   res.redirect(url);
 });
 
 app.get('/auth/google/callback', async (req, res) => {
   try {
-    const { tokens } = await oauth2Client.getToken(req.query.code);
-    console.log("🔐 Tokens récupérés de Google Analytics:", tokens);
-    
-    // Log specifically if refresh token is present
+    console.log('🌍 GA Redirect URI:', redirectUriGA);
+    console.log('🆔 GA Client ID      :', client_id);
+    const { tokens } = await oauth2ClientGA.getToken(req.query.code);
+    console.log('🔐 GA tokens:', tokens);
     if (tokens.refresh_token) {
-      console.log("✅ Refresh token found for Google Analytics!");
+      console.log('✅ GA refresh_token received');
     } else {
-      console.log("❌ No refresh token provided by Google Analytics!");
+      console.log('❌ GA no refresh_token');
     }
-    
     const { access_token, refresh_token, expires_in } = tokens;
-    res.redirect(`https://app.askeliott.com/authcallback?access_token=${access_token}&refresh_token=${refresh_token || ''}&expires_in=${expires_in}`);
+    res.redirect(
+      `https://app.askeliott.com/authcallback?access_token=${access_token}` +
+      `&refresh_token=${refresh_token || ''}&expires_in=${expires_in}`
+    );
   } catch (err) {
-    console.error('Google Analytics callback error:', err.message);
+    console.error('GA callback error:', err.message);
     res.status(500).send('OAuth error');
   }
 });
 
-// Google Sheets OAuth
+// -- Google Sheets ---
 app.get('/auth/google-sheets', (req, res) => {
-  const url = sheetsClient.generateAuthUrl({
+  const url = oauth2ClientSheets.generateAuthUrl({
     access_type: 'offline',
     prompt: 'consent',
     include_granted_scopes: true,
@@ -118,47 +119,62 @@ app.get('/auth/google-sheets', (req, res) => {
       'openid'
     ]
   });
+  console.log('🔗 Sheets auth URL:', url);
   res.redirect(url);
 });
 
 app.get('/auth/google-sheets/callback', async (req, res) => {
   try {
-    const { tokens } = await sheetsClient.getToken(req.query.code);
+    const { tokens } = await oauth2ClientSheets.getToken(req.query.code);
+    console.log('🔐 Sheets tokens:', tokens);
     const { access_token, refresh_token, expires_in } = tokens;
-    res.redirect(`https://app.askeliott.com/authcallback?googleSheetsAccessToken=${access_token}&sheetsRefreshToken=${refresh_token || ''}&sheetsExpiresIn=${expires_in}`);
+    res.redirect(
+      `https://app.askeliott.com/authcallback?googleSheetsAccessToken=${access_token}` +
+      `&sheetsRefreshToken=${refresh_token || ''}&sheetsExpiresIn=${expires_in}`
+    );
   } catch (err) {
-    console.error("Google Sheets callback error:", err.message);
-    res.status(500).send("OAuth error");
+    console.error('Sheets callback error:', err.message);
+    res.status(500).send('OAuth error');
   }
 });
 
-// Meta Ads
+// -- Meta Ads ---
 app.get('/auth/meta', (req, res) => {
   const scope = 'ads_read,business_management,pages_read_engagement';
-  const url = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${metaClientId}&redirect_uri=${encodeURIComponent(metaRedirectUri)}&scope=${scope}&response_type=code`;
+  const url = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${metaClientId}` +
+    `&redirect_uri=${encodeURIComponent(redirectUriMeta)}` +
+    `&scope=${scope}&response_type=code`;
   res.redirect(url);
 });
 
 app.get('/auth/meta/callback', async (req, res) => {
   try {
     const code = req.query.code;
-    const tokenRes = await fetch(`https://graph.facebook.com/v19.0/oauth/access_token?client_id=${metaClientId}&redirect_uri=${encodeURIComponent(metaRedirectUri)}&client_secret=${metaClientSecret}&code=${code}`);
+    const tokenRes = await fetch(
+      `https://graph.facebook.com/v19.0/oauth/access_token` +
+      `?client_id=${metaClientId}` +
+      `&redirect_uri=${encodeURIComponent(redirectUriMeta)}` +
+      `&client_secret=${metaClientSecret}` +
+      `&code=${code}`
+    );
     const { access_token } = await tokenRes.json();
-
-    const adAccountsRes = await fetch(`https://graph.facebook.com/v19.0/me/adaccounts?access_token=${access_token}`);
-    const adAccounts = await adAccountsRes.json();
-    const adAccountId = adAccounts.data?.[0]?.id || '';
-
+    const adAccRes = await fetch(`https://graph.facebook.com/v19.0/me/adaccounts?access_token=${access_token}`);
+    const adAcc = await adAccRes.json();
+    const adAccountId = adAcc.data?.[0]?.id || '';
     res.redirect(`https://app.askeliott.com/authcallback?metaAccessToken=${access_token}&metaAdAccount=${adAccountId}`);
   } catch (err) {
-    console.error("Meta Ads callback error:", err.message);
-    res.status(500).send("OAuth error");
+    console.error('Meta callback error:', err.message);
+    res.status(500).send('OAuth error');
   }
 });
 
-// Google Ads
+// -- Google Ads ---
 app.get('/auth/google-ads', (req, res) => {
-  const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleAdsClientId}&redirect_uri=${encodeURIComponent(googleAdsRedirectUri)}&response_type=code&scope=https://www.googleapis.com/auth/adwords&access_type=offline&prompt=consent`;
+  const url =
+    `https://accounts.google.com/o/oauth2/v2/auth?client_id=${adsClientId}` +
+    `&redirect_uri=${encodeURIComponent(redirectUriAds)}` +
+    `&response_type=code&scope=https://www.googleapis.com/auth/adwords` +
+    `&access_type=offline&prompt=consent`;
   res.redirect(url);
 });
 
@@ -169,69 +185,58 @@ app.get('/auth/google-ads/callback', async (req, res) => {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         code: req.query.code,
-        client_id: googleAdsClientId,
-        client_secret: googleAdsClientSecret,
-        redirect_uri: googleAdsRedirectUri,
+        client_id: adsClientId,
+        client_secret: adsClientSecret,
+        redirect_uri: redirectUriAds,
         grant_type: 'authorization_code'
       })
     });
-
     const { access_token, refresh_token, expires_in } = await tokenRes.json();
-    res.redirect(`https://app.askeliott.com/authcallback?googleAdsAccessToken=${access_token}&adsRefreshToken=${refresh_token || ''}&adsExpiresIn=${expires_in}`);
+    res.redirect(
+      `https://app.askeliott.com/authcallback?googleAdsAccessToken=${access_token}` +
+      `&adsRefreshToken=${refresh_token || ''}&adsExpiresIn=${expires_in}`
+    );
   } catch (err) {
-    console.error("Google Ads callback error:", err.message);
-    res.status(500).send("OAuth error");
+    console.error('Ads callback error:', err.message);
+    res.status(500).send('OAuth error');
   }
 });
 
-// Liste des comptes Google Analytics
+// === GA ACCOUNT & PROPERTIES API ===
 app.get('/api/analytics/accounts', async (req, res) => {
   const token = req.query.token;
   if (!token) return res.status(400).json({ error: 'Access token manquant' });
-
-  const authClient = new google.auth.OAuth2();
-  authClient.setCredentials({ access_token: token });
-
+  const client = new google.auth.OAuth2();
+  client.setCredentials({ access_token: token });
   try {
-    const analyticsAdmin = google.analyticsadmin({ version: 'v1beta', auth: authClient });
-    const response = await analyticsAdmin.accounts.list();
-    const accounts = response.data.accounts || [];
-    res.json({ accounts });
+    const admin = google.analyticsadmin({ version: 'v1beta', auth: client });
+    const { data } = await admin.accounts.list();
+    res.json({ accounts: data.accounts || [] });
   } catch (err) {
-    console.error("❌ Erreur récupération comptes GA:", err.message);
+    console.error('❌ GA accounts error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Liste des propriétés GA4
 app.get('/api/analytics/properties', async (req, res) => {
   const token = req.query.token;
   let accountId = req.query.accountId;
   if (!token) return res.status(400).json({ error: 'Access token manquant' });
-
-  const authClient = new google.auth.OAuth2();
-  authClient.setCredentials({ access_token: token });
-
+  const client = new google.auth.OAuth2();
+  client.setCredentials({ access_token: token });
   try {
+    const admin = google.analyticsadmin({ version: 'v1beta', auth: client });
     if (!accountId) {
-      const analyticsAdmin = google.analyticsadmin({ version: 'v1beta', auth: authClient });
-      const accountsResp = await analyticsAdmin.accounts.list();
-      const firstAccount = accountsResp.data.accounts?.[0];
-      if (!firstAccount) return res.json({ properties: [] });
-      accountId = firstAccount.name;
+      const { data } = await admin.accounts.list();
+      accountId = data.accounts?.[0]?.name || '';
     } else {
       accountId = decodeURIComponent(accountId);
-      if (!accountId.startsWith('accounts/')) {
-        accountId = `accounts/${accountId}`;
-      }
+      if (!accountId.startsWith('accounts/')) accountId = `accounts/${accountId}`;
     }
-
-    const analyticsAdmin = google.analyticsadmin({ version: 'v1beta', auth: authClient });
-    const response = await analyticsAdmin.properties.list({ filter: `parent:${accountId}` });
-    const properties = response.data.properties || [];
-    res.json({ properties });
+    const { data } = await admin.properties.list({ filter: `parent:${accountId}` });
+    res.json({ properties: data.properties || [] });
   } catch (err) {
-    console.error("❌ Erreur API GA Admin:", err.message);
+    console.error('❌ GA properties error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
