@@ -13,6 +13,10 @@ app.use(cors({
 
 // === ENV ===
 const rawClientId = process.env.GOOGLE_CLIENT_ID || '';
+console.log(
+  "🧩 Char codes du rawClientId :",
+  rawClientId.split("").map(c => c.charCodeAt(0))
+);
 const client_id = rawClientId.trim();             // enlève espaces/tabs début & fin
 console.log(`🚀 Client ID brut : [${rawClientId}]`);
 console.log(`🚀 Client ID utilisé : [${client_id}] (length : ${client_id.length})`);
