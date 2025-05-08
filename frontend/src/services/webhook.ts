@@ -1,4 +1,3 @@
-
 interface GoogleAnalyticsContext {
   accountId: string;
   propertyId: string;
@@ -38,17 +37,8 @@ export const sendToWebhook = async (
   query: string,
   context: {
     googleAnalytics: GoogleAnalyticsContext | null;
-    googleSheets: {
-      accessToken: string;
-      refreshToken: string;
-      files: GoogleSheetsFile[];
-      fileIds?: string[];
-    } | null;
-    googleAds?: {
-      accessToken: string;
-      refreshToken: string;
-      customerId: string;
-    } | null;
+    googleSheets: GoogleSheetsContext | null;
+    googleAds?: GoogleAdsContext | null;
   }
 ): Promise<any> => {
   const payload: WebhookPayload = {
@@ -65,15 +55,18 @@ export const sendToWebhook = async (
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-  
+
   if (!response.ok) {
     const errorText = await response.text();
     console.error("❌ Erreur webhook :", errorText);
     throw new Error("Erreur lors de l'envoi au webhook");
   }
-  
+
   const data = await response.json();
-  
+  console.log("✅ Réponse complète du webhook :", data);
+
   // ✅ On récupère le champ "output" dans la première entrée du tableau
-  return data[0]?.output;  
+  const output = data[0]?.output;
+  console.log("🧠 Contenu de 'output' retourné :", output);
+  return output;
 };
