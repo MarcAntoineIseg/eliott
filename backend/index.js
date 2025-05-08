@@ -96,7 +96,7 @@ app.get('/auth/google/callback', async (req, res) => {
     }
     const { access_token, refresh_token, expires_in } = tokens;
     res.redirect(
-      `https://app.askeliott.com/authcallback?access_token=${access_token}` +
+      `https://app.askeliott.com/auth/callback?access_token=${access_token}` +
       `&refresh_token=${refresh_token || ''}&expires_in=${expires_in}`
     );
   } catch (err) {
@@ -129,7 +129,7 @@ app.get('/auth/google-sheets/callback', async (req, res) => {
     console.log('🔐 Sheets tokens:', tokens);
     const { access_token, refresh_token, expires_in } = tokens;
     res.redirect(
-      `https://app.askeliott.com/authcallback?googleSheetsAccessToken=${access_token}` +
+      `https://app.askeliott.com/auth/callback?googleSheetsAccessToken=${access_token}` +
       `&sheetsRefreshToken=${refresh_token || ''}&sheetsExpiresIn=${expires_in}`
     );
   } catch (err) {
