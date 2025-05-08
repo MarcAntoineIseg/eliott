@@ -70,22 +70,22 @@ const Request = () => {
       const adsCustomerId = localStorage.getItem("googleAdsCustomerId") || "";
 
       console.log("📦 GA Context:", {
-        gaAccessToken,
-        gaRefreshToken,
+        gaAccessToken: gaAccessToken ? "présent" : "absent",
+        gaRefreshToken: gaRefreshToken ? "présent" : "absent",
         gaAccountId,
         gaPropertyId
       });
       
       console.log("📦 Sheets Context:", {
-        sheetsAccessToken,
-        sheetsRefreshToken,
-        sheetsFiles,
+        sheetsAccessToken: sheetsAccessToken ? "présent" : "absent",
+        sheetsRefreshToken: sheetsRefreshToken ? "présent" : "absent",
+        sheetsFiles: sheetsFiles.length,
         sheetsFileIds
       });
       
       console.log("📦 Ads Context:", {
-        adsAccessToken,
-        adsRefreshToken,
+        adsAccessToken: adsAccessToken ? "présent" : "absent",
+        adsRefreshToken: adsRefreshToken ? "présent" : "absent",
         adsCustomerId
       });
 

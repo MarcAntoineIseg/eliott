@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -29,7 +30,9 @@ const AuthCallback = () => {
 
       if (gaRefreshToken) {
         localStorage.setItem("ga_refresh_token", gaRefreshToken);
-        console.log("✅ Refresh token Google Analytics stocké avec succès.");
+        console.log("✅ Refresh token Google Analytics stocké avec succès:", gaRefreshToken.substring(0, 5) + "...");
+      } else {
+        console.warn("⚠️ Aucun refresh token Google Analytics reçu!");
       }
 
       if (gaExpiresIn) {
@@ -47,7 +50,9 @@ const AuthCallback = () => {
 
       if (sheetsRefreshToken) {
         localStorage.setItem("sheets_refresh_token", sheetsRefreshToken);
-        console.log("✅ Refresh token Google Sheets stocké avec succès.");
+        console.log("✅ Refresh token Google Sheets stocké avec succès:", sheetsRefreshToken.substring(0, 5) + "...");
+      } else {
+        console.warn("⚠️ Aucun refresh token Google Sheets reçu!");
       }
 
       if (sheetsExpiresIn) {
@@ -65,7 +70,9 @@ const AuthCallback = () => {
 
       if (adsRefreshToken) {
         localStorage.setItem("ads_refresh_token", adsRefreshToken);
-        console.log("✅ Refresh token Google Ads stocké avec succès.");
+        console.log("✅ Refresh token Google Ads stocké avec succès:", adsRefreshToken.substring(0, 5) + "...");
+      } else {
+        console.warn("⚠️ Aucun refresh token Google Ads reçu!");
       }
 
       if (adsExpiresIn) {

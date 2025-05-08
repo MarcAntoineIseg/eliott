@@ -1,3 +1,4 @@
+
 const express = require('express');
 const { google } = require('googleapis');
 const { OAuth2Client } = require('google-auth-library');
@@ -45,11 +46,11 @@ const checkTokenValidity = async (token) => {
 
 // === ROUTES ===
 
-// Google Analytics OAuth
+// Google Analytics OAuth - Modified to always request a refresh token
 app.get('/auth/google', (req, res) => {
   const url = oauth2Client.generateAuthUrl({
     access_type: 'offline',
-    prompt: 'consent',
+    prompt: 'consent',  // Force to show the consent screen to get refresh token
     include_granted_scopes: true,
     scope: [
       'https://www.googleapis.com/auth/analytics.readonly',
@@ -61,6 +62,7 @@ app.get('/auth/google', (req, res) => {
       'openid'
     ]
   });
+  console.log("🔗 Google Analytics auth URL:", url);
   res.redirect(url);
 });
 
@@ -68,6 +70,14 @@ app.get('/auth/google/callback', async (req, res) => {
   try {
     const { tokens } = await oauth2Client.getToken(req.query.code);
     console.log("🔐 Tokens récupérés de Google Analytics:", tokens);
+    
+    // Log specifically if refresh token is present
+    if (tokens.refresh_token) {
+      console.log("✅ Refresh token found for Google Analytics!");
+    } else {
+      console.log("❌ No refresh token provided by Google Analytics!");
+    }
+    
     const { access_token, refresh_token, expires_in } = tokens;
     res.redirect(`https://app.askeliott.com/authcallback?access_token=${access_token}&refresh_token=${refresh_token || ''}&expires_in=${expires_in}`);
   } catch (err) {
