@@ -12,15 +12,26 @@ app.use(cors({
 }));
 
 // === ENV ===
-const rawClientId = process.env.GOOGLE_CLIENT_ID || '';
+const rawClientId       = process.env.GOOGLE_CLIENT_ID     || '';
+const rawClientSecret   = process.env.GOOGLE_CLIENT_SECRET || '';
+
+// Debug des codes caractères pour détecter tout parasite
 console.log(
-  "🧩 Char codes du rawClientId :",
+  "🧩 Char codes du rawClientId       :",
   rawClientId.split("").map(c => c.charCodeAt(0))
 );
-const client_id = rawClientId.trim();             // enlève espaces/tabs début & fin
-console.log(`🚀 Client ID brut : [${rawClientId}]`);
-console.log(`🚀 Client ID utilisé : [${client_id}] (length : ${client_id.length})`);
-const client_secret = process.env.GOOGLE_CLIENT_SECRET;
+console.log(
+  "🧩 Char codes du rawClientSecret   :",
+  rawClientSecret.split("").map(c => c.charCodeAt(0))
+);
+
+// On ne garde que lettres, chiffres, underscore, point et tiret
+const client_id       = rawClientId.replace(/[^\w\.-]/g, "");
+const client_secret   = rawClientSecret.replace(/[^\w\.-]/g, "");
+
+console.log(`🧹 Client ID après sanitize       : [${client_id}] (length: ${client_id.length})`);
+console.log(`🧹 Client secret après sanitize   : (length: ${client_secret.length})`);
+
 const redirect_uri = 'https://api.askeliott.com/auth/google/callback';
 const oauth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uri);
 
