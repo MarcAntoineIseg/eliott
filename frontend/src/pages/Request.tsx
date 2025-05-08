@@ -1,4 +1,4 @@
-
+import ReactMarkdown from "react-markdown";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -217,7 +217,10 @@ const Request = () => {
         {/* ✅ Affichage réponse IA */}
         {responseMessage && (
           <div className="mt-8 bg-white p-6 rounded-lg shadow text-gray-800 max-w-3xl">
-            <p className="whitespace-pre-line">{responseMessage}</p>
+<ReactMarkdown className="prose prose-sm max-w-none text-gray-800">
+  {responseMessage}
+</ReactMarkdown>
+
           </div>
         )}
 

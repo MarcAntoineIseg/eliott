@@ -65,12 +65,15 @@ export const sendToWebhook = async (
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-
+  
   if (!response.ok) {
     const errorText = await response.text();
     console.error("❌ Erreur webhook :", errorText);
     throw new Error("Erreur lors de l'envoi au webhook");
   }
-
-  return await response.json();
+  
+  const data = await response.json();
+  
+  // ✅ On récupère le champ "output" dans la première entrée du tableau
+  return data[0]?.output;  
 };
