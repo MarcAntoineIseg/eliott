@@ -12,7 +12,10 @@ app.use(cors({
 }));
 
 // === ENV ===
-const client_id = process.env.GOOGLE_CLIENT_ID;
+const rawClientId = process.env.GOOGLE_CLIENT_ID || '';
+const client_id = rawClientId.trim();             // enlève espaces/tabs début & fin
+console.log(`🚀 Client ID brut : [${rawClientId}]`);
+console.log(`🚀 Client ID utilisé : [${client_id}] (length : ${client_id.length})`);
 const client_secret = process.env.GOOGLE_CLIENT_SECRET;
 const redirect_uri = 'https://api.askeliott.com/auth/google/callback';
 const oauth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uri);
@@ -107,7 +110,7 @@ app.get('/auth/google-sheets/callback', async (req, res) => {
   try {
     const { tokens } = await sheetsClient.getToken(req.query.code);
     const { access_token, refresh_token, expires_in } = tokens;
-    res.redirect(`https://app.askeliott.com/integration?googleSheetsAccessToken=${access_token}&sheetsRefreshToken=${refresh_token || ''}&sheetsExpiresIn=${expires_in}`);
+    res.redirect(`https://app.askeliott.com/authcallback?googleSheetsAccessToken=${access_token}&sheetsRefreshToken=${refresh_token || ''}&sheetsExpiresIn=${expires_in}`);
   } catch (err) {
     console.error("Google Sheets callback error:", err.message);
     res.status(500).send("OAuth error");
@@ -131,7 +134,7 @@ app.get('/auth/meta/callback', async (req, res) => {
     const adAccounts = await adAccountsRes.json();
     const adAccountId = adAccounts.data?.[0]?.id || '';
 
-    res.redirect(`https://app.askeliott.com/integration?metaAccessToken=${access_token}&metaAdAccount=${adAccountId}`);
+    res.redirect(`https://app.askeliott.com/authcallback?metaAccessToken=${access_token}&metaAdAccount=${adAccountId}`);
   } catch (err) {
     console.error("Meta Ads callback error:", err.message);
     res.status(500).send("OAuth error");
@@ -159,7 +162,7 @@ app.get('/auth/google-ads/callback', async (req, res) => {
     });
 
     const { access_token, refresh_token, expires_in } = await tokenRes.json();
-    res.redirect(`https://app.askeliott.com/integration?googleAdsAccessToken=${access_token}&adsRefreshToken=${refresh_token || ''}&adsExpiresIn=${expires_in}`);
+    res.redirect(`https://app.askeliott.com/authcallback?googleAdsAccessToken=${access_token}&adsRefreshToken=${refresh_token || ''}&adsExpiresIn=${expires_in}`);
   } catch (err) {
     console.error("Google Ads callback error:", err.message);
     res.status(500).send("OAuth error");
