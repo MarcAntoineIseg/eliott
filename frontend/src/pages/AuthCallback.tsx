@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -35,11 +34,14 @@ const AuthCallback = () => {
         console.warn("⚠️ Aucun refresh token Google Analytics reçu!");
       }
 
-      if (gaExpiresIn) {
+      const expires = parseInt(gaExpiresIn || "0");
+      if (!isNaN(expires) && expires > 0) {
         const expirationDate = new Date();
-        expirationDate.setSeconds(expirationDate.getSeconds() + parseInt(gaExpiresIn));
+        expirationDate.setSeconds(expirationDate.getSeconds() + expires);
         localStorage.setItem("ga_token_expires_at", expirationDate.toISOString());
-        console.log("✅ Expiration du token Google Analytics stockée avec succès.");
+        console.log("✅ Expiration GA stockée :", expirationDate.toISOString());
+      } else {
+        console.warn("⚠️ Expiration GA non définie ou invalide :", gaExpiresIn);
       }
     }
 
@@ -55,11 +57,12 @@ const AuthCallback = () => {
         console.warn("⚠️ Aucun refresh token Google Sheets reçu!");
       }
 
-      if (sheetsExpiresIn) {
+      const expires = parseInt(sheetsExpiresIn || "0");
+      if (!isNaN(expires) && expires > 0) {
         const expirationDate = new Date();
-        expirationDate.setSeconds(expirationDate.getSeconds() + parseInt(sheetsExpiresIn));
+        expirationDate.setSeconds(expirationDate.getSeconds() + expires);
         localStorage.setItem("sheets_token_expires_at", expirationDate.toISOString());
-        console.log("✅ Expiration du token Google Sheets stockée avec succès.");
+        console.log("✅ Expiration Google Sheets stockée :", expirationDate.toISOString());
       }
     }
 
@@ -75,11 +78,12 @@ const AuthCallback = () => {
         console.warn("⚠️ Aucun refresh token Google Ads reçu!");
       }
 
-      if (adsExpiresIn) {
+      const expires = parseInt(adsExpiresIn || "0");
+      if (!isNaN(expires) && expires > 0) {
         const expirationDate = new Date();
-        expirationDate.setSeconds(expirationDate.getSeconds() + parseInt(adsExpiresIn));
+        expirationDate.setSeconds(expirationDate.getSeconds() + expires);
         localStorage.setItem("ads_token_expires_at", expirationDate.toISOString());
-        console.log("✅ Expiration du token Google Ads stockée avec succès.");
+        console.log("✅ Expiration Google Ads stockée :", expirationDate.toISOString());
       }
     }
 
@@ -87,8 +91,9 @@ const AuthCallback = () => {
   }, [navigate]);
 
   return (
-    <div className="h-screen w-full flex items-center justify-center text-lg">
-      Connexion en cours...
+    <div className="h-screen w-full flex flex-col items-center justify-center text-center p-4">
+      <h2 className="text-xl font-semibold mb-2">Connexion en cours...</h2>
+      <p className="text-muted">Nous finalisons la connexion à votre compte Google.</p>
     </div>
   );
 };
