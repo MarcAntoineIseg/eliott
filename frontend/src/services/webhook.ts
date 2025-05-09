@@ -65,13 +65,17 @@ export const sendToWebhook = async (
   const data = await response.json();
   console.log("✅ Réponse complète du webhook :", data);
 
-  // 🔍 Extraction du message à partir de différents formats possibles
-  const message =
+  // ✅ Extraction robuste du message
+  const rawMessage =
     data?.message ??
     data?.output?.message ??
     data?.[0]?.output?.message ??
-    "Aucune réponse compréhensible.";
+    null;
 
-  console.log("💬 Message final :", message);
-  return message;
+  if (typeof rawMessage !== "string") {
+    throw new Error("Réponse du webhook invalide : aucun message trouvé.");
+  }
+
+  console.log("💬 Message final :", rawMessage);
+  return rawMessage;
 };
