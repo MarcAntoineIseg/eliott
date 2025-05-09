@@ -133,14 +133,12 @@ const Request = () => {
       setQuery("");
 
       // ✅ Gérer le message texte de l'IA
-      if (typeof response.message === "string" && response.message.trim().length > 0) {
+      if (typeof response === "string" && response.trim().length > 0) {
   try {
-    const parsed = JSON.parse(response.message);
-    // Si c’est encore une string (double encodage), on la parse une 2e fois
+    const parsed = JSON.parse(response);
     setResponseMessage(typeof parsed === "string" ? JSON.parse(parsed) : parsed);
   } catch {
-    // Si ce n’est pas du JSON, on affiche tel quel
-    setResponseMessage(response.message);
+    setResponseMessage(response);
   }
 } else {
   console.warn("❌ Réponse du webhook invalide :", response);
