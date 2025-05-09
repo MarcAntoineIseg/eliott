@@ -40,7 +40,7 @@ export const sendToWebhook = async (
     googleSheets: GoogleSheetsContext | null;
     googleAds?: GoogleAdsContext | null;
   }
-): Promise<any> => {
+): Promise<string> => {
   const payload: WebhookPayload = {
     query,
     googleAnalytics: context.googleAnalytics,
@@ -65,8 +65,13 @@ export const sendToWebhook = async (
   const data = await response.json();
   console.log("✅ Réponse complète du webhook :", data);
 
-  // ✅ On récupère le champ "output" dans la première entrée du tableau
-  const output = data[0]?.output;
-  console.log("🧠 Contenu de 'output' retourné :", output);
-  return output;
+  // 🔍 Extraction du message à partir de différents formats possibles
+  const message =
+    data?.message ??
+    data?.output?.message ??
+    data?.[0]?.output?.message ??
+    "Aucune réponse compréhensible.";
+
+  console.log("💬 Message final :", message);
+  return message;
 };
