@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { onAuthStateChanged, getAuth } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,6 @@ import GoogleSheetsAuthButton from "@/components/GoogleSheetsAuthButton";
 import GoogleAdsAuthButton from "@/components/GoogleAdsAuthButton";
 import AdsAccountList from "@/components/AdsAccountList";
 import SheetsFileList from "@/components/SheetsFileList";
-import SignInWithGoogleButton from "@/components/SignInWithGoogleButton";
 
 const Integration = () => {
   const [firebaseUser, setFirebaseUser] = useState(null);
@@ -29,7 +28,9 @@ const Integration = () => {
       <div className="min-h-screen w-full bg-[#f4f6f9] flex flex-col items-center justify-center p-6 text-center">
         <h1 className="text-2xl font-bold mb-2">Veuillez vous connecter</h1>
         <p className="text-gray-600 mb-4">Connectez-vous pour accéder à vos intégrations.</p>
-        <SignInWithGoogleButton />
+        <a href="/create-account">
+          <Button className="bg-blue-600 text-white">Aller à la page de connexion</Button>
+        </a>
       </div>
     );
   }
