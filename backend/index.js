@@ -43,7 +43,7 @@ console.log(`🧹 Client ID sanitized     : [${client_id}] (length: ${client_id.
 console.log(`🧹 Client Secret sanitized : (length: ${client_secret.length})`);
 
 // === OAuth2 Clients ===
-const redirectUriGA    = 'https://api.askeliott.com/auth/google/callback';
+const redirectUriGA = 'https://app.askeliott.com/integration';
 const oauth2ClientGA   = new google.auth.OAuth2(client_id, client_secret, redirectUriGA);
 
 const redirectUriSheets  = 'https://api.askeliott.com/auth/google-sheets/callback';
@@ -92,10 +92,33 @@ app.get('/auth/google', (req, res) => {
   res.redirect(url);
 });
 
-app.get('/auth/google/callback', async (req, res) => {
+app.post('/auth/google/start', async (req, res) => {
   try {
-    const { tokens } = await oauth2ClientGA.getToken(req.query.code);
-    const { access_token, refresh_token, expires_in } = tokens;
+    const { access_token, refresh_token } = req.body;
+    const idToken = req.headers.authorization?.split('Bearer ')[1];
+
+    if (!access_token || !refresh_token || !idToken) {
+      return res.status(400).json({ error: 'Données manquantes' });
+    }
+
+    // Vérifie le ID token Firebase
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const uid = decodedToken.uid;
+
+    // Stockage en base (merge pour ne pas écraser d’autres données user)
+    await db.collection('users').doc(uid).set({
+      ga_access_token: access_token,
+      ga_refresh_token: refresh_token,
+      ga_token_expires_at: Date.now() + 3600 * 1000 // durée approx : 1h
+    }, { merge: true });
+
+    console.log(`✅ Tokens Google Analytics enregistrés pour UID : ${uid}`);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("Erreur enregistrement token backend :", err.message);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
 
     // 🔐 TEMP : récupérer l'UID du user via query pour ce test
     const firebaseUid = req.query.uid;
