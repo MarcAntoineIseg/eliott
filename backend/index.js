@@ -92,6 +92,22 @@ app.get('/auth/google', (req, res) => {
   res.redirect(url);
 });
 
+// -- Google Analytics Callback ---
+app.get('/auth/google/callback', async (req, res) => {
+  try {
+    const { tokens } = await oauth2ClientGA.getToken(req.query.code);
+    const { access_token, refresh_token, expires_in } = tokens;
+
+    console.log('🔐 GA tokens récupérés :', { access_token, refresh_token });
+
+    const redirectUrl = `https://app.askeliott.com/integration?googleAccessToken=${access_token}&refreshToken=${refresh_token || ''}&expiresIn=${expires_in}`;
+    res.redirect(redirectUrl);
+  } catch (err) {
+    console.error('GA callback error:', err.message);
+    res.status(500).send('OAuth error');
+  }
+});
+
 app.post('/auth/google/start', async (req, res) => {
   try {
     const { access_token, refresh_token } = req.body;
