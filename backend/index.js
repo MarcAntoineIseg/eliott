@@ -119,24 +119,24 @@ app.post('/auth/google/start', async (req, res) => {
       return res.status(400).json({ error: 'Données manquantes' });
     }
 
-    // Vérifie le ID token Firebase
     const decodedToken = await admin.auth().verifyIdToken(idToken);
     const uid = decodedToken.uid;
+    console.log("✅ Firebase UID :", uid);
 
-    // Stockage en base (merge pour ne pas écraser d’autres données user)
     await db.collection('users').doc(uid).set({
       ga_access_token: access_token,
       ga_refresh_token: refresh_token,
-      ga_token_expires_at: Date.now() + 3600 * 1000 // durée approx : 1h
+      ga_token_expires_at: Date.now() + 3600 * 1000
     }, { merge: true });
 
     console.log(`✅ Tokens Google Analytics enregistrés pour UID : ${uid}`);
     res.status(200).json({ success: true });
   } catch (err) {
-    console.error("Erreur enregistrement token backend :", err.message);
+    console.error("❌ Erreur enregistrement token backend :", err);
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
+
 
 // -- Google Sheets ---
 app.get('/auth/google-sheets', (req, res) => {
