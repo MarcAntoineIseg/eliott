@@ -7,6 +7,8 @@ import SheetsFileList from "@/components/SheetsFileList";
 import GoogleSheetsAuthButton from "@/components/GoogleSheetsAuthButton";
 import GoogleAdsAuthButton from "@/components/GoogleAdsAuthButton";
 import AdsAccountList from "@/components/AdsAccountList";
+import { auth } from "@/lib/firebase"; // ou "@/services/firebase" selon où tu l’as placé
+import { getAuth } from "firebase/auth"; // utile si tu n’utilises pas le `auth` exporté
 import { toast } from "sonner";
 import {
   CLIENT_ID,
@@ -44,6 +46,30 @@ import {
   SelectItem
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+
+// 🔐 AJOUT POUR ENREGISTRER TOKENS EN BACKEND AVEC UID FIREBASE
+const sendOAuthTokensToBackend = async (accessToken: string, refreshToken: string) => {
+  try {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Utilisateur non authentifié");
+    const idToken = await user.getIdToken();
+
+    const res = await fetch("https://api.askeliott.com/auth/google/start", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${idToken}`
+      },
+      body: JSON.stringify({ access_token: accessToken, refresh_token: refreshToken })
+    });
+
+    if (!res.ok) throw new Error("Erreur lors de l'enregistrement des tokens côté serveur");
+    toast.success("Tokens Google Analytics enregistrés côté serveur");
+  } catch (error: any) {
+    console.error("Erreur envoi tokens backend:", error);
+    toast.error("Erreur lors de l'enregistrement des tokens en base");
+  }
+};
 
 const Integration = () => {
   // Google Analytics states
@@ -254,7 +280,9 @@ const Integration = () => {
               localStorage.setItem("googleRefreshToken", refreshToken);
             }
           }
-          
+          if (token && refreshToken) {
+  await sendOAuthTokensToBackend(token, refreshToken);
+}
           setAccessToken(tokenToUse);
           setConnectionStatus("connected");
           toast.success(token ? "Connexion réussie à Google Analytics" : "Session restaurée");
