@@ -3,7 +3,7 @@ import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth"
 
 const firebaseConfig = {
   apiKey: "AIzaSyDCVfnIvk-KlpctZIXbcbVcGbmbwyf9ojM",
-  authDomain: "eliott-analytics.firebaseapp.com",
+  authDomain: "askeliott.com", // ✅ au lieu de eliott-analytics.firebaseapp.com
   projectId: "eliott-analytics",
 };
 
