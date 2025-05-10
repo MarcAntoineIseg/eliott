@@ -1,10 +1,19 @@
-
 import { useState, useEffect } from "react";
 import { GoogleAnalyticsProperty } from "@/services/googleAnalytics";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link, CheckCircle } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/sonner";
@@ -24,7 +33,6 @@ const PropertyList = ({ properties, isLoading, accessToken, error, selectedAccou
   const [showConnectButton, setShowConnectButton] = useState<boolean>(false);
 
   useEffect(() => {
-    // Load connected property from localStorage on component mount
     const savedPropertyId = localStorage.getItem("ga_property_id");
     if (savedPropertyId) {
       setConnectedPropertyId(savedPropertyId);
@@ -48,17 +56,11 @@ const PropertyList = ({ properties, isLoading, accessToken, error, selectedAccou
       return;
     }
 
-    // Save to localStorage
     localStorage.setItem("ga_property_id", propertyToConnect.id);
     localStorage.setItem("ga_account_id", selectedAccount);
-    
-    // Update state
     setConnectedPropertyId(propertyToConnect.id);
     setShowConnectButton(false);
-    
-    // Call parent handler
     onSelectProperty(propertyToConnect);
-    
     toast.success("Propriété connectée avec succès");
   };
 
@@ -109,15 +111,6 @@ const PropertyList = ({ properties, isLoading, accessToken, error, selectedAccou
               {error}
             </AlertDescription>
           </Alert>
-          <div className="text-sm text-gray-500">
-            <p>Voici quelques suggestions :</p>
-            <ul className="list-disc pl-5 mt-2">
-              <li>Vérifiez que votre backend est correctement configuré pour l'API Google Analytics</li>
-              <li>Assurez-vous que les APIs Google Analytics Admin et Data sont activées dans votre projet</li>
-              <li>Vérifiez les journaux d'erreur côté serveur pour plus de détails</li>
-              <li>L'URL de l'API n'est peut-être pas correcte ou le format des paramètres attendu diffère</li>
-            </ul>
-          </div>
         </CardContent>
       </Card>
     );
@@ -135,11 +128,9 @@ const PropertyList = ({ properties, isLoading, accessToken, error, selectedAccou
         </CardHeader>
         <CardContent>
           <div className="text-sm text-gray-500">
-            <p>Possibles raisons :</p>
             <ul className="list-disc pl-5 mt-2">
-              <li>Aucune propriété Google Analytics n'a été créée avec ce compte Google</li>
-              <li>Votre compte n'a pas les permissions nécessaires pour accéder aux propriétés</li>
-              <li>Les APIs Analytics nécessaires ne sont pas activées dans votre projet Google Cloud</li>
+              <li>Aucune propriété n'existe pour ce compte</li>
+              <li>Les permissions ou APIs sont manquantes</li>
             </ul>
           </div>
         </CardContent>
@@ -150,60 +141,58 @@ const PropertyList = ({ properties, isLoading, accessToken, error, selectedAccou
   return (
     <div className="space-y-4">
       <div className="text-sm text-gray-500 mb-2">
-        {properties.length} propriété(s) trouvée(s). Cliquez sur une propriété pour la sélectionner.
+        {properties.length} propriété(s) trouvée(s). Cliquez pour la sélectionner.
       </div>
-      
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+
+      <div className="space-y-2">
         {properties.map((property) => (
-          <Card 
-            key={property.id} 
-            className={`cursor-pointer transition-all hover:shadow-md ${
+          <Card
+            key={property.id}
+            className={`transition-all hover:shadow-md relative w-full cursor-pointer ${
               selectedProperty === property.id ? "ring-2 ring-blue-500" : ""
             }`}
             onClick={() => handlePropertySelect(property)}
           >
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                {connectedPropertyId === property.id && (
-                  <CheckCircle className="text-green-500 h-5 w-5" />
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex flex-col">
+                <span className="font-medium text-base">{property.name}</span>
+                <span className="text-xs text-gray-500">
+                  ID: {property.id} • {property.createdAt ? new Date(property.createdAt).toLocaleDateString() : "Date inconnue"}
+                </span>
+              </div>
+              <div className="flex gap-2 items-center">
+                {property.url && (
+                  <Button variant="ghost" size="icon" asChild>
+                    <a
+                      href={property.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Link size={16} />
+                    </a>
+                  </Button>
                 )}
-                {property.name}
-              </CardTitle>
-              <CardDescription>ID: {property.id}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-between items-center">
-                <div className="text-sm text-gray-500">
-                  {property.createdAt ? new Date(property.createdAt).toLocaleDateString() : "Date inconnue"}
-                </div>
-                <div className="flex gap-2 items-center">
-                  {property.url && (
-                    <Button variant="ghost" size="sm" asChild>
-                      <a href={property.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
-                        <Link size={14} />
-                        Voir dans GA
-                      </a>
-                    </Button>
-                  )}
-                  {showConnectButton && selectedProperty === property.id && connectedPropertyId !== property.id && (
-                    <Button 
+                {showConnectButton &&
+                  selectedProperty === property.id &&
+                  connectedPropertyId !== property.id && (
+                    <Button
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleConnectProperty();
                       }}
                     >
-                      Connecter la propriété
+                      Connecter
                     </Button>
                   )}
-                  {connectedPropertyId === property.id && (
-                    <span className="text-sm text-green-600 flex items-center gap-1">
-                      ✅ Propriété connectée
-                    </span>
-                  )}
-                </div>
+                {connectedPropertyId === property.id && (
+                  <span className="text-sm text-green-600 flex items-center gap-1">
+                    ✅ Propriété connectée
+                  </span>
+                )}
               </div>
-            </CardContent>
+            </div>
           </Card>
         ))}
       </div>
