@@ -1,4 +1,4 @@
-import { getAuth, signInWithRedirect, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 
 const SignInWithGoogleButton = () => {
   const handleLogin = async () => {
@@ -6,7 +6,7 @@ const SignInWithGoogleButton = () => {
     const provider = new GoogleAuthProvider();
 
     try {
-      await signInWithRedirect(auth, provider);
+      await signInWithPopup(auth, provider);
     } catch (err) {
       console.error("❌ Erreur lors de la connexion Firebase :", err);
     }
