@@ -155,28 +155,25 @@ const SheetsFileList = ({
         )}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="space-y-2">
         {filteredFiles.map((file) => (
           <Card
             key={file.id}
-            className={`transition-all hover:shadow-md relative ${
+            className={`transition-all hover:shadow-md relative w-full ${
               selectedFileId === file.id ? "ring-2 ring-green-500" : ""
             } ${isFileConnected(file.id) ? "opacity-50" : ""}`}
             onClick={() => !isFileConnected(file.id) && handleFileSelect(file)}
           >
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-medium line-clamp-2">
-                {file.name}
-              </CardTitle>
-              <CardDescription>ID: {file.id.substring(0, 20)}...</CardDescription>
-            </CardHeader>
-            <CardContent className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">
-                {file.modifiedTime
-                  ? new Date(file.modifiedTime).toLocaleDateString()
-                  : "Date inconnue"}
-              </span>
-              <div className="flex gap-1 items-center">
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex flex-col">
+                <span className="font-medium text-base">{file.name}</span>
+                <span className="text-xs text-gray-500">
+                  ID: {file.id.substring(0, 20)}... • {file.modifiedTime
+                    ? new Date(file.modifiedTime).toLocaleDateString()
+                    : "Date inconnue"}
+                </span>
+              </div>
+              <div className="flex gap-2 items-center">
                 {file.url && (
                   <Button variant="ghost" size="icon" asChild>
                     <a
@@ -203,7 +200,7 @@ const SheetsFileList = ({
                     </Button>
                   )}
               </div>
-            </CardContent>
+            </div>
           </Card>
         ))}
       </div>
