@@ -9,7 +9,6 @@ import Request from "./pages/Request";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
 import AuthCallback from "./pages/AuthCallback";
-import PrivacyPolicy from "./pages/PrivacyPolicy"; // Add this import
 
 const queryClient = new QueryClient();
 
@@ -24,7 +23,6 @@ const App = () => (
           <Route path="/integration" element={<Layout><Integration /></Layout>} />
           <Route path="/request" element={<Layout><Request /></Layout>} />
           <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
