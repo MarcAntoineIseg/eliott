@@ -258,16 +258,11 @@ const Integration = () => {
 
   // Initialize Google Analytics connection
 useEffect(() => {
-  const clearUrlAndProcessToken = async () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get("googleAccessToken");
-    const refreshToken = urlParams.get("refreshToken");
+  const initGoogleAnalytics = async () => {
+    const token = localStorage.getItem("googleAccessToken");
+    const refreshToken = localStorage.getItem("ga_refresh_token");
 
-
-    window.history.replaceState({}, document.title, "/integration");
-    const tokenToUse = token || localStorage.getItem("googleAccessToken");
-
-    if (!tokenToUse) {
+    if (!token) {
       setConnectionStatus("disconnected");
       return;
     }
@@ -275,52 +270,40 @@ useEffect(() => {
     setConnectionStatus("connecting");
 
     try {
-      const isValid = await checkTokenValidity(tokenToUse);
+      const isValid = await checkTokenValidity(token);
       if (isValid) {
-        if (token) {
-          localStorage.setItem("googleAccessToken", token);
+        setAccessToken(token);
+        setConnectionStatus("connected");
 
-          if (refreshToken) {
-            localStorage.setItem("googleRefreshToken", refreshToken);
-          }
-
-          // 🔐 Envoi au backend si l'utilisateur Firebase est bien authentifié
-          const user = auth.currentUser;
-          if (user && refreshToken) {
-            try {
-              await sendOAuthTokensToBackend(token, refreshToken);
-            } catch (err) {
-              console.error("Erreur lors de l'envoi des tokens à Firebase :", err);
-            }
-          } else {
-            console.warn("Utilisateur Firebase non authentifié, envoi des tokens ignoré.");
+        // 🔐 Envoi au backend si l'utilisateur Firebase est bien authentifié
+        const user = auth.currentUser;
+        if (user && refreshToken) {
+          try {
+            await sendOAuthTokensToBackend(token, refreshToken);
+          } catch (err) {
+            console.error("Erreur lors de l'envoi des tokens à Firebase :", err);
           }
         }
 
-        setAccessToken(tokenToUse);
-        setConnectionStatus("connected");
-        toast.success(token ? "Connexion réussie à Google Analytics" : "Session restaurée");
-        loadAccounts(tokenToUse);
+        toast.success("Connexion réussie à Google Analytics");
+        loadAccounts(token);
       } else {
         localStorage.removeItem("googleAccessToken");
-        localStorage.removeItem("googleRefreshToken");
+        localStorage.removeItem("ga_refresh_token");
         setAccessToken(null);
         setConnectionStatus("disconnected");
-        toast.error(token ? "Échec de connexion : token invalide" : "Session expirée. Veuillez vous reconnecter.");
+        toast.error("Token expiré, veuillez vous reconnecter.");
       }
-    } catch (error) {
-      console.error("Erreur lors de la vérification du token:", error);
-      localStorage.removeItem("googleAccessToken");
-      localStorage.removeItem("googleRefreshToken");
-      setAccessToken(null);
+    } catch (err) {
+      console.error("Erreur lors de la vérification du token:", err);
       setConnectionStatus("disconnected");
-      toast.error("Erreur lors de la connexion");
+      toast.error("Erreur lors de la connexion à Google Analytics");
     } finally {
       setIsInitialLoad(false);
     }
   };
 
-  clearUrlAndProcessToken();
+  initGoogleAnalytics();
 }, []);
 
   // Load Google Analytics accounts
