@@ -43,7 +43,7 @@ console.log(`🧹 Client ID sanitized     : [${client_id}] (length: ${client_id.
 console.log(`🧹 Client Secret sanitized : (length: ${client_secret.length})`);
 
 // === OAuth2 Clients ===
-const redirectUriGA = 'https://app.askeliott.com/integration';
+const redirectUriGA = 'https://api.askeliott.com/auth/google/callback';
 const oauth2ClientGA   = new google.auth.OAuth2(client_id, client_secret, redirectUriGA);
 
 const redirectUriSheets  = 'https://api.askeliott.com/auth/google-sheets/callback';
