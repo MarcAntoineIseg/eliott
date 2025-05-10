@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/c
 import GoogleAuthButton from "@/components/GoogleAuthButton";
 import PropertyList from "@/components/PropertyList";
 import SheetsFileList from "@/components/SheetsFileList";
+import { onAuthStateChanged } from "firebase/auth";
 import GoogleSheetsAuthButton from "@/components/GoogleSheetsAuthButton";
 import GoogleAdsAuthButton from "@/components/GoogleAdsAuthButton";
 import AdsAccountList from "@/components/AdsAccountList";
@@ -69,6 +70,16 @@ const sendOAuthTokensToBackend = async (accessToken: string, refreshToken: strin
     console.error("Erreur envoi tokens backend:", error);
     toast.error("Erreur lors de l'enregistrement des tokens en base");
   }
+};
+
+const waitForUser = (): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      unsubscribe();
+      if (user) resolve(user);
+      else reject(new Error("Aucun utilisateur connecté"));
+    });
+  });
 };
 
 const Integration = () => {
@@ -275,13 +286,22 @@ useEffect(() => {
         setAccessToken(token);
         setConnectionStatus("connected");
 
-        // 🔐 Envoi au backend si l'utilisateur Firebase est bien authentifié
-        const user = auth.currentUser;
-        if (user && refreshToken) {
+        const waitForUser = (): Promise<any> => {
+          return new Promise((resolve, reject) => {
+            const unsubscribe = onAuthStateChanged(auth, (user) => {
+              unsubscribe();
+              if (user) resolve(user);
+              else reject(new Error("Aucun utilisateur connecté"));
+            });
+          });
+        };
+
+        if (refreshToken) {
           try {
+            const user = await waitForUser();
             await sendOAuthTokensToBackend(token, refreshToken);
           } catch (err) {
-            console.error("Erreur lors de l'envoi des tokens à Firebase :", err);
+            console.warn("Impossible d'envoyer les tokens : utilisateur non connecté.");
           }
         }
 
