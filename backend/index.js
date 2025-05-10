@@ -1,8 +1,8 @@
 // index.js
+require('dotenv').config(); // charge les variables d’environnement
 
 const admin = require('firebase-admin');
-
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+const serviceAccount = require('./serviceAccountKey.json');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
@@ -20,6 +20,8 @@ app.use(cors({
   origin: 'https://app.askeliott.com',
   credentials: true
 }));
+
+app.use(express.json()); // 🔥 Permet de lire req.body en JSON
 
 // === ENV & SANITIZE ===
 const rawClientId     = process.env.GOOGLE_CLIENT_ID     || '';
