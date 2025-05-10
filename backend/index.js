@@ -120,31 +120,6 @@ app.post('/auth/google/start', async (req, res) => {
   }
 });
 
-    // 🔐 TEMP : récupérer l'UID du user via query pour ce test
-    const firebaseUid = req.query.uid;
-
-    if (!firebaseUid) {
-      return res.status(400).send('UID utilisateur manquant');
-    }
-
-    // ✅ Enregistrement Firestore
-    await db.collection('users').doc(firebaseUid).set({
-      ga_access_token: access_token,
-      ga_refresh_token: refresh_token,
-      ga_token_expires_at: Date.now() + expires_in * 1000
-    }, { merge: true });
-
-    console.log('✅ Tokens GA enregistrés pour UID :', firebaseUid);
-
-    // 🔁 Redirige vers page intégration sans passer les tokens dans l'URL
-    res.redirect('https://app.askeliott.com/integration?ga_connected=true');
-
-  } catch (err) {
-    console.error('GA callback error:', err.message);
-    res.status(500).send('OAuth error');
-  }
-});
-
 // -- Google Sheets ---
 app.get('/auth/google-sheets', (req, res) => {
   const url = oauth2ClientSheets.generateAuthUrl({
