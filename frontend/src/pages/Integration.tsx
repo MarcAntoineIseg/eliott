@@ -259,8 +259,10 @@ const Integration = () => {
   // Initialize Google Analytics connection
 useEffect(() => {
   const clearUrlAndProcessToken = async () => {
-    const token = getAccessTokenFromUrl();
-    const refreshToken = getRefreshTokenFromUrl();
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("googleAccessToken");
+    const refreshToken = urlParams.get("refreshToken");
+
 
     window.history.replaceState({}, document.title, "/integration");
     const tokenToUse = token || localStorage.getItem("googleAccessToken");
