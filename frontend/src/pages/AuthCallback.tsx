@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { getAuth } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 
 const AuthCallback = () => {
@@ -43,6 +44,43 @@ const AuthCallback = () => {
       } else {
         console.warn("⚠️ Expiration GA non définie ou invalide :", gaExpiresIn);
       }
+
+      // 🔁 Envoi au backend
+      const sendTokensToBackend = async () => {
+        try {
+          const auth = getAuth();
+          const user = auth.currentUser;
+
+          if (!user) {
+            console.warn("⚠️ Aucun utilisateur Firebase connecté.");
+            return;
+          }
+
+          const idToken = await user.getIdToken();
+          const res = await fetch("https://api.askeliott.com/auth/google/start", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${idToken}`
+            },
+            body: JSON.stringify({
+              access_token: gaAccessToken,
+              refresh_token: gaRefreshToken
+            })
+          });
+
+          const data = await res.json();
+          if (res.ok) {
+            console.log("✅ Tokens envoyés au backend avec succès :", data);
+          } else {
+            console.error("❌ Erreur backend :", data);
+          }
+        } catch (err) {
+          console.error("❌ Erreur envoi token backend :", err);
+        }
+      };
+
+      sendTokensToBackend();
     }
 
     // ✅ Google Sheets
