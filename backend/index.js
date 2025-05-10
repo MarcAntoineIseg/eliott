@@ -94,20 +94,28 @@ app.get('/auth/google', (req, res) => {
 
 app.get('/auth/google/callback', async (req, res) => {
   try {
-    console.log('🌍 GA Redirect URI:', redirectUriGA);
-    console.log('🆔 GA Client ID      :', client_id);
     const { tokens } = await oauth2ClientGA.getToken(req.query.code);
-    console.log('🔐 GA tokens:', tokens);
-    if (tokens.refresh_token) {
-      console.log('✅ GA refresh_token received');
-    } else {
-      console.log('❌ GA no refresh_token');
-    }
     const { access_token, refresh_token, expires_in } = tokens;
-    res.redirect(
-      `https://app.askeliott.com/auth/callback?access_token=${access_token}` +
-      `&refresh_token=${refresh_token || ''}&expires_in=${expires_in}`
-    );
+
+    // 🔐 TEMP : récupérer l'UID du user via query pour ce test
+    const firebaseUid = req.query.uid;
+
+    if (!firebaseUid) {
+      return res.status(400).send('UID utilisateur manquant');
+    }
+
+    // ✅ Enregistrement Firestore
+    await db.collection('users').doc(firebaseUid).set({
+      ga_access_token: access_token,
+      ga_refresh_token: refresh_token,
+      ga_token_expires_at: Date.now() + expires_in * 1000
+    }, { merge: true });
+
+    console.log('✅ Tokens GA enregistrés pour UID :', firebaseUid);
+
+    // 🔁 Redirige vers page intégration sans passer les tokens dans l'URL
+    res.redirect('https://app.askeliott.com/integration?ga_connected=true');
+
   } catch (err) {
     console.error('GA callback error:', err.message);
     res.status(500).send('OAuth error');
