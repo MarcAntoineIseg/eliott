@@ -257,56 +257,69 @@ const Integration = () => {
   };
 
   // Initialize Google Analytics connection
-  useEffect(() => {
-    const clearUrlAndProcessToken = async () => {
-      const token = getAccessTokenFromUrl();
-      const refreshToken = getRefreshTokenFromUrl();
-      
-      window.history.replaceState({}, document.title, "/integration");
-      const tokenToUse = token || localStorage.getItem("googleAccessToken");
-      
-      if (!tokenToUse) return setConnectionStatus("disconnected");
-      
-      setConnectionStatus("connecting");
-      
-      try {
-        const isValid = await checkTokenValidity(tokenToUse);
-        if (isValid) {
-          if (token) {
-            localStorage.setItem("googleAccessToken", token);
-            
-            // Store the refresh token if available
-            if (refreshToken) {
-              localStorage.setItem("googleRefreshToken", refreshToken);
-            }
+useEffect(() => {
+  const clearUrlAndProcessToken = async () => {
+    const token = getAccessTokenFromUrl();
+    const refreshToken = getRefreshTokenFromUrl();
+
+    window.history.replaceState({}, document.title, "/integration");
+    const tokenToUse = token || localStorage.getItem("googleAccessToken");
+
+    if (!tokenToUse) {
+      setConnectionStatus("disconnected");
+      return;
+    }
+
+    setConnectionStatus("connecting");
+
+    try {
+      const isValid = await checkTokenValidity(tokenToUse);
+      if (isValid) {
+        if (token) {
+          localStorage.setItem("googleAccessToken", token);
+
+          if (refreshToken) {
+            localStorage.setItem("googleRefreshToken", refreshToken);
           }
-          if (token && refreshToken) {
-  await sendOAuthTokensToBackend(token, refreshToken);
-}
-          setAccessToken(tokenToUse);
-          setConnectionStatus("connected");
-          toast.success(token ? "Connexion réussie à Google Analytics" : "Session restaurée");
-          loadAccounts(tokenToUse);
-        } else {
-          localStorage.removeItem("googleAccessToken");
-          localStorage.removeItem("googleRefreshToken");
-          setAccessToken(null);
-          setConnectionStatus("disconnected");
-          toast.error(token ? "Échec de connexion : token invalide" : "Session expirée. Veuillez vous reconnecter.");
+
+          // 🔐 Envoi au backend si l'utilisateur Firebase est bien authentifié
+          const user = auth.currentUser;
+          if (user && refreshToken) {
+            try {
+              await sendOAuthTokensToBackend(token, refreshToken);
+            } catch (err) {
+              console.error("Erreur lors de l'envoi des tokens à Firebase :", err);
+            }
+          } else {
+            console.warn("Utilisateur Firebase non authentifié, envoi des tokens ignoré.");
+          }
         }
-      } catch (error) {
-        console.error("Erreur lors de la vérification du token:", error);
+
+        setAccessToken(tokenToUse);
+        setConnectionStatus("connected");
+        toast.success(token ? "Connexion réussie à Google Analytics" : "Session restaurée");
+        loadAccounts(tokenToUse);
+      } else {
         localStorage.removeItem("googleAccessToken");
         localStorage.removeItem("googleRefreshToken");
         setAccessToken(null);
         setConnectionStatus("disconnected");
-        toast.error("Erreur lors de la connexion");
-      } finally {
-        setIsInitialLoad(false);
+        toast.error(token ? "Échec de connexion : token invalide" : "Session expirée. Veuillez vous reconnecter.");
       }
-    };
-    clearUrlAndProcessToken();
-  }, []);
+    } catch (error) {
+      console.error("Erreur lors de la vérification du token:", error);
+      localStorage.removeItem("googleAccessToken");
+      localStorage.removeItem("googleRefreshToken");
+      setAccessToken(null);
+      setConnectionStatus("disconnected");
+      toast.error("Erreur lors de la connexion");
+    } finally {
+      setIsInitialLoad(false);
+    }
+  };
+
+  clearUrlAndProcessToken();
+}, []);
 
   // Load Google Analytics accounts
   const loadAccounts = async (token: string) => {
