@@ -102,7 +102,7 @@ app.get('/auth/google/callback', async (req, res) => {
 
     console.log('🔐 GA tokens récupérés :', { access_token, refresh_token });
 
-    const redirectUrl = `https://app.askeliott.com/auth/callback?access_token=${access_token}&refresh_token=${refresh_token || ''}&expires_in=${expires_in}`;
+    const redirectUrl = `https://app.askeliott.com/auth/callback?access_token=${access_token}&refresh_token=${refresh_token || ''}&expires_in=${expires_in || 3600}`;
     res.redirect(redirectUrl);
   } catch (err) {
     console.error('GA callback error:', err.message);
