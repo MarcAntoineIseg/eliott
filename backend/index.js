@@ -112,24 +112,42 @@ app.get('/auth/google/callback', async (req, res) => {
 
 app.post('/auth/google/start', async (req, res) => {
   try {
-    const { access_token, refresh_token } = req.body;
     const idToken = req.headers.authorization?.split('Bearer ')[1];
-
-    if (!access_token || !refresh_token || !idToken) {
-      return res.status(400).json({ error: 'Données manquantes' });
-    }
+    if (!idToken) return res.status(401).json({ error: 'ID Token Firebase manquant.' });
 
     const decodedToken = await admin.auth().verifyIdToken(idToken);
     const uid = decodedToken.uid;
     console.log("✅ Firebase UID :", uid);
 
-    await db.collection('users').doc(uid).set({
-      ga_access_token: access_token,
-      ga_refresh_token: refresh_token,
-      ga_token_expires_at: Date.now() + 3600 * 1000
-    }, { merge: true });
+    const { analytics, sheets, ads } = req.body;
 
-    console.log(`✅ Tokens Google Analytics enregistrés pour UID : ${uid}`);
+    const userData = {};
+
+    if (analytics?.access_token && analytics?.refresh_token) {
+      userData.ga_access_token = analytics.access_token;
+      userData.ga_refresh_token = analytics.refresh_token;
+      userData.ga_token_expires_at = Date.now() + (parseInt(analytics.expires_in || "3600") * 1000);
+    }
+
+    if (sheets?.access_token && sheets?.refresh_token) {
+      userData.sheets_access_token = sheets.access_token;
+      userData.sheets_refresh_token = sheets.refresh_token;
+      userData.sheets_token_expires_at = Date.now() + (parseInt(sheets.expires_in || "3600") * 1000);
+    }
+
+    if (ads?.access_token && ads?.refresh_token) {
+      userData.ads_access_token = ads.access_token;
+      userData.ads_refresh_token = ads.refresh_token;
+      userData.ads_token_expires_at = Date.now() + (parseInt(ads.expires_in || "3600") * 1000);
+    }
+
+    if (Object.keys(userData).length === 0) {
+      return res.status(400).json({ error: 'Aucun token fourni dans le corps de la requête.' });
+    }
+
+    await db.collection('users').doc(uid).set(userData, { merge: true });
+
+    console.log(`✅ Tokens enregistrés avec succès pour UID : ${uid}`);
     res.status(200).json({ success: true });
   } catch (err) {
     console.error("❌ Erreur enregistrement token backend :", err);

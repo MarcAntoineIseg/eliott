@@ -8,6 +8,7 @@ const AuthCallback = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
 
+    // Récupération des tokens depuis les query params
     const gaAccessToken = params.get("access_token");
     const gaRefreshToken = params.get("refresh_token");
     const gaExpiresIn = params.get("expires_in");
@@ -20,54 +21,18 @@ const AuthCallback = () => {
     const adsRefreshToken = params.get("adsRefreshToken");
     const adsExpiresIn = params.get("adsExpiresIn");
 
-    // === Google Analytics
-    if (gaAccessToken) {
-      localStorage.setItem("googleAccessToken", gaAccessToken);
-      console.log("✅ Access token GA stocké");
-
-      if (gaRefreshToken) {
-        localStorage.setItem("ga_refresh_token", gaRefreshToken);
-        console.log("✅ Refresh token GA stocké:", gaRefreshToken.substring(0, 5) + "...");
-      }
-
-      const expires = parseInt(gaExpiresIn || "3600"); // fallback à 1h
-      const expirationDate = new Date();
-      expirationDate.setSeconds(expirationDate.getSeconds() + expires);
-      localStorage.setItem("ga_token_expires_at", expirationDate.toISOString());
-      console.log("✅ Expiration GA :", expirationDate.toISOString());
-    }
-
-    // === Google Sheets
-    if (sheetsAccessToken) {
-      localStorage.setItem("googleSheetsAccessToken", sheetsAccessToken);
-      if (sheetsRefreshToken) localStorage.setItem("sheets_refresh_token", sheetsRefreshToken);
-      const expires = parseInt(sheetsExpiresIn || "3600");
-      const expirationDate = new Date();
-      expirationDate.setSeconds(expirationDate.getSeconds() + expires);
-      localStorage.setItem("sheets_token_expires_at", expirationDate.toISOString());
-    }
-
-    // === Google Ads
-    if (adsAccessToken) {
-      localStorage.setItem("googleAdsAccessToken", adsAccessToken);
-      if (adsRefreshToken) localStorage.setItem("ads_refresh_token", adsRefreshToken);
-      const expires = parseInt(adsExpiresIn || "3600");
-      const expirationDate = new Date();
-      expirationDate.setSeconds(expirationDate.getSeconds() + expires);
-      localStorage.setItem("ads_token_expires_at", expirationDate.toISOString());
-    }
-
     // 🔁 Envoi au backend dès que l'utilisateur Firebase est prêt
     const auth = getAuth();
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         console.warn("⚠️ Aucun utilisateur Firebase connecté.");
-        navigate("/request"); // ⚠️ redirige même si non connecté pour éviter blocage
+        navigate("/request");
         return;
       }
 
       try {
         const idToken = await user.getIdToken();
+
         const res = await fetch("https://api.askeliott.com/auth/google/start", {
           method: "POST",
           headers: {
@@ -75,8 +40,21 @@ const AuthCallback = () => {
             Authorization: `Bearer ${idToken}`
           },
           body: JSON.stringify({
-            access_token: gaAccessToken,
-            refresh_token: gaRefreshToken
+            analytics: {
+              access_token: gaAccessToken,
+              refresh_token: gaRefreshToken,
+              expires_in: gaExpiresIn
+            },
+            sheets: {
+              access_token: sheetsAccessToken,
+              refresh_token: sheetsRefreshToken,
+              expires_in: sheetsExpiresIn
+            },
+            ads: {
+              access_token: adsAccessToken,
+              refresh_token: adsRefreshToken,
+              expires_in: adsExpiresIn
+            }
           })
         });
 
@@ -90,7 +68,6 @@ const AuthCallback = () => {
         console.error("❌ Erreur envoi backend :", err);
       }
 
-      // ✅ Navigation
       navigate("/request");
     });
   }, [navigate]);
