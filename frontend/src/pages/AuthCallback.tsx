@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { getAuth, signInWithCustomToken, onAuthStateChanged } from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 
 const AuthCallback = () => {
@@ -7,8 +7,6 @@ const AuthCallback = () => {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-
-    const customIdToken = params.get("idToken"); // <--- récupéré depuis Webflow
 
     const gaAccessToken = params.get("access_token");
     const gaRefreshToken = params.get("refresh_token");
@@ -66,25 +64,15 @@ const AuthCallback = () => {
       navigate("/request");
     };
 
-    if (customIdToken) {
-      // 🔐 On connecte manuellement l'utilisateur avec le token reçu de Webflow
-      signInWithCustomToken(auth, customIdToken)
-        .then((cred) => handleConnectedUser(cred.user))
-        .catch((err) => {
-          console.error("❌ Erreur signInWithCustomToken :", err);
-          navigate("/create-account");
-        });
-    } else {
-      // 🔁 Cas classique : l'utilisateur est déjà connecté (OAuth tools)
-      onAuthStateChanged(auth, (user) => {
-        if (!user) {
-          console.warn("⚠️ Aucun utilisateur Firebase détecté");
-          navigate("/request");
-        } else {
-          handleConnectedUser(user);
-        }
-      });
-    }
+    // 🔁 On attend que Firebase détecte l'utilisateur déjà connecté
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        console.warn("⚠️ Aucun utilisateur Firebase détecté");
+        navigate("/request");
+      } else {
+        handleConnectedUser(user);
+      }
+    });
   }, [navigate]);
 
   return (
