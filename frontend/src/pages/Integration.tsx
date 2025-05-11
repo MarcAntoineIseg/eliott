@@ -23,6 +23,14 @@ const Integration = () => {
     return () => unsubscribe();
   }, []);
 
+  if (firebaseLoading) {
+    return (
+    <div className="min-h-screen w-full flex items-center justify-center">
+      <p>Chargement...</p>
+    </div>
+  );
+}
+
   if (!firebaseUser && !firebaseLoading) {
     return (
       <div className="min-h-screen w-full bg-[#f4f6f9] flex flex-col items-center justify-center p-6 text-center">
