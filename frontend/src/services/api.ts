@@ -4,15 +4,15 @@ import {
   API_BASE_URL
 } from "./googleAnalytics";
 
-// ✅ Endpoints de ton backend
-const API_ENDPOINTS = {
+// ✅ Endpoints backend
+export const API_ENDPOINTS = {
   AUTH_GOOGLE: `${API_BASE_URL}/auth/google`,
   ANALYTICS_ACCOUNTS: `${API_BASE_URL}/api/analytics/accounts`,
   ANALYTICS_PROPERTIES: `${API_BASE_URL}/api/analytics/properties`,
   ANALYTICS_DATA: `${API_BASE_URL}/api/analytics/data`
 };
 
-// 🔁 Obtenir les comptes GA via backend sécurisé
+// 🔁 Obtenir les comptes GA sécurisés via Firebase Auth
 export const getGoogleAnalyticsAccounts = async (idToken: string) => {
   const response = await fetch(API_ENDPOINTS.ANALYTICS_ACCOUNTS, {
     method: "GET",
@@ -31,7 +31,7 @@ export const getGoogleAnalyticsAccounts = async (idToken: string) => {
   return data.accounts || [];
 };
 
-// 🔁 Obtenir les propriétés GA d’un compte
+// 🔁 Obtenir les propriétés GA d’un compte spécifique
 export const getGoogleAnalyticsAccountProperties = async (
   accountId: string,
   idToken: string
@@ -57,7 +57,7 @@ export const getGoogleAnalyticsAccountProperties = async (
   return data.properties || [];
 };
 
-// ✅ Obtenir les propriétés d’un utilisateur (optionnel, si tu ne précises pas accountId)
+// 🔁 Obtenir toutes les propriétés GA disponibles pour l'utilisateur (si aucun accountId n’est précisé)
 export const getGoogleAnalyticsProperties = async (idToken: string) => {
   const response = await fetch(API_ENDPOINTS.ANALYTICS_PROPERTIES, {
     method: "GET",
@@ -76,7 +76,7 @@ export const getGoogleAnalyticsProperties = async (idToken: string) => {
   return data.properties || [];
 };
 
-// ✅ Obtenir les données GA (ex : pour une requête de l’agent IA)
+// 🔁 Obtenir un rapport GA d’une propriété
 export const getGoogleAnalyticsData = async (
   propertyId: string,
   idToken: string
@@ -100,20 +100,15 @@ export const getGoogleAnalyticsData = async (
   return data;
 };
 
-// Fournit les URLs des endpoints API (utile si besoin)
+// ➕ Utilitaire pour construire dynamiquement des URLs d’API avec query params
 export const getApiUrl = (
   endpoint: string,
   queryParams?: Record<string, string>
-) => {
+): string => {
   let url = endpoint;
   if (queryParams) {
-    const params = new URLSearchParams();
-    Object.entries(queryParams).forEach(([key, value]) => {
-      params.append(key, value);
-    });
+    const params = new URLSearchParams(queryParams);
     url += `?${params.toString()}`;
   }
   return url;
 };
-
-export { API_ENDPOINTS };
