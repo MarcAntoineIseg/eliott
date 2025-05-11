@@ -1,12 +1,15 @@
 import { useEffect } from "react";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getAuth, signInWithCustomToken, onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 
 const AuthCallback = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const auth = getAuth();
     const params = new URLSearchParams(window.location.search);
+
+    const idTokenFromUrl = params.get("idToken");
 
     const gaAccessToken = params.get("access_token");
     const gaRefreshToken = params.get("refresh_token");
@@ -19,8 +22,6 @@ const AuthCallback = () => {
     const adsAccessToken = params.get("googleAdsAccessToken");
     const adsRefreshToken = params.get("adsRefreshToken");
     const adsExpiresIn = params.get("adsExpiresIn");
-
-    const auth = getAuth();
 
     const handleConnectedUser = async (user: any) => {
       try {
@@ -64,10 +65,16 @@ const AuthCallback = () => {
       navigate("/request");
     };
 
-    // 👉 On détecte simplement si l'utilisateur est déjà connecté
+    // 1. Si un idToken est dans l'URL => on tente de le stocker et d'attendre Firebase
+    if (idTokenFromUrl) {
+      console.log("✅ idToken détecté dans l'URL");
+      localStorage.setItem("firebaseIdToken", idTokenFromUrl);
+    }
+
+    // 2. Attendre que Firebase Auth détecte l'utilisateur
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        console.log("✅ Utilisateur déjà connecté :", user);
+        console.log("✅ Utilisateur détecté :", user);
         handleConnectedUser(user);
       } else {
         console.warn("⚠️ Aucun utilisateur Firebase détecté");

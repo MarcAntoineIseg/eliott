@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { sendToWebhook } from "@/services/webhook";
 import {
@@ -49,6 +51,22 @@ const Request = () => {
     googleSheets: null,
     googleAds: null,
   });
+
+  const navigate = useNavigate();
+
+useEffect(() => {
+  const auth = getAuth();
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      console.warn("⚠️ Aucun utilisateur Firebase détecté. Redirection...");
+      navigate("/create-account");
+    } else {
+      console.log("✅ Session Firebase détectée :", user.email);
+    }
+  });
+
+  return () => unsubscribe(); // Nettoyage
+}, [navigate]);
 
   useEffect(() => {
     const loadContext = () => {
