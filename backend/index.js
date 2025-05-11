@@ -261,14 +261,19 @@ app.get('/api/analytics/accounts', async (req, res) => {
 
     const decoded = await admin.auth().verifyIdToken(idToken);
     const uid = decoded.uid;
+    console.log("📌 UID Firebase reçu :", uid);
 
     const doc = await db.collection('users').doc(uid).get();
     if (!doc.exists) {
+      console.warn("⚠️ Document Firestore introuvable pour UID :", uid);
       return res.status(404).json({ error: "Utilisateur non trouvé dans Firestore." });
     }
 
     const userData = doc.data();
+    console.log("📦 Données Firestore trouvées :", userData);
+
     if (!userData?.ga_access_token) {
+      console.warn("⚠️ Aucun token GA dans Firestore pour UID :", uid);
       return res.status(404).json({ error: "Aucun token GA trouvé pour cet utilisateur." });
     }
 
@@ -279,6 +284,8 @@ app.get('/api/analytics/accounts', async (req, res) => {
 
     const adminAPI = google.analyticsadmin({ version: 'v1beta', auth: client });
     const { data } = await adminAPI.accounts.list();
+    console.log("✅ Comptes GA reçus :", data.accounts);
+
     res.json({ accounts: data.accounts || [] });
 
   } catch (err) {
@@ -294,13 +301,17 @@ app.get('/api/analytics/properties', async (req, res) => {
 
     const decoded = await admin.auth().verifyIdToken(idToken);
     const uid = decoded.uid;
+    console.log("📌 UID Firebase reçu :", uid);
 
     const doc = await db.collection('users').doc(uid).get();
     if (!doc.exists) {
+      console.warn("⚠️ Document Firestore introuvable pour UID :", uid);
       return res.status(404).json({ error: "Utilisateur non trouvé dans Firestore." });
     }
 
     const userData = doc.data();
+    console.log("📦 Données Firestore :", userData);
+
     if (!userData?.ga_access_token) {
       return res.status(404).json({ error: "Aucun token GA trouvé pour cet utilisateur." });
     }
@@ -316,17 +327,20 @@ app.get('/api/analytics/properties', async (req, res) => {
     if (!accountId) {
       const accRes = await adminAPI.accounts.list();
       accountId = accRes.data.accounts?.[0]?.name || '';
+      console.log("🔄 Account ID détecté automatiquement :", accountId);
     } else {
       accountId = decodeURIComponent(accountId);
       if (!accountId.startsWith("accounts/")) {
         accountId = `accounts/${accountId}`;
       }
+      console.log("📥 Account ID fourni via query :", accountId);
     }
 
     const { data } = await adminAPI.properties.list({
       filter: `parent:${accountId}`
     });
 
+    console.log("✅ Propriétés GA récupérées :", data.properties);
     res.json({ properties: data.properties || [] });
 
   } catch (err) {
