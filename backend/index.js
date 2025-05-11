@@ -263,8 +263,11 @@ app.get('/api/analytics/accounts', async (req, res) => {
     const uid = decoded.uid;
 
     const doc = await db.collection('users').doc(uid).get();
-    const userData = doc.data();
+    if (!doc.exists) {
+      return res.status(404).json({ error: "Utilisateur non trouvé dans Firestore." });
+    }
 
+    const userData = doc.data();
     if (!userData?.ga_access_token) {
       return res.status(404).json({ error: "Aucun token GA trouvé pour cet utilisateur." });
     }
@@ -293,8 +296,11 @@ app.get('/api/analytics/properties', async (req, res) => {
     const uid = decoded.uid;
 
     const doc = await db.collection('users').doc(uid).get();
-    const userData = doc.data();
+    if (!doc.exists) {
+      return res.status(404).json({ error: "Utilisateur non trouvé dans Firestore." });
+    }
 
+    const userData = doc.data();
     if (!userData?.ga_access_token) {
       return res.status(404).json({ error: "Aucun token GA trouvé pour cet utilisateur." });
     }

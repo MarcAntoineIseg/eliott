@@ -9,7 +9,7 @@ const AuthCallback = () => {
     const auth = getAuth();
     const params = new URLSearchParams(window.location.search);
 
-    // Access tokens d’intégrations (si présents)
+    // 🔁 Extraction des tokens depuis l'URL
     const gaAccessToken = params.get("access_token");
     const gaRefreshToken = params.get("refresh_token");
     const gaExpiresIn = params.get("expires_in");
@@ -22,9 +22,40 @@ const AuthCallback = () => {
     const adsRefreshToken = params.get("adsRefreshToken");
     const adsExpiresIn = params.get("adsExpiresIn");
 
+    // ✅ Traitement de l'utilisateur connecté
     const handleConnectedUser = async (user: any) => {
       try {
         const idToken = await user.getIdToken();
+
+        // Construction dynamique du body (envoie uniquement les tokens présents)
+        const body: any = {};
+        if (gaAccessToken) {
+          body.analytics = {
+            access_token: gaAccessToken,
+            refresh_token: gaRefreshToken,
+            expires_in: gaExpiresIn,
+          };
+        }
+        if (sheetsAccessToken) {
+          body.sheets = {
+            access_token: sheetsAccessToken,
+            refresh_token: sheetsRefreshToken,
+            expires_in: sheetsExpiresIn,
+          };
+        }
+        if (adsAccessToken) {
+          body.ads = {
+            access_token: adsAccessToken,
+            refresh_token: adsRefreshToken,
+            expires_in: adsExpiresIn,
+          };
+        }
+
+        if (Object.keys(body).length === 0) {
+          console.warn("⚠️ Aucun token à envoyer.");
+          navigate("/integration");
+          return;
+        }
 
         const res = await fetch("https://api.askeliott.com/auth/google/start", {
           method: "POST",
@@ -32,23 +63,7 @@ const AuthCallback = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${idToken}`,
           },
-          body: JSON.stringify({
-            analytics: {
-              access_token: gaAccessToken,
-              refresh_token: gaRefreshToken,
-              expires_in: gaExpiresIn,
-            },
-            sheets: {
-              access_token: sheetsAccessToken,
-              refresh_token: sheetsRefreshToken,
-              expires_in: sheetsExpiresIn,
-            },
-            ads: {
-              access_token: adsAccessToken,
-              refresh_token: adsRefreshToken,
-              expires_in: adsExpiresIn,
-            },
-          }),
+          body: JSON.stringify(body),
         });
 
         const data = await res.json();
@@ -61,22 +76,21 @@ const AuthCallback = () => {
         console.error("❌ Erreur envoi backend :", err);
       }
 
-      navigate("/request");
+      navigate("/integration"); // 👈 redirige vers la bonne page
     };
 
-    const timeout = setTimeout(() => {
-      onAuthStateChanged(auth, (user) => {
-        if (user) {
-          console.log("✅ Utilisateur Firebase détecté :", user);
-          handleConnectedUser(user);
-        } else {
-          console.warn("⚠️ Aucun utilisateur Firebase détecté après délai");
-          navigate("/request");
-        }
-      });
-    }, 500); // attendre 500ms pour laisser Firebase se charger
+    // 🔄 Écoute directe de Firebase Auth
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log("✅ Utilisateur Firebase détecté :", user);
+        handleConnectedUser(user);
+      } else {
+        console.warn("⚠️ Aucun utilisateur Firebase détecté");
+        navigate("/integration");
+      }
+    });
 
-    return () => clearTimeout(timeout);
+    return () => unsubscribe();
   }, [navigate]);
 
   return (
