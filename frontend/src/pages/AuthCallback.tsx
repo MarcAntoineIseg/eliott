@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getAuth, signInWithCustomToken } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 
 const AuthCallback = () => {
@@ -7,6 +7,8 @@ const AuthCallback = () => {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+
+    const customIdToken = params.get("idToken"); // 🔑 Transmis depuis Webflow
 
     const gaAccessToken = params.get("access_token");
     const gaRefreshToken = params.get("refresh_token");
@@ -64,15 +66,21 @@ const AuthCallback = () => {
       navigate("/request");
     };
 
-    // 🔁 On attend que Firebase détecte l'utilisateur déjà connecté
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        console.warn("⚠️ Aucun utilisateur Firebase détecté");
-        navigate("/request");
-      } else {
-        handleConnectedUser(user);
-      }
-    });
+    if (customIdToken) {
+      // ✅ Connexion Firebase avec le token passé dans l'URL
+      signInWithCustomToken(auth, customIdToken)
+        .then((cred) => {
+          console.log("✅ Firebase connecté via custom token :", cred.user);
+          handleConnectedUser(cred.user);
+        })
+        .catch((err) => {
+          console.error("❌ Erreur signInWithCustomToken :", err);
+          navigate("/create-account");
+        });
+    } else {
+      console.warn("⚠️ Aucun idToken trouvé dans l’URL");
+      navigate("/create-account");
+    }
   }, [navigate]);
 
   return (
