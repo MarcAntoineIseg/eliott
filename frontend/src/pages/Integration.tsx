@@ -11,9 +11,19 @@ import GoogleAdsAuthButton from "@/components/GoogleAdsAuthButton";
 import AdsAccountList from "@/components/AdsAccountList";
 import SheetsFileList from "@/components/SheetsFileList";
 
+import {
+  getGoogleAnalyticsAccounts,
+  getGoogleAnalyticsAccountProperties
+} from "@/services/api";
+
 const Integration = () => {
   const [firebaseUser, setFirebaseUser] = useState(null);
   const [firebaseLoading, setFirebaseLoading] = useState(true);
+  const [accounts, setAccounts] = useState([]);
+  const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
+  const [properties, setProperties] = useState([]);
+  const [loadingProperties, setLoadingProperties] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -23,13 +33,42 @@ const Integration = () => {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    const fetchAnalyticsData = async () => {
+      if (!firebaseUser) return;
+
+      try {
+        const idToken = await firebaseUser.getIdToken();
+
+        const accounts = await getGoogleAnalyticsAccounts(idToken);
+        setAccounts(accounts);
+
+        if (accounts.length > 0) {
+          const accountId = accounts[0].name; // ex: "accounts/123456"
+          setSelectedAccount(accountId);
+
+          setLoadingProperties(true);
+          const properties = await getGoogleAnalyticsAccountProperties(accountId, idToken);
+          setProperties(properties);
+          setLoadingProperties(false);
+        }
+      } catch (err: any) {
+        setError("Erreur lors du chargement de Google Analytics");
+        console.error(err);
+        toast.error("Erreur chargement Google Analytics");
+      }
+    };
+
+    fetchAnalyticsData();
+  }, [firebaseUser]);
+
   if (firebaseLoading) {
     return (
-    <div className="min-h-screen w-full flex items-center justify-center">
-      <p>Chargement...</p>
-    </div>
-  );
-}
+      <div className="min-h-screen w-full flex items-center justify-center">
+        <p>Chargement...</p>
+      </div>
+    );
+  }
 
   if (!firebaseUser && !firebaseLoading) {
     return (
@@ -101,6 +140,19 @@ const Integration = () => {
               </Button>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Affichage des propriétés GA */}
+        <div className="mt-12">
+          <PropertyList
+            properties={properties}
+            isLoading={loadingProperties}
+            selectedAccount={selectedAccount}
+            onSelectProperty={(property) => {
+              console.log("📌 Propriété sélectionnée :", property);
+              // Tu peux ajouter une action ici si nécessaire
+            }}
+          />
         </div>
       </main>
     </div>

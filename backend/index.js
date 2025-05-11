@@ -255,14 +255,29 @@ app.get('/auth/google-ads/callback', async (req, res) => {
 
 // === GA ACCOUNT & PROPERTIES API ===
 app.get('/api/analytics/accounts', async (req, res) => {
-  const token = req.query.token;
-  if (!token) return res.status(400).json({ error: 'Access token manquant' });
-  const client = new google.auth.OAuth2();
-  client.setCredentials({ access_token: token });
   try {
-    const admin = google.analyticsadmin({ version: 'v1beta', auth: client });
-    const { data } = await admin.accounts.list();
+    const idToken = req.headers.authorization?.split("Bearer ")[1];
+    if (!idToken) return res.status(401).json({ error: 'ID Token manquant.' });
+
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    const uid = decoded.uid;
+
+    const doc = await db.collection('users').doc(uid).get();
+    const userData = doc.data();
+
+    if (!userData?.ga_access_token) {
+      return res.status(404).json({ error: "Aucun token GA trouvé pour cet utilisateur." });
+    }
+
+    const client = new google.auth.OAuth2();
+    client.setCredentials({
+      access_token: userData.ga_access_token
+    });
+
+    const adminAPI = google.analyticsadmin({ version: 'v1beta', auth: client });
+    const { data } = await adminAPI.accounts.list();
     res.json({ accounts: data.accounts || [] });
+
   } catch (err) {
     console.error('❌ GA accounts error:', err.message);
     res.status(500).json({ error: err.message });
@@ -270,22 +285,44 @@ app.get('/api/analytics/accounts', async (req, res) => {
 });
 
 app.get('/api/analytics/properties', async (req, res) => {
-  const token = req.query.token;
-  let accountId = req.query.accountId;
-  if (!token) return res.status(400).json({ error: 'Access token manquant' });
-  const client = new google.auth.OAuth2();
-  client.setCredentials({ access_token: token });
   try {
-    const admin = google.analyticsadmin({ version: 'v1beta', auth: client });
+    const idToken = req.headers.authorization?.split("Bearer ")[1];
+    if (!idToken) return res.status(401).json({ error: 'ID Token manquant.' });
+
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    const uid = decoded.uid;
+
+    const doc = await db.collection('users').doc(uid).get();
+    const userData = doc.data();
+
+    if (!userData?.ga_access_token) {
+      return res.status(404).json({ error: "Aucun token GA trouvé pour cet utilisateur." });
+    }
+
+    const client = new google.auth.OAuth2();
+    client.setCredentials({
+      access_token: userData.ga_access_token
+    });
+
+    const adminAPI = google.analyticsadmin({ version: 'v1beta', auth: client });
+
+    let accountId = req.query.accountId;
     if (!accountId) {
-      const { data } = await admin.accounts.list();
-      accountId = data.accounts?.[0]?.name || '';
+      const accRes = await adminAPI.accounts.list();
+      accountId = accRes.data.accounts?.[0]?.name || '';
     } else {
       accountId = decodeURIComponent(accountId);
-      if (!accountId.startsWith('accounts/')) accountId = `accounts/${accountId}`;
+      if (!accountId.startsWith("accounts/")) {
+        accountId = `accounts/${accountId}`;
+      }
     }
-    const { data } = await admin.properties.list({ filter: `parent:${accountId}` });
+
+    const { data } = await adminAPI.properties.list({
+      filter: `parent:${accountId}`
+    });
+
     res.json({ properties: data.properties || [] });
+
   } catch (err) {
     console.error('❌ GA properties error:', err.message);
     res.status(500).json({ error: err.message });

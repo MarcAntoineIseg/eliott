@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { API_BASE_URL } from "@/services/googleAnalytics";
 
 interface GoogleAuthButtonProps {
-  clientId: string;
+  clientId?: string;
   onSuccess?: (response: any) => void;
   onError?: (error: Error) => void;
 }
