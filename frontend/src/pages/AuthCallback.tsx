@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { getAuth, getRedirectResult, onAuthStateChanged } from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 
 const AuthCallback = () => {
@@ -64,27 +64,16 @@ const AuthCallback = () => {
       navigate("/request");
     };
 
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result && result.user) {
-          console.log("✅ Utilisateur détecté via redirect :", result.user);
-          handleConnectedUser(result.user);
-        } else {
-          onAuthStateChanged(auth, (user) => {
-            if (user) {
-              console.log("✅ Utilisateur déjà connecté :", user);
-              handleConnectedUser(user);
-            } else {
-              console.warn("⚠️ Aucun utilisateur Firebase détecté");
-              navigate("/request");
-            }
-          });
-        }
-      })
-      .catch((err) => {
-        console.error("❌ Erreur getRedirectResult :", err);
+    // 👉 On détecte simplement si l'utilisateur est déjà connecté
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log("✅ Utilisateur déjà connecté :", user);
+        handleConnectedUser(user);
+      } else {
+        console.warn("⚠️ Aucun utilisateur Firebase détecté");
         navigate("/request");
-      });
+      }
+    });
   }, [navigate]);
 
   return (
