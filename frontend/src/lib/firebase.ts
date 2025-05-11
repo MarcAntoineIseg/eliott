@@ -1,4 +1,5 @@
 import { initializeApp } from "firebase/app";
+import { GoogleAuthProvider } from "firebase/auth";
 import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 
 const firebaseConfig = {
@@ -21,4 +22,6 @@ setPersistence(auth, browserLocalPersistence)
     console.error("❌ Erreur de persistance Firebase :", error);
   });
 
-export { auth };
+const provider = new GoogleAuthProvider();
+
+export { auth, provider };
