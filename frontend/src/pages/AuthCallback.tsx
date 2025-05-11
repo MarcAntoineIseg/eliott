@@ -64,9 +64,35 @@ const AuthCallback = () => {
       navigate("/request");
     };
 
-    // 🔄 Essaye d'abord de récupérer le résultat du redirect OAuth
     getRedirectResult(auth)
       .then((result) => {
         if (result && result.user) {
           console.log("✅ Utilisateur détecté via redirect :", result.user);
           handleConnectedUser(result.user);
+        } else {
+          onAuthStateChanged(auth, (user) => {
+            if (user) {
+              console.log("✅ Utilisateur déjà connecté :", user);
+              handleConnectedUser(user);
+            } else {
+              console.warn("⚠️ Aucun utilisateur Firebase détecté");
+              navigate("/request");
+            }
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("❌ Erreur getRedirectResult :", err);
+        navigate("/request");
+      });
+  }, [navigate]);
+
+  return (
+    <div className="h-screen w-full flex flex-col items-center justify-center text-center p-4">
+      <h2 className="text-xl font-semibold mb-2">Connexion en cours...</h2>
+      <p className="text-muted">Nous finalisons la connexion à votre compte...</p>
+    </div>
+  );
+};
+
+export default AuthCallback;
