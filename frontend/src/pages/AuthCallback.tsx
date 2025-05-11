@@ -1,10 +1,5 @@
 import { useEffect } from "react";
-import {
-  getAuth,
-  GoogleAuthProvider,
-  signInWithCredential,
-  onAuthStateChanged,
-} from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 
 const AuthCallback = () => {
@@ -14,8 +9,7 @@ const AuthCallback = () => {
     const auth = getAuth();
     const params = new URLSearchParams(window.location.search);
 
-    const idTokenFromUrl = params.get("idToken");
-
+    // Access tokens d’intégrations (si présents)
     const gaAccessToken = params.get("access_token");
     const gaRefreshToken = params.get("refresh_token");
     const gaExpiresIn = params.get("expires_in");
@@ -70,33 +64,19 @@ const AuthCallback = () => {
       navigate("/request");
     };
 
-    if (idTokenFromUrl) {
-      console.log("✅ idToken détecté dans l'URL");
-      const credential = GoogleAuthProvider.credential(idTokenFromUrl);
-
-      signInWithCredential(auth, credential)
-        .then(({ user }) => {
-          console.log("✅ Utilisateur connecté avec idToken :", user);
+    const timeout = setTimeout(() => {
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          console.log("✅ Utilisateur Firebase détecté :", user);
           handleConnectedUser(user);
-        })
-        .catch((err) => {
-          console.error("❌ Erreur signInWithCredential :", err);
-          navigate("/create-account");
-        });
+        } else {
+          console.warn("⚠️ Aucun utilisateur Firebase détecté après délai");
+          navigate("/request");
+        }
+      });
+    }, 500); // attendre 500ms pour laisser Firebase se charger
 
-      return; // ⛔ Ne pas exécuter le onAuthStateChanged plus bas
-    }
-
-    // Cas normal : utilisateur déjà connecté
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        console.log("✅ Utilisateur déjà connecté :", user);
-        handleConnectedUser(user);
-      } else {
-        console.warn("⚠️ Aucun utilisateur Firebase détecté");
-        navigate("/create-account");
-      }
-    });
+    return () => clearTimeout(timeout);
   }, [navigate]);
 
   return (
