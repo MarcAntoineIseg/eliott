@@ -23,6 +23,7 @@ const App = () => (
           <Route path="/" element={<Navigate to="/request" replace />} />
           <Route path="/integration" element={<Layout><Integration /></Layout>} />
           <Route path="/request" element={<Layout><Request /></Layout>} />
+          <Route path="/redirect" element={<RedirectHandler />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
