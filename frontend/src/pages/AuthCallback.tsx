@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getAuth, getRedirectResult, onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 
 const AuthCallback = () => {
@@ -64,22 +64,9 @@ const AuthCallback = () => {
       navigate("/request");
     };
 
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        console.warn("⚠️ Aucun utilisateur Firebase détecté");
-        navigate("/request");
-      } else {
-        handleConnectedUser(user);
-      }
-    });
-  }, [navigate]);
-
-  return (
-    <div className="h-screen w-full flex flex-col items-center justify-center text-center p-4">
-      <h2 className="text-xl font-semibold mb-2">Connexion en cours...</h2>
-      <p className="text-muted">Nous finalisons la connexion à votre compte...</p>
-    </div>
-  );
-};
-
-export default AuthCallback;
+    // 🔄 Essaye d'abord de récupérer le résultat du redirect OAuth
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result && result.user) {
+          console.log("✅ Utilisateur détecté via redirect :", result.user);
+          handleConnectedUser(result.user);
