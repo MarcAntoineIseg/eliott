@@ -1,5 +1,10 @@
 import { useEffect } from "react";
-import { getAuth, signInWithCustomToken, onAuthStateChanged } from "firebase/auth";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithCredential,
+  onAuthStateChanged,
+} from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 
 const AuthCallback = () => {
@@ -65,20 +70,31 @@ const AuthCallback = () => {
       navigate("/request");
     };
 
-    // 1. Si un idToken est dans l'URL => on tente de le stocker et d'attendre Firebase
     if (idTokenFromUrl) {
       console.log("✅ idToken détecté dans l'URL");
-      localStorage.setItem("firebaseIdToken", idTokenFromUrl);
+      const credential = GoogleAuthProvider.credential(idTokenFromUrl);
+
+      signInWithCredential(auth, credential)
+        .then(({ user }) => {
+          console.log("✅ Utilisateur connecté avec idToken :", user);
+          handleConnectedUser(user);
+        })
+        .catch((err) => {
+          console.error("❌ Erreur signInWithCredential :", err);
+          navigate("/create-account");
+        });
+
+      return; // ⛔ Ne pas exécuter le onAuthStateChanged plus bas
     }
 
-    // 2. Attendre que Firebase Auth détecte l'utilisateur
+    // Cas normal : utilisateur déjà connecté
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        console.log("✅ Utilisateur détecté :", user);
+        console.log("✅ Utilisateur déjà connecté :", user);
         handleConnectedUser(user);
       } else {
         console.warn("⚠️ Aucun utilisateur Firebase détecté");
-        navigate("/request");
+        navigate("/create-account");
       }
     });
   }, [navigate]);
