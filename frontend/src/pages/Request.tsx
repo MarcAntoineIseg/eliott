@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { fetchGoogleAnalyticsTokensFromFirestore } from "@/services/firebaseUser";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -69,54 +70,42 @@ useEffect(() => {
 }, [navigate]);
 
   useEffect(() => {
-    const loadContext = () => {
-      // Google Analytics tokens
-      const gaAccessToken = localStorage.getItem("googleAccessToken") || "";
-      const gaRefreshToken = localStorage.getItem("ga_refresh_token") || "";
-      const gaPropertyId = localStorage.getItem("ga_property_id") || "";
-      const gaAccountId = localStorage.getItem("ga_account_id") || "";
+  const loadContext = async () => {
+    // GA : récupération côté serveur (Firestore)
+    const gaTokens = await fetchGoogleAnalyticsTokensFromFirestore();
+    const gaAccountId = localStorage.getItem("ga_account_id") || "";
+    const gaPropertyId = localStorage.getItem("ga_property_id") || "";
 
-      // Google Sheets tokens
-      const sheetsAccessToken = localStorage.getItem("googleSheetsAccessToken") || "";
-      const sheetsRefreshToken = localStorage.getItem("sheets_refresh_token") || "";
-      const sheetsFiles = getConnectedSheetsFiles();
-      const sheetsFileIds = getConnectedSheetsFileIds();
-      
-      // Google Ads tokens
-      const adsAccessToken = localStorage.getItem("googleAdsAccessToken") || "";
-      const adsRefreshToken = localStorage.getItem("ads_refresh_token") || "";
-      const adsCustomerId = localStorage.getItem("googleAdsCustomerId") || "";
+    // Sheets : depuis le localStorage
+    const sheetsAccessToken = localStorage.getItem("googleSheetsAccessToken") || "";
+    const sheetsRefreshToken = localStorage.getItem("sheets_refresh_token") || "";
+    const sheetsFiles = getConnectedSheetsFiles();
+    const sheetsFileIds = getConnectedSheetsFileIds();
 
-      console.log("📦 GA Context:", {
-        gaAccessToken: gaAccessToken ? "présent" : "absent",
-        gaRefreshToken: gaRefreshToken ? "présent" : "absent",
-        gaAccountId,
-        gaPropertyId
-      });
-      
-      console.log("📦 Sheets Context:", {
-        sheetsAccessToken: sheetsAccessToken ? "présent" : "absent",
-        sheetsRefreshToken: sheetsRefreshToken ? "présent" : "absent",
-        sheetsFiles: sheetsFiles.length,
-        sheetsFileIds
-      });
-      
-      console.log("📦 Ads Context:", {
-        adsAccessToken: adsAccessToken ? "présent" : "absent",
-        adsRefreshToken: adsRefreshToken ? "présent" : "absent",
-        adsCustomerId
-      });
+    // Ads : depuis le localStorage
+    const adsAccessToken = localStorage.getItem("googleAdsAccessToken") || "";
+    const adsRefreshToken = localStorage.getItem("ads_refresh_token") || "";
+    const adsCustomerId = localStorage.getItem("googleAdsCustomerId") || "";
 
-      setUserContext({
-        googleAnalytics: gaAccessToken && gaAccountId && gaPropertyId
+    console.log("📦 GA Context:", {
+      accessToken: gaTokens?.accessToken ? "présent" : "absent",
+      refreshToken: gaTokens?.refreshToken ? "présent" : "absent",
+      gaAccountId,
+      gaPropertyId,
+    });
+
+    setUserContext({
+      googleAnalytics:
+        gaTokens?.accessToken && gaAccountId && gaPropertyId
           ? {
-              accessToken: gaAccessToken,
-              refreshToken: gaRefreshToken,
+              accessToken: gaTokens.accessToken,
+              refreshToken: gaTokens.refreshToken,
               accountId: gaAccountId,
               propertyId: gaPropertyId,
             }
           : null,
-        googleSheets: sheetsAccessToken && sheetsFiles.length > 0
+      googleSheets:
+        sheetsAccessToken && sheetsFiles.length > 0
           ? {
               accessToken: sheetsAccessToken,
               refreshToken: sheetsRefreshToken,
@@ -124,18 +113,19 @@ useEffect(() => {
               fileIds: sheetsFileIds,
             }
           : null,
-        googleAds: adsAccessToken && adsCustomerId
+      googleAds:
+        adsAccessToken && adsCustomerId
           ? {
               accessToken: adsAccessToken,
               refreshToken: adsRefreshToken,
               customerId: adsCustomerId,
             }
           : null,
-      });
-    };
+    });
+  };
 
-    loadContext();
-  }, []);
+  loadContext();
+}, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
