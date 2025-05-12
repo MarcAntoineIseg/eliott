@@ -20,7 +20,9 @@ const Integration = () => {
   const [firebaseUser, setFirebaseUser] = useState(null);
   const [firebaseLoading, setFirebaseLoading] = useState(true);
   const [accounts, setAccounts] = useState([]);
-  const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
+  const [selectedAccount, setSelectedAccount] = useState<string | null>(
+  localStorage.getItem("ga_account_id")
+);
   const [properties, setProperties] = useState([]);
   const [loadingProperties, setLoadingProperties] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +56,26 @@ const Integration = () => {
 
     fetchAnalyticsData();
   }, [firebaseUser]);
+
+  useEffect(() => {
+  const fetchPropertiesIfAccountExists = async () => {
+    if (!firebaseUser || !selectedAccount) return;
+
+    try {
+      setLoadingProperties(true);
+      const idToken = await firebaseUser.getIdToken();
+      const props = await getGoogleAnalyticsAccountProperties(selectedAccount, idToken);
+      setProperties(props);
+    } catch (err) {
+      toast.error("Erreur chargement des propriétés GA4");
+      console.error("❌ GA4 fetch error:", err);
+    } finally {
+      setLoadingProperties(false);
+    }
+  };
+
+  fetchPropertiesIfAccountExists();
+}, [firebaseUser, selectedAccount]);
 
   const handleAccountChange = async (accountId: string) => {
   setSelectedAccount(accountId);
