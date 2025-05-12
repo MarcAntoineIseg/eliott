@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { useMemo } from "react";
 import PropertyList from "@/components/PropertyList";
 import GoogleAuthButton from "@/components/GoogleAuthButton";
 import GoogleSheetsAuthButton from "@/components/GoogleSheetsAuthButton";
@@ -22,12 +21,13 @@ const Integration = () => {
   const [firebaseLoading, setFirebaseLoading] = useState(true);
   const [accounts, setAccounts] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
-  const selectedAccountObject = useMemo(() => {
-  return accounts.find((acc: any) => acc.name === selectedAccount);
-}, [accounts, selectedAccount]);
   const [properties, setProperties] = useState([]);
   const [loadingProperties, setLoadingProperties] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const selectedAccountObject = useMemo(() => {
+    return accounts.find((acc: any) => acc.name === selectedAccount);
+  }, [accounts, selectedAccount]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -43,19 +43,8 @@ const Integration = () => {
 
       try {
         const idToken = await firebaseUser.getIdToken();
-
         const accounts = await getGoogleAnalyticsAccounts(idToken);
         setAccounts(accounts);
-
-        if (accounts.length > 0) {
-          const accountId = accounts[0].name; // ex: "accounts/123456"
-          setSelectedAccount(accountId);
-
-          setLoadingProperties(true);
-          const properties = await getGoogleAnalyticsAccountProperties(accountId, idToken);
-          setProperties(properties);
-          setLoadingProperties(false);
-        }
       } catch (err: any) {
         setError("Erreur lors du chargement de Google Analytics");
         console.error(err);
@@ -66,13 +55,25 @@ const Integration = () => {
     fetchAnalyticsData();
   }, [firebaseUser]);
 
-  if (firebaseLoading) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center">
-        <p>Chargement...</p>
-      </div>
-    );
+  const handleAccountChange = async (accountId: string) => {
+  setSelectedAccount(accountId);
+  localStorage.setItem("ga_account_id", accountId); // ✅ Stockage local
+
+  setProperties([]);
+  if (!firebaseUser) return;
+
+  try {
+    setLoadingProperties(true);
+    const idToken = await firebaseUser.getIdToken();
+    const properties = await getGoogleAnalyticsAccountProperties(accountId, idToken);
+    setProperties(properties);
+  } catch (err) {
+    console.error("Erreur chargement propriétés GA4 :", err);
+    toast.error("Erreur chargement des propriétés GA4");
+  } finally {
+    setLoadingProperties(false);
   }
+};
 
   if (!firebaseUser && !firebaseLoading) {
     return (
@@ -92,28 +93,53 @@ const Integration = () => {
         <h1 className="text-4xl font-extrabold mb-8 text-gray-800">Intégrations</h1>
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           <Card className="col-span-1 md:col-span-2 lg:col-span-3">
-  <CardContent className="p-6 space-y-4">
-    <CardTitle>Google Analytics</CardTitle>
-    <CardDescription>
-      {selectedAccountObject
-        ? `Compte connecté : ${selectedAccountObject.displayName}`
-        : "Connectez votre compte Google Analytics"}
-    </CardDescription>
+            <CardContent className="p-6 space-y-4">
+              <CardTitle>Google Analytics</CardTitle>
+              <CardDescription>
+                {selectedAccountObject
+                  ? `Compte sélectionné : ${selectedAccountObject.displayName}`
+                  : "Connectez votre compte Google Analytics"}
+              </CardDescription>
 
-    {!selectedAccountObject ? (
-      <GoogleAuthButton />
-    ) : (
-      <PropertyList
-        properties={properties}
-        isLoading={loadingProperties}
-        selectedAccount={selectedAccount}
-        onSelectProperty={(property) => {
-          console.log("📌 Propriété sélectionnée :", property);
-        }}
-      />
-    )}
-  </CardContent>
-</Card>
+              {!accounts.length ? (
+                <GoogleAuthButton />
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <label htmlFor="gaAccount" className="block text-sm font-medium text-gray-700">
+                      Sélectionnez un compte
+                    </label>
+                    <select
+                      id="gaAccount"
+                      className="w-full p-2 border rounded-md"
+                      value={selectedAccount || ''}
+                      onChange={(e) => handleAccountChange(e.target.value)}
+                    >
+                      <option value="">-- Choisissez un compte --</option>
+                      {accounts.map((acc: any) => (
+                        <option key={acc.name} value={acc.name}>
+                          {acc.displayName} ({acc.name})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {selectedAccountObject && (
+                    <PropertyList
+                      properties={properties}
+                      isLoading={loadingProperties}
+                      selectedAccount={selectedAccount}
+                      onSelectProperty={(property) => {
+                      console.log("📌 Propriété sélectionnée :", property);
+                      localStorage.setItem("ga_property_id", property.name); // ex: properties/12345678
+                  }}
+                 />
+
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
 
           <Card>
             <CardContent className="p-6">
