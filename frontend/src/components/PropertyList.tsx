@@ -33,11 +33,12 @@ const PropertyList = ({ properties, isLoading, accessToken, error, selectedAccou
   const [showConnectButton, setShowConnectButton] = useState<boolean>(false);
 
   useEffect(() => {
-    const savedPropertyId = localStorage.getItem("ga_property_id");
-    if (savedPropertyId) {
-      setConnectedPropertyId(savedPropertyId);
-    }
-  }, []);
+  const savedPropertyId = localStorage.getItem("ga_property_id");
+  if (savedPropertyId) {
+    setConnectedPropertyId(savedPropertyId);
+    setSelectedProperty(savedPropertyId); // ✅ Ajoute ceci
+  }
+}, []);
 
   const handlePropertySelect = (property: GoogleAnalyticsProperty) => {
     setSelectedProperty(property.id);
@@ -145,59 +146,67 @@ const PropertyList = ({ properties, isLoading, accessToken, error, selectedAccou
       </div>
 
       <div className="space-y-2">
-        {properties.map((property) => (
-          <Card
-            key={property.id}
-            className={`transition-all hover:shadow-md relative w-full cursor-pointer ${
-              selectedProperty === property.id ? "ring-2 ring-blue-500" : ""
-            }`}
-            onClick={() => handlePropertySelect(property)}
-          >
-            <div className="flex items-center justify-between px-4 py-3">
-              <div className="flex flex-col">
-                <span className="font-medium text-base">{property.name}</span>
-                <span className="text-xs text-gray-500">
-                  ID: {property.id} • {property.createdAt ? new Date(property.createdAt).toLocaleDateString() : "Date inconnue"}
-                </span>
-              </div>
-              <div className="flex gap-2 items-center">
-                {property.url && (
-                  <Button variant="ghost" size="icon" asChild>
-                    <a
-                      href={property.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Link size={16} />
-                    </a>
-                  </Button>
-                )}
-                {showConnectButton &&
-                  selectedProperty === property.id &&
-                  connectedPropertyId !== property.id && (
-                    <Button
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleConnectProperty();
-                      }}
-                    >
-                      Connecter
-                    </Button>
-                  )}
-                {connectedPropertyId === property.id && (
-                  <span className="text-sm text-green-600 flex items-center gap-1">
-                    ✅ Propriété connectée
-                  </span>
-                )}
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-    </div>
+  {properties.map((property) => {
+    const isSelected = selectedProperty === property.id;
+    const isConnected = connectedPropertyId === property.id;
+
+    return (
+      <Card
+        key={property.id}
+        className={`transition-all hover:shadow-md relative w-full cursor-pointer ${
+          isSelected ? "ring-2 ring-blue-500" : ""
+        }`}
+        onClick={() => handlePropertySelect(property)}
+      >
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex flex-col">
+            <span className="font-medium text-base">{property.name}</span>
+            <span className="text-xs text-gray-500">
+              ID: {property.id} •{" "}
+              {property.createdAt
+                ? new Date(property.createdAt).toLocaleDateString()
+                : "Date inconnue"}
+            </span>
+          </div>
+          <div className="flex gap-2 items-center">
+            {property.url && (
+              <Button variant="ghost" size="icon" asChild>
+                <a
+                  href={property.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Link size={16} />
+                </a>
+              </Button>
+            )}
+
+            {isConnected ? (
+              <span className="text-sm text-green-600 flex items-center gap-1">
+                ✅ Propriété connectée
+              </span>
+            ) : (
+              showConnectButton &&
+              isSelected && (
+                <Button
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleConnectProperty();
+                  }}
+                >
+                  Connecter
+                </Button>
+              )
+            )}
+          </div>
+        </div>
+      </Card>
+    );
+  })}
+</div>
+</div>
   );
 };
-
 export default PropertyList;
