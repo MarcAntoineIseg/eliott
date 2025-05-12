@@ -177,14 +177,6 @@ useEffect(() => {
     }
   };
 
-  if (!userContext.googleAnalytics && !userContext.googleSheets) {
-    return (
-      <div className="h-screen w-full flex items-center justify-center text-lg">
-        Chargement du contexte utilisateur...
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen w-full bg-[#f4f6f9]">
       <main className="container py-8">
