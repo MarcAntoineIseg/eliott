@@ -240,6 +240,6 @@ if (!parsedResponse?.chartData && response?.rows) {
       </main>
     </div>
   );
-};
+}
 
 export default Request;
