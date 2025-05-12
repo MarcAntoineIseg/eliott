@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { useState, useEffect } from "react";
+import DynamicChart from "@/components/DynamicChart";
 import { fetchGoogleAnalyticsTokensFromFirestore } from "@/services/firebaseUser";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
@@ -27,6 +29,7 @@ const Request = () => {
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [chartData, setChartData] = useState<any[]>([]);
+  const [chartType, setChartType] = useState<"line" | "bar" | "pie">("line");
   const [responseMessage, setResponseMessage] = useState<string | null>(null);
 
   const [userContext, setUserContext] = useState<{
@@ -141,16 +144,26 @@ useEffect(() => {
       setQuery("");
 
       // ✅ Gérer le message texte de l'IA
-      if (typeof response === "string" && response.trim().length > 0) {
+            
+ let parsedResponse: any = null;
+
+if (typeof response === "string" && response.trim().length > 0) {
   try {
-    const parsed = JSON.parse(response);
-    setResponseMessage(typeof parsed === "string" ? JSON.parse(parsed) : parsed);
+    parsedResponse = JSON.parse(response);
+    setResponseMessage(parsedResponse.message || response);
   } catch {
+    console.warn("❌ Erreur parsing JSON : ", response);
     setResponseMessage(response);
   }
-} else {
-  console.warn("❌ Réponse du webhook invalide :", response);
-  setResponseMessage(null);
+} else if (typeof response === "object") {
+  parsedResponse = response;
+  setResponseMessage(response.message || null);
+}
+
+// ✅ Si la réponse contient des données de graphique
+if (parsedResponse?.chartData && parsedResponse?.chartType) {
+  setChartData(parsedResponse.chartData);
+  setChartType(parsedResponse.chartType);
 }
 
       // ✅ Gérer les données graphiques si présentes
@@ -222,20 +235,13 @@ useEffect(() => {
           </div>
         )}
 
-        {chartData.length > 0 && (
-          <div className="mt-10">
-            <h2 className="text-2xl font-semibold text-gray-700 mb-4">Évolution du trafic</h2>
-            <ResponsiveContainer width="100%" height={400}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="sessions" stroke="#8884d8" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
+       {chartData.length > 0 && (
+  <div className="mt-10">
+    <h2 className="text-2xl font-semibold text-gray-700 mb-4">Données visualisées</h2>
+    <DynamicChart chartType={chartType} data={chartData} />
+  </div>
+)}
+ 
       </main>
     </div>
   );
