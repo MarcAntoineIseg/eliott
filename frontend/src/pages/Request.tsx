@@ -175,9 +175,6 @@ if (!parsedResponse?.chartData && response?.rows) {
   setChartData(parsed);
 }
 
-
-  };
-
   return (
     <div className="min-h-screen w-full bg-[#f4f6f9]">
       <main className="container py-8">
