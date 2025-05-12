@@ -160,24 +160,22 @@ if (typeof response === "string" && response.trim().length > 0) {
   setResponseMessage(response.message || null);
 }
 
-// ✅ Si la réponse contient des données de graphique
+// ✅ Si la réponse contient des données de graphique, on les utilise
 if (parsedResponse?.chartData && parsedResponse?.chartType) {
   setChartData(parsedResponse.chartData);
   setChartType(parsedResponse.chartType);
 }
 
-      // ✅ Gérer les données graphiques si présentes
-      const parsed = (response.rows || []).map((row: any) => ({
-        date: row.dimensionValues?.[0]?.value,
-        sessions: parseInt(row.metricValues?.[0]?.value || "0", 10),
-      }));
-      setChartData(parsed);
-    } catch (error) {
-      console.error("❌ Erreur:", error);
-      toast.error("Erreur lors de l'envoi de la requête");
-    } finally {
-      setIsLoading(false);
-    }
+// ✅ Sinon on tente de parser les données GA brutes (si disponibles)
+if (!parsedResponse?.chartData && response?.rows) {
+  const parsed = (response.rows || []).map((row: any) => ({
+    label: row.dimensionValues?.[0]?.value,
+    value: parseInt(row.metricValues?.[0]?.value || "0", 10),
+  }));
+  setChartData(parsed);
+}
+
+
   };
 
   return (
