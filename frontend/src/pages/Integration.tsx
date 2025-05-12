@@ -4,6 +4,7 @@ import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useMemo } from "react";
 import PropertyList from "@/components/PropertyList";
 import GoogleAuthButton from "@/components/GoogleAuthButton";
 import GoogleSheetsAuthButton from "@/components/GoogleSheetsAuthButton";
@@ -21,6 +22,9 @@ const Integration = () => {
   const [firebaseLoading, setFirebaseLoading] = useState(true);
   const [accounts, setAccounts] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
+  const selectedAccountObject = useMemo(() => {
+  return accounts.find((acc: any) => acc.name === selectedAccount);
+}, [accounts, selectedAccount]);
   const [properties, setProperties] = useState([]);
   const [loadingProperties, setLoadingProperties] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,13 +91,29 @@ const Integration = () => {
       <main className="container py-8">
         <h1 className="text-4xl font-extrabold mb-8 text-gray-800">Intégrations</h1>
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardContent className="p-6">
-              <CardTitle>Google Analytics</CardTitle>
-              <CardDescription>Connectez votre compte Google Analytics</CardDescription>
-              <GoogleAuthButton />
-            </CardContent>
-          </Card>
+          <Card className="col-span-1 md:col-span-2 lg:col-span-3">
+  <CardContent className="p-6 space-y-4">
+    <CardTitle>Google Analytics</CardTitle>
+    <CardDescription>
+      {selectedAccountObject
+        ? `Compte connecté : ${selectedAccountObject.displayName}`
+        : "Connectez votre compte Google Analytics"}
+    </CardDescription>
+
+    {!selectedAccountObject ? (
+      <GoogleAuthButton />
+    ) : (
+      <PropertyList
+        properties={properties}
+        isLoading={loadingProperties}
+        selectedAccount={selectedAccount}
+        onSelectProperty={(property) => {
+          console.log("📌 Propriété sélectionnée :", property);
+        }}
+      />
+    )}
+  </CardContent>
+</Card>
 
           <Card>
             <CardContent className="p-6">
@@ -140,19 +160,6 @@ const Integration = () => {
               </Button>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Affichage des propriétés GA */}
-        <div className="mt-12">
-          <PropertyList
-            properties={properties}
-            isLoading={loadingProperties}
-            selectedAccount={selectedAccount}
-            onSelectProperty={(property) => {
-              console.log("📌 Propriété sélectionnée :", property);
-              // Tu peux ajouter une action ici si nécessaire
-            }}
-          />
         </div>
       </main>
     </div>
