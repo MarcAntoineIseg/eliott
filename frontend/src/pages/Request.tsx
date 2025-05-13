@@ -114,10 +114,12 @@ if (typeof response === "string" && response.trim().length > 0) {
     setResponseMessage(response);
   }
 } else if (typeof response === "object") {
-  parsedResponse = response;
-  setResponseMessage(response.message || null);
+  parsedResponse = typeof response === "string" ? JSON.parse(response) : response;
+  setResponseMessage(parsedResponse.message || null);
+
 }
 
+console.log("✅ Réponse parsée :", parsedResponse);
 console.log("🎯 chartType reçu :", parsedResponse?.chartType);
 console.log("📊 chartData reçu :", parsedResponse?.chartData);
 
