@@ -213,6 +213,25 @@ app.get('/auth/google-sheets/callback', async (req, res) => {
   }
 });
 
+app.get("/auth/user/tokens", async (req, res) => {
+  try {
+    const idToken = req.headers.authorization?.split("Bearer ")[1];
+    if (!idToken) return res.status(401).json({ error: "Token manquant" });
+
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    const uid = decoded.uid;
+
+    const doc = await db.collection("users").doc(uid).get();
+    if (!doc.exists) return res.status(404).json({ error: "Utilisateur non trouvé" });
+
+    const data = doc.data();
+    return res.status(200).json(data);
+  } catch (err) {
+    console.error("❌ Erreur lecture token utilisateur :", err);
+    return res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 // -- Meta Ads ---
 app.get('/auth/meta', (req, res) => {
   const scope = 'ads_read,business_management,pages_read_engagement';
