@@ -3,6 +3,7 @@ import { onAuthStateChanged, getAuth } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import PropertyList from "@/components/PropertyList";
 import GoogleAuthButton from "@/components/GoogleAuthButton";
@@ -29,6 +30,7 @@ const Integration = () => {
   const [googleSheetsFiles, setGoogleSheetsFiles] = useState([]);
   const [googleSheetsLoading, setGoogleSheetsLoading] = useState(false);
   const [googleSheetsError, setGoogleSheetsError] = useState<string | null>(null);
+  const [connectedSheetsFileName, setConnectedSheetsFileName] = useState<string | null>(null);
 
   const selectedAccountObject = useMemo(() => {
     return accounts.find((acc: any) => acc.name === selectedAccount);
@@ -104,6 +106,12 @@ const Integration = () => {
         const driveData = await driveRes.json();
         const files = driveData.files || [];
         setGoogleSheetsFiles(files);
+
+        // 🧠 Si un fichier est connecté, stocke son ID
+        if (userData?.sheets_connected_file?.id) {
+          localStorage.setItem("sheets_file_id", userData.sheets_connected_file.id);
+          setConnectedSheetsFileName(userData.sheets_connected_file.name);
+        }
       } catch (err) {
         console.error("❌ Erreur chargement fichiers Google Sheets :", err);
         setGoogleSheetsError("Erreur chargement fichiers Google Sheets");
@@ -204,15 +212,22 @@ const Integration = () => {
               <CardTitle>Google Sheets</CardTitle>
               <CardDescription>Connectez vos fichiers Google Sheets</CardDescription>
               <GoogleSheetsAuthButton />
+              {connectedSheetsFileName && (
+                <Badge className="text-sm bg-green-100 text-green-700 w-fit">Fichier connecté : {connectedSheetsFileName}</Badge>
+              )}
               <SheetsFileList
                 files={googleSheetsFiles}
                 isLoading={googleSheetsLoading}
                 error={googleSheetsError}
                 onSelectFile={(file) => {
                   console.log("✅ Fichier sélectionné côté front :", file);
+                  localStorage.setItem("sheets_file_id", file.id);
+                  setConnectedSheetsFileName(file.name);
                 }}
                 onRemoveFile={(fileId) => {
                   console.log("🗑️ Fichier déconnecté côté front :", fileId);
+                  localStorage.removeItem("sheets_file_id");
+                  setConnectedSheetsFileName(null);
                 }}
               />
             </CardContent>
