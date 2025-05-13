@@ -91,58 +91,45 @@ const Request = () => {
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return toast.error("Veuillez saisir une question");
-    if (!userContext.googleSheets && !userContext.googleAnalytics) {
-      return toast.error("Aucune source connectée !");
-    }
-
-    setIsLoading(true);
-    try {
-      const response = await sendToWebhook(query, userContext);
-      toast.success("Requête envoyée à Eliott ✅");
-      setQuery("");
-
-      let parsedResponse: any = null;
-
-if (typeof response === "string" && response.trim().length > 0) {
-  try {
-    parsedResponse = JSON.parse(response);
-    setResponseMessage(parsedResponse.message || response);
-  } catch {
-    console.warn("❌ Erreur parsing JSON : ", response);
-    setResponseMessage(response);
+  e.preventDefault();
+  if (!query.trim()) return toast.error("Veuillez saisir une question");
+  if (!userContext.googleSheets && !userContext.googleAnalytics) {
+    return toast.error("Aucune source connectée !");
   }
-} else if (typeof response === "object") {
-  parsedResponse = typeof response === "string" ? JSON.parse(response) : response;
-  setResponseMessage(parsedResponse.message || null);
 
-}
+  setIsLoading(true);
+  try {
+    const response = await sendToWebhook(query, userContext);
+    toast.success("Requête envoyée à Eliott ✅");
+    setQuery("");
 
-console.log("✅ Réponse parsée :", parsedResponse);
-console.log("🎯 chartType reçu :", parsedResponse?.chartType);
-console.log("📊 chartData reçu :", parsedResponse?.chartData);
+    let parsedResponse: any = null;
 
-if (parsedResponse?.chartData && parsedResponse?.chartType) {
-  setChartData(parsedResponse.chartData);
-  setChartType(parsedResponse.chartType as "line" | "bar" | "pie");
-}
+    const data = typeof response === "string" ? JSON.parse(response) : response;
+    parsedResponse = Array.isArray(data) ? data[0] : data;
 
-if (!parsedResponse?.chartData && response?.rows) {
-  const parsed = (response.rows || []).map((row: any) => ({
-    label: row.dimensionValues?.[0]?.value,
-    value: parseInt(row.metricValues?.[0]?.value || "0", 10),
-  }));
-  setChartData(parsed);
-}
+    setResponseMessage(parsedResponse.message || null);
 
-    } catch (error) {
-      console.error("❌ Erreur:", error);
-      toast.error("Erreur lors de l'envoi de la requête");
-    } finally {
-      setIsLoading(false);
+    if (parsedResponse?.chartData?.length && parsedResponse?.chartType) {
+      setChartData(parsedResponse.chartData);
+      setChartType(parsedResponse.chartType as "line" | "bar" | "pie");
     }
-  };
+
+    if (!parsedResponse?.chartData && parsedResponse?.rows) {
+      const parsed = (parsedResponse.rows || []).map((row: any) => ({
+        label: row.dimensionValues?.[0]?.value,
+        value: parseInt(row.metricValues?.[0]?.value || "0", 10),
+      }));
+      setChartData(parsed);
+    }
+  } catch (error) {
+    console.error("❌ Erreur:", error);
+    toast.error("Erreur lors de l'envoi ou du traitement de la requête");
+    setResponseMessage("Erreur lors du traitement de la réponse.");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen w-full bg-[#f4f6f9]">
