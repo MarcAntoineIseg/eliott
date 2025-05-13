@@ -183,7 +183,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         {chartData.length > 0 && (
           <div className="mt-10">
             <h2 className="text-2xl font-semibold text-gray-700 mb-4">Données visualisées</h2>
-            <DynamicChart chartType={chartType} data={chartData} />
+            <DynamicChart type={chartType} data={chartData} />
           </div>
         )}
       </main>

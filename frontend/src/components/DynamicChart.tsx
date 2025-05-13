@@ -14,10 +14,10 @@ type ChartProps = {
   data: { label: string; value: number }[];
 };
 
-export default function DynamicChart({ chartType, data }: ChartProps) {
+export default function DynamicChart({ type, data }: ChartProps) {
   if (!data?.length) return null;
 
-  switch (chartType) {
+  switch (type) {
     case "line":
       return (
         <ResponsiveContainer width="100%" height={300}>
