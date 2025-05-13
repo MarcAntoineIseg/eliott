@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, getAuth } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
@@ -21,11 +21,14 @@ const Integration = () => {
   const [firebaseLoading, setFirebaseLoading] = useState(true);
   const [accounts, setAccounts] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState<string | null>(
-  localStorage.getItem("ga_account_id")
-);
+    localStorage.getItem("ga_account_id")
+  );
   const [properties, setProperties] = useState([]);
   const [loadingProperties, setLoadingProperties] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [googleSheetsFiles, setGoogleSheetsFiles] = useState([]);
+  const [googleSheetsLoading, setGoogleSheetsLoading] = useState(false);
+  const [googleSheetsError, setGoogleSheetsError] = useState<string | null>(null);
 
   const selectedAccountObject = useMemo(() => {
     return accounts.find((acc: any) => acc.name === selectedAccount);
@@ -58,44 +61,78 @@ const Integration = () => {
   }, [firebaseUser]);
 
   useEffect(() => {
-  const fetchPropertiesIfAccountExists = async () => {
-    if (!firebaseUser || !selectedAccount) return;
+    const fetchPropertiesIfAccountExists = async () => {
+      if (!firebaseUser || !selectedAccount) return;
+
+      try {
+        setLoadingProperties(true);
+        const idToken = await firebaseUser.getIdToken();
+        const props = await getGoogleAnalyticsAccountProperties(selectedAccount, idToken);
+        setProperties(props);
+      } catch (err) {
+        toast.error("Erreur chargement des propriétés GA4");
+        console.error("❌ GA4 fetch error:", err);
+      } finally {
+        setLoadingProperties(false);
+      }
+    };
+
+    fetchPropertiesIfAccountExists();
+  }, [firebaseUser, selectedAccount]);
+
+  useEffect(() => {
+    const loadGoogleSheetsFiles = async () => {
+      if (!firebaseUser) return;
+      try {
+        setGoogleSheetsLoading(true);
+        const idToken = await firebaseUser.getIdToken();
+
+        const tokensRes = await fetch("https://api.askeliott.com/auth/user/tokens", {
+          headers: { Authorization: `Bearer ${idToken}` },
+        });
+        const userData = await tokensRes.json();
+        const accessToken = userData?.sheets_access_token;
+        if (!accessToken) return;
+
+        const driveRes = await fetch(
+          "https://www.googleapis.com/drive/v3/files?q=mimeType='application/vnd.google-apps.spreadsheet'&fields=files(id,name,modifiedTime,webViewLink)",
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
+
+        const driveData = await driveRes.json();
+        const files = driveData.files || [];
+        setGoogleSheetsFiles(files);
+      } catch (err) {
+        console.error("❌ Erreur chargement fichiers Google Sheets :", err);
+        setGoogleSheetsError("Erreur chargement fichiers Google Sheets");
+      } finally {
+        setGoogleSheetsLoading(false);
+      }
+    };
+
+    loadGoogleSheetsFiles();
+  }, [firebaseUser]);
+
+  const handleAccountChange = async (accountId: string) => {
+    setSelectedAccount(accountId);
+    localStorage.setItem("ga_account_id", accountId);
+    setProperties([]);
+    if (!firebaseUser) return;
 
     try {
       setLoadingProperties(true);
       const idToken = await firebaseUser.getIdToken();
-      const props = await getGoogleAnalyticsAccountProperties(selectedAccount, idToken);
-      setProperties(props);
+      const properties = await getGoogleAnalyticsAccountProperties(accountId, idToken);
+      setProperties(properties);
     } catch (err) {
+      console.error("Erreur chargement propriétés GA4 :", err);
       toast.error("Erreur chargement des propriétés GA4");
-      console.error("❌ GA4 fetch error:", err);
     } finally {
       setLoadingProperties(false);
     }
   };
-
-  fetchPropertiesIfAccountExists();
-}, [firebaseUser, selectedAccount]);
-
-  const handleAccountChange = async (accountId: string) => {
-  setSelectedAccount(accountId);
-  localStorage.setItem("ga_account_id", accountId); // ✅ Stockage local
-
-  setProperties([]);
-  if (!firebaseUser) return;
-
-  try {
-    setLoadingProperties(true);
-    const idToken = await firebaseUser.getIdToken();
-    const properties = await getGoogleAnalyticsAccountProperties(accountId, idToken);
-    setProperties(properties);
-  } catch (err) {
-    console.error("Erreur chargement propriétés GA4 :", err);
-    toast.error("Erreur chargement des propriétés GA4");
-  } finally {
-    setLoadingProperties(false);
-  }
-};
 
   if (!firebaseUser && !firebaseLoading) {
     return (
@@ -152,22 +189,32 @@ const Integration = () => {
                       isLoading={loadingProperties}
                       selectedAccount={selectedAccount}
                       onSelectProperty={(property) => {
-                      console.log("📌 Propriété sélectionnée :", property);
-                      localStorage.setItem("ga_property_id", property.name); // ex: properties/12345678
-                  }}
-                 />
-
+                        console.log("📌 Propriété sélectionnée :", property);
+                        localStorage.setItem("ga_property_id", property.name);
+                      }}
+                    />
                   )}
                 </>
               )}
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
+          <Card className="col-span-1">
+            <CardContent className="p-6 space-y-4">
               <CardTitle>Google Sheets</CardTitle>
               <CardDescription>Connectez vos fichiers Google Sheets</CardDescription>
               <GoogleSheetsAuthButton />
+              <SheetsFileList
+                files={googleSheetsFiles}
+                isLoading={googleSheetsLoading}
+                error={googleSheetsError}
+                onSelectFile={(file) => {
+                  console.log("✅ Fichier sélectionné côté front :", file);
+                }}
+                onRemoveFile={(fileId) => {
+                  console.log("🗑️ Fichier déconnecté côté front :", fileId);
+                }}
+              />
             </CardContent>
           </Card>
 
@@ -185,26 +232,6 @@ const Integration = () => {
               <CardDescription>Connectez votre compte Meta Ads</CardDescription>
               <Button onClick={() => window.location.href = "https://api.askeliott.com/auth/meta"} className="w-full bg-[#1877F2] text-white">
                 Connecter Meta Ads
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <CardTitle>HubSpot</CardTitle>
-              <CardDescription>Connectez votre compte HubSpot</CardDescription>
-              <Button onClick={() => window.location.href = "https://api.askeliott.com/auth/hubspot"} className="w-full bg-[#FF7A59] text-white">
-                Connecter HubSpot
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <CardTitle>Shopify</CardTitle>
-              <CardDescription>Connectez votre boutique Shopify</CardDescription>
-              <Button onClick={() => window.location.href = "https://api.askeliott.com/auth/shopify"} className="w-full bg-[#95BF47] text-white">
-                Connecter Shopify
               </Button>
             </CardContent>
           </Card>
