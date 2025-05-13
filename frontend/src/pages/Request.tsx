@@ -131,7 +131,8 @@ try {
   setResponseMessage("Erreur lors du traitement de la réponse.");
 } finally {
   setIsLoading(false);
-}
+  }  
+};
 
   return (
     <div className="min-h-screen w-full bg-[#f4f6f9]">
