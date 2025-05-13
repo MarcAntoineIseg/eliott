@@ -44,51 +44,44 @@ const Request = () => {
   }, [navigate]);
 
   useEffect(() => {
-    const loadContext = async () => {
-      const gaTokens = await fetchGoogleAnalyticsTokensFromFirestore();
-      const gaAccountId = localStorage.getItem("ga_account_id") || "";
-      const gaPropertyId = localStorage.getItem("ga_property_id") || "";
+  const loadContext = async () => {
+    const gaTokens = await fetchGoogleAnalyticsTokensFromFirestore();
+    const gaAccountId = localStorage.getItem("ga_account_id") || "";
+    const gaPropertyId = localStorage.getItem("ga_property_id") || "";
 
-      const sheetsAccessToken = localStorage.getItem("googleSheetsAccessToken") || "";
-      const sheetsRefreshToken = localStorage.getItem("sheets_refresh_token") || "";
-      const sheetsFiles = getConnectedSheetsFiles();
-      const sheetsFileIds = getConnectedSheetsFileIds();
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) return;
 
-      const adsAccessToken = localStorage.getItem("googleAdsAccessToken") || "";
-      const adsRefreshToken = localStorage.getItem("ads_refresh_token") || "";
-      const adsCustomerId = localStorage.getItem("googleAdsCustomerId") || "";
+    const idToken = await user.getIdToken();
+    const tokenRes = await fetch("https://api.askeliott.com/auth/user/tokens", {
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+    const userData = await tokenRes.json();
 
-      setUserContext({
-        googleAnalytics:
-          gaTokens?.accessToken && gaAccountId && gaPropertyId
-            ? {
-                accessToken: gaTokens.accessToken,
-                refreshToken: gaTokens.refreshToken,
-                accountId: gaAccountId,
-                propertyId: gaPropertyId,
-              }
-            : null,
-        googleSheets:
-          sheetsAccessToken && sheetsFiles.length > 0
-            ? {
-                accessToken: sheetsAccessToken,
-                refreshToken: sheetsRefreshToken,
-                files: sheetsFiles,
-                fileIds: sheetsFileIds,
-              }
-            : null,
-        googleAds:
-          adsAccessToken && adsCustomerId
-            ? {
-                accessToken: adsAccessToken,
-                refreshToken: adsRefreshToken,
-                customerId: adsCustomerId,
-              }
-            : null,
-      });
-    };
-    loadContext();
-  }, []);
+    setUserContext({
+      googleAnalytics:
+        gaTokens?.accessToken && gaAccountId && gaPropertyId
+          ? {
+              accessToken: gaTokens.accessToken,
+              refreshToken: gaTokens.refreshToken,
+              accountId: gaAccountId,
+              propertyId: gaPropertyId,
+            }
+          : null,
+      googleSheets:
+        userData?.sheets_access_token && userData?.sheets_refresh_token && userData?.sheets_connected_file?.id
+          ? {
+              accessToken: userData.sheets_access_token,
+              refreshToken: userData.sheets_refresh_token,
+              fileId: userData.sheets_connected_file.id,
+            }
+          : null,
+      googleAds: null, // tu peux compléter avec ton système Ads
+    });
+  };
+  loadContext();
+}, []);
 
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
