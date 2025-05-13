@@ -155,6 +155,30 @@ app.post('/auth/google/start', async (req, res) => {
   }
 });
 
+app.post("/auth/sheets/connect-file", async (req, res) => {
+  try {
+    const idToken = req.headers.authorization?.split("Bearer ")[1];
+    if (!idToken) return res.status(401).json({ error: "ID Token manquant" });
+
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const uid = decodedToken.uid;
+
+    const { file } = req.body;
+    if (!file?.id || !file?.name) {
+      return res.status(400).json({ error: "Fichier invalide" });
+    }
+
+    await db.collection("users").doc(uid).set({
+      sheets_connected_file: file
+    }, { merge: true });
+
+    console.log("✅ Fichier Google Sheets enregistré pour UID :", uid);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("❌ Erreur enregistrement fichier Sheets :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
 
 // -- Google Sheets ---
 app.get('/auth/google-sheets', (req, res) => {

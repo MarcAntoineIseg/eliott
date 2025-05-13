@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Link, CheckCircle, X } from "lucide-react";
+import { Link } from "lucide-react";
 import {
   Alert,
   AlertDescription,
@@ -16,15 +16,10 @@ import {
 import { AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import {
-  GoogleSheetsFile,
-  saveConnectedSheetsFile,
-  removeConnectedSheetsFile,
-  getConnectedSheetsFiles,
-  getConnectedSheetsFileIds,
-} from "@/services/googleSheets";
+import { GoogleSheetsFile } from "@/services/googleSheets";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { getAuth } from "firebase/auth";
 
 interface SheetsFileListProps {
   files: GoogleSheetsFile[];
@@ -46,11 +41,31 @@ const SheetsFileList = ({
   const [showConnectButton, setShowConnectButton] = useState<boolean>(false);
   const [search, setSearch] = useState<string>("");
 
+  // Lecture du fichier connecté depuis Firestore via /auth/user/tokens
   useEffect(() => {
-    const savedFiles = getConnectedSheetsFiles();
-    if (savedFiles) {
-      setConnectedFiles(savedFiles);
-    }
+    const fetchConnectedSheetsFile = async () => {
+      try {
+        const user = getAuth().currentUser;
+        if (!user) return;
+        const idToken = await user.getIdToken();
+
+        const res = await fetch("https://api.askeliott.com/auth/user/tokens", {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+        });
+
+        const data = await res.json();
+        const file = data?.sheets_connected_file;
+        if (file) {
+          setConnectedFiles([file]);
+        }
+      } catch (err) {
+        console.error("Erreur récupération fichier connecté :", err);
+      }
+    };
+
+    fetchConnectedSheetsFile();
   }, []);
 
   const handleFileSelect = (file: GoogleSheetsFile) => {
@@ -62,23 +77,42 @@ const SheetsFileList = ({
     return connectedFiles.some((f) => f.id === fileId);
   };
 
-  const handleConnectFile = () => {
+  const handleConnectFile = async () => {
     const fileToConnect = files.find((f) => f.id === selectedFileId);
     if (!fileToConnect) {
       toast.error("Aucun fichier sélectionné");
       return;
     }
-    const updatedFiles = saveConnectedSheetsFile(fileToConnect);
-    setConnectedFiles(updatedFiles);
-    setShowConnectButton(false);
-    onSelectFile(fileToConnect);
-    toast.success(`Fichier "${fileToConnect.name}" connecté avec succès`);
+
+    try {
+      const user = getAuth().currentUser;
+      if (!user) throw new Error("Utilisateur non connecté");
+      const idToken = await user.getIdToken();
+
+      const res = await fetch("https://api.askeliott.com/auth/sheets/connect-file", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ file: fileToConnect }),
+      });
+
+      if (!res.ok) throw new Error("Erreur côté serveur");
+
+      setConnectedFiles([fileToConnect]);
+      setShowConnectButton(false);
+      onSelectFile(fileToConnect);
+      toast.success(`Fichier "${fileToConnect.name}" connecté avec succès`);
+    } catch (err) {
+      console.error("❌", err);
+      toast.error("Impossible de connecter le fichier");
+    }
   };
 
   const handleRemoveFile = (e: React.MouseEvent, fileId: string) => {
     e.stopPropagation();
-    const updatedFiles = removeConnectedSheetsFile(fileId);
-    setConnectedFiles(updatedFiles);
+    setConnectedFiles((prev) => prev.filter((f) => f.id !== fileId));
     onRemoveFile(fileId);
     toast.success("Fichier déconnecté avec succès");
   };
@@ -168,7 +202,8 @@ const SheetsFileList = ({
               <div className="flex flex-col">
                 <span className="font-medium text-base">{file.name}</span>
                 <span className="text-xs text-gray-500">
-                  ID: {file.id.substring(0, 20)}... • {file.modifiedTime
+                  ID: {file.id.substring(0, 20)}... •{" "}
+                  {file.modifiedTime
                     ? new Date(file.modifiedTime).toLocaleDateString()
                     : "Date inconnue"}
                 </span>
