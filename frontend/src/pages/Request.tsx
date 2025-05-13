@@ -151,10 +151,10 @@ const handleSubmit = async (e: React.FormEvent) => {
               Google Analytics connecté
             </div>
           )}
-          {userContext.googleSheets && (
+          {userContext.googleSheets?.files?.length > 0 && (
             <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm ml-2">
               <span className="h-2 w-2 rounded-full bg-green-500"></span>
-              {userContext.googleSheets.files.length} fichier(s) Google Sheets connecté(s)
+          {userContext.googleSheets.files.length} fichier(s) Google Sheets connecté(s)
             </div>
           )}
           {userContext.googleAds && (
