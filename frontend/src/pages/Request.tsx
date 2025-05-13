@@ -98,38 +98,40 @@ const Request = () => {
   }
 
   setIsLoading(true);
-  try {
-    const response = await sendToWebhook(query, userContext);
-    toast.success("Requête envoyée à Eliott ✅");
-    setQuery("");
+try {
+  const response = await sendToWebhook(query, userContext);
+  toast.success("Requête envoyée à Eliott ✅");
+  setQuery("");
 
-    let parsedResponse: any = null;
+  let parsedResponse: any;
 
-    const data = typeof response === "string" ? JSON.parse(response) : response;
-    parsedResponse = Array.isArray(data) ? data[0] : data;
+  // ✅ Vérifie si la réponse est un string à parser
+  const data = typeof response === "string" ? JSON.parse(response) : response;
+  parsedResponse = Array.isArray(data) ? data[0] : data;
 
-    setResponseMessage(parsedResponse.message || null);
+  setResponseMessage(parsedResponse.message || null);
 
-    if (parsedResponse?.chartData?.length && parsedResponse?.chartType) {
-      setChartData(parsedResponse.chartData);
-      setChartType(parsedResponse.chartType as "line" | "bar" | "pie");
-    }
-
-    if (!parsedResponse?.chartData && parsedResponse?.rows) {
-      const parsed = (parsedResponse.rows || []).map((row: any) => ({
-        label: row.dimensionValues?.[0]?.value,
-        value: parseInt(row.metricValues?.[0]?.value || "0", 10),
-      }));
-      setChartData(parsed);
-    }
-  } catch (error) {
-    console.error("❌ Erreur:", error);
-    toast.error("Erreur lors de l'envoi ou du traitement de la requête");
-    setResponseMessage("Erreur lors du traitement de la réponse.");
-  } finally {
-    setIsLoading(false);
+  // ✅ Graphique si chartData + chartType
+  if (parsedResponse?.chartData?.length && parsedResponse?.chartType) {
+    setChartData(parsedResponse.chartData);
+    setChartType(parsedResponse.chartType as "line" | "bar" | "pie");
   }
-};
+
+  // ✅ Graphique GA brut (fallback)
+  if (!parsedResponse?.chartData && parsedResponse?.rows) {
+    const parsed = (parsedResponse.rows || []).map((row: any) => ({
+      label: row.dimensionValues?.[0]?.value,
+      value: parseInt(row.metricValues?.[0]?.value || "0", 10),
+    }));
+    setChartData(parsed);
+  }
+} catch (error) {
+  console.error("❌ Erreur:", error);
+  toast.error("Erreur lors de l'envoi ou du traitement de la requête");
+  setResponseMessage("Erreur lors du traitement de la réponse.");
+} finally {
+  setIsLoading(false);
+}
 
   return (
     <div className="min-h-screen w-full bg-[#f4f6f9]">
