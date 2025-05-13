@@ -105,31 +105,35 @@ const Request = () => {
 
       let parsedResponse: any = null;
 
-      if (typeof response === "string" && response.trim().length > 0) {
-        try {
-          parsedResponse = JSON.parse(response);
-          setResponseMessage(parsedResponse.message || response);
-        } catch {
-          console.warn("❌ Erreur parsing JSON : ", response);
-          setResponseMessage(response);
-        }
-      } else if (typeof response === "object") {
-        parsedResponse = response;
-        setResponseMessage(response.message || null);
-      }
+if (typeof response === "string" && response.trim().length > 0) {
+  try {
+    parsedResponse = JSON.parse(response);
+    setResponseMessage(parsedResponse.message || response);
+  } catch {
+    console.warn("❌ Erreur parsing JSON : ", response);
+    setResponseMessage(response);
+  }
+} else if (typeof response === "object") {
+  parsedResponse = response;
+  setResponseMessage(response.message || null);
+}
 
-      if (parsedResponse?.chartData && parsedResponse?.chartType) {
-        setChartData(parsedResponse.chartData);
-        setChartType(parsedResponse.chartType);
-      }
+console.log("🎯 chartType reçu :", parsedResponse?.chartType);
+console.log("📊 chartData reçu :", parsedResponse?.chartData);
 
-      if (!parsedResponse?.chartData && response?.rows) {
-        const parsed = (response.rows || []).map((row: any) => ({
-          label: row.dimensionValues?.[0]?.value,
-          value: parseInt(row.metricValues?.[0]?.value || "0", 10),
-        }));
-        setChartData(parsed);
-      }
+if (parsedResponse?.chartData && parsedResponse?.chartType) {
+  setChartData(parsedResponse.chartData);
+  setChartType(parsedResponse.chartType as "line" | "bar" | "pie");
+}
+
+if (!parsedResponse?.chartData && response?.rows) {
+  const parsed = (response.rows || []).map((row: any) => ({
+    label: row.dimensionValues?.[0]?.value,
+    value: parseInt(row.metricValues?.[0]?.value || "0", 10),
+  }));
+  setChartData(parsed);
+}
+
     } catch (error) {
       console.error("❌ Erreur:", error);
       toast.error("Erreur lors de l'envoi de la requête");
