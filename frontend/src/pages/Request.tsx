@@ -90,7 +90,7 @@ const Request = () => {
     loadContext();
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   if (!query.trim()) return toast.error("Veuillez saisir une question");
   if (!userContext.googleSheets && !userContext.googleAnalytics) {
@@ -98,41 +98,37 @@ const Request = () => {
   }
 
   setIsLoading(true);
-try {
-  const response = await sendToWebhook(query, userContext);
-  toast.success("Requête envoyée à Eliott ✅");
-  setQuery("");
+  try {
+    const response = await sendToWebhook(query, userContext);
+    toast.success("Requête envoyée à Eliott ✅");
+    setQuery("");
 
-  let parsedResponse: any;
+    // ✅ Traitement correct de la réponse : tableau ou objet
+    const parsedResponse = Array.isArray(response) ? response[0] : response;
 
-  // ✅ Vérifie si la réponse est un string à parser
-  const data = typeof response === "string" ? JSON.parse(response) : response;
-  parsedResponse = Array.isArray(data) ? data[0] : data;
+    setResponseMessage(parsedResponse.message || null);
 
-  setResponseMessage(parsedResponse.message || null);
+    if (parsedResponse?.chartData?.length && parsedResponse?.chartType) {
+      setChartData(parsedResponse.chartData);
+      setChartType(parsedResponse.chartType as "line" | "bar" | "pie");
+    }
 
-  // ✅ Graphique si chartData + chartType
-  if (parsedResponse?.chartData?.length && parsedResponse?.chartType) {
-    setChartData(parsedResponse.chartData);
-    setChartType(parsedResponse.chartType as "line" | "bar" | "pie");
+    if (!parsedResponse?.chartData && parsedResponse?.rows) {
+      const parsed = (parsedResponse.rows || []).map((row: any) => ({
+        label: row.dimensionValues?.[0]?.value,
+        value: parseInt(row.metricValues?.[0]?.value || "0", 10),
+      }));
+      setChartData(parsed);
+    }
+  } catch (error) {
+    console.error("❌ Erreur:", error);
+    toast.error("Erreur lors de l'envoi ou du traitement de la requête");
+    setResponseMessage("Erreur lors du traitement de la réponse.");
+  } finally {
+    setIsLoading(false);
   }
-
-  // ✅ Graphique GA brut (fallback)
-  if (!parsedResponse?.chartData && parsedResponse?.rows) {
-    const parsed = (parsedResponse.rows || []).map((row: any) => ({
-      label: row.dimensionValues?.[0]?.value,
-      value: parseInt(row.metricValues?.[0]?.value || "0", 10),
-    }));
-    setChartData(parsed);
-  }
-} catch (error) {
-  console.error("❌ Erreur:", error);
-  toast.error("Erreur lors de l'envoi ou du traitement de la requête");
-  setResponseMessage("Erreur lors du traitement de la réponse.");
-} finally {
-  setIsLoading(false);
-  }  
 };
+
 
   return (
     <div className="min-h-screen w-full bg-[#f4f6f9]">
