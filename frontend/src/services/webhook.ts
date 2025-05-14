@@ -16,9 +16,9 @@ interface GoogleSheetsFile {
 interface GoogleSheetsContext {
   accessToken: string;
   refreshToken: string;
-  fileId?: string;      // ✅ optionnel, si plusieurs fichiers
-  fileName?: string;    // ✅ optionnel aussi
-  files?: GoogleSheetsFile[]; // ✅ tu peux aussi garder le tableau pour les cas multiples
+  fileId?: string;
+  fileName?: string;
+  files?: GoogleSheetsFile[];
   fileIds?: string[];
 }
 
@@ -45,12 +45,34 @@ export const sendToWebhook = async (
 ): Promise<string> => {
   const payload: WebhookPayload = {
     query,
-    googleAnalytics: context.googleAnalytics,
-    googleSheets: context.googleSheets,
-    googleAds: context.googleAds,
+    googleAnalytics: context.googleAnalytics
+      ? {
+          accessToken: context.googleAnalytics.accessToken,
+          refreshToken: context.googleAnalytics.refreshToken,
+          accountId: context.googleAnalytics.accountId,
+          propertyId: context.googleAnalytics.propertyId,
+        }
+      : null,
+    googleSheets: context.googleSheets
+      ? {
+          accessToken: context.googleSheets.accessToken,
+          refreshToken: context.googleSheets.refreshToken,
+          fileId: context.googleSheets.fileId,
+          fileName: context.googleSheets.fileName,
+          files: context.googleSheets.files || [],
+          fileIds: (context.googleSheets.files || []).map((f) => f.id),
+        }
+      : null,
+    googleAds: context.googleAds
+      ? {
+          accessToken: context.googleAds.accessToken,
+          refreshToken: context.googleAds.refreshToken,
+          customerId: context.googleAds.customerId,
+        }
+      : null,
   };
 
-  console.log("🚀 Envoi webhook avec payload :", payload);
+  console.log("\u{1F680} Envoi webhook avec payload :", payload);
 
   const response = await fetch("https://n8n.askeliott.com/webhook-test/ask", {
     method: "POST",
@@ -60,12 +82,12 @@ export const sendToWebhook = async (
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("❌ Erreur webhook :", errorText);
+    console.error("\u274C Erreur webhook :", errorText);
     throw new Error("Erreur lors de l'envoi au webhook");
   }
 
   const data = await response.json();
-  console.log("✅ Réponse complète du webhook :", data);
+  console.log("\u2705 Réponse complète du webhook :", data);
 
   const rawMessage =
     data?.message ??
@@ -77,6 +99,6 @@ export const sendToWebhook = async (
     throw new Error("Réponse du webhook invalide : aucun message trouvé.");
   }
 
-  console.log("💬 Message final :", rawMessage);
+  console.log("\u{1F4AC} Message final :", rawMessage);
   return rawMessage;
 };

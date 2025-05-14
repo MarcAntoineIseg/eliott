@@ -9,11 +9,6 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { sendToWebhook } from "@/services/webhook";
-import {
-  GoogleSheetsFile,
-  getConnectedSheetsFiles,
-  getConnectedSheetsFileIds,
-} from "@/services/googleSheets";
 
 const Request = () => {
   const [query, setQuery] = useState("");
@@ -34,7 +29,7 @@ const Request = () => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
-        console.warn("\u26A0\uFE0F Aucun utilisateur Firebase d\u00e9tect\u00e9. Redirection...");
+        console.warn("\u26a0\ufe0f Aucun utilisateur Firebase d\u00e9tect\u00e9. Redirection...");
         navigate("/create-account");
       } else {
         console.log("\u2705 Session Firebase d\u00e9tect\u00e9e :", user.email);
@@ -99,14 +94,13 @@ const Request = () => {
     try {
       const sheetsFiles = JSON.parse(localStorage.getItem("sheetsFiles") || "[]");
 
-      const response = await sendToWebhook({
-        query,
+      const response = await sendToWebhook(query, {
         googleSheets: {
           ...userContext.googleSheets,
-          files: sheetsFiles,
+          files: sheetsFiles
         },
         googleAnalytics: userContext.googleAnalytics,
-        googleAds: userContext.googleAds,
+        googleAds: userContext.googleAds
       });
 
       toast.success("Requ\u00eate envoy\u00e9e \u00e0 Eliott \u2705");
@@ -127,8 +121,9 @@ const Request = () => {
         }));
         setChartData(parsed);
       }
+
     } catch (error) {
-      console.error("\u274C Erreur:", error);
+      console.error("\u274c Erreur:", error);
       toast.error("Erreur lors de l'envoi ou du traitement de la requ\u00eate");
       setResponseMessage("Erreur lors du traitement de la r\u00e9ponse.");
     } finally {
@@ -139,7 +134,7 @@ const Request = () => {
   return (
     <div className="min-h-screen w-full bg-[#f4f6f9]">
       <main className="container py-8">
-        <h1 className="text-4xl font-extrabold mb-8 text-gray-800">Hey Eliott! \ud83d\udc4b</h1>
+        <h1 className="text-4xl font-extrabold mb-8 text-gray-800">Hey Eliott! 👋</h1>
 
         <form onSubmit={handleSubmit} className="max-w-3xl">
           <div className="flex gap-3">

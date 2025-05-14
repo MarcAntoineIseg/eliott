@@ -467,6 +467,81 @@ app.get("/api/google-sheets/files", async (req, res) => {
   }
 });
 
+// === 🔌 DISCONNECT ROUTES ===
+
+// 🔹 Google Analytics → Supprimer GA tokens et infos
+app.post("/auth/google/analytics/disconnect", async (req, res) => {
+  try {
+    const idToken = req.headers.authorization?.split("Bearer ")[1];
+    if (!idToken) return res.status(401).json({ error: "ID Token manquant" });
+
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    const uid = decoded.uid;
+
+    await db.collection("users").doc(uid).update({
+      ga_access_token: admin.firestore.FieldValue.delete(),
+      ga_refresh_token: admin.firestore.FieldValue.delete(),
+      ga_token_expires_at: admin.firestore.FieldValue.delete(),
+    });
+
+    console.log("✅ Tokens Google Analytics supprimés pour UID:", uid);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("❌ Erreur suppression GA tokens:", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// 🔹 Google Ads → Supprimer tokens Ads
+app.post("/auth/google-ads/disconnect", async (req, res) => {
+  try {
+    const idToken = req.headers.authorization?.split("Bearer ")[1];
+    if (!idToken) return res.status(401).json({ error: "ID Token manquant" });
+
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    const uid = decoded.uid;
+
+    await db.collection("users").doc(uid).update({
+      ads_access_token: admin.firestore.FieldValue.delete(),
+      ads_refresh_token: admin.firestore.FieldValue.delete(),
+      ads_token_expires_at: admin.firestore.FieldValue.delete(),
+    });
+
+    console.log("✅ Tokens Google Ads supprimés pour UID:", uid);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("❌ Erreur suppression Ads tokens:", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// 🔹 Google Sheets → Supprimer fichier spécifique du tableau sheets_connected_files
+app.post("/auth/sheets/disconnect-file", async (req, res) => {
+  try {
+    const idToken = req.headers.authorization?.split("Bearer ")[1];
+    if (!idToken) return res.status(401).json({ error: "ID Token manquant" });
+
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    const uid = decoded.uid;
+    const { fileId } = req.body;
+    if (!fileId) return res.status(400).json({ error: "fileId requis" });
+
+    const userRef = db.collection("users").doc(uid);
+    const doc = await userRef.get();
+    const currentFiles = doc.data()?.sheets_connected_files || [];
+    const updatedFiles = currentFiles.filter(f => f.id !== fileId);
+
+    await userRef.update({ sheets_connected_files: updatedFiles });
+
+    console.log(`✅ Fichier Sheets retiré pour UID: ${uid}, fileId: ${fileId}`);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("❌ Erreur suppression fichier Sheets:", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+
 // === START SERVER ===
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
