@@ -53,7 +53,7 @@ const Request = () => {
         headers: { Authorization: `Bearer ${idToken}` },
       });
       const userData = await tokenRes.json();
-      const sheetFileName = localStorage.getItem("sheetFileName") || "";
+      const sheetsFiles = userData?.sheets_connected_files || [];
 
       setUserContext({
         googleAnalytics:
@@ -68,12 +68,12 @@ const Request = () => {
         googleSheets:
           userData?.sheets_access_token &&
           userData?.sheets_refresh_token &&
-          userData?.sheets_connected_file?.id
+          sheetsFiles.length
             ? {
                 accessToken: userData.sheets_access_token,
                 refreshToken: userData.sheets_refresh_token,
-                fileId: userData.sheets_connected_file.id,
-                fileName: sheetFileName,
+                files: sheetsFiles,
+                fileIds: sheetsFiles.map((f: any) => f.id),
               }
             : null,
         googleAds: null,
@@ -92,15 +92,10 @@ const Request = () => {
 
     setIsLoading(true);
     try {
-      const sheetsFiles = JSON.parse(localStorage.getItem("sheetsFiles") || "[]");
-
       const response = await sendToWebhook(query, {
-        googleSheets: {
-          ...userContext.googleSheets,
-          files: sheetsFiles
-        },
+        googleSheets: userContext.googleSheets,
         googleAnalytics: userContext.googleAnalytics,
-        googleAds: userContext.googleAds
+        googleAds: userContext.googleAds,
       });
 
       toast.success("Requ\u00eate envoy\u00e9e \u00e0 Eliott \u2705");
@@ -121,7 +116,6 @@ const Request = () => {
         }));
         setChartData(parsed);
       }
-
     } catch (error) {
       console.error("\u274c Erreur:", error);
       toast.error("Erreur lors de l'envoi ou du traitement de la requ\u00eate");
@@ -162,7 +156,7 @@ const Request = () => {
           {userContext.googleSheets && (
             <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm ml-2">
               <span className="h-2 w-2 rounded-full bg-green-500"></span>
-              Google Sheet connect\u00e9 : {userContext.googleSheets.fileName || "Nom inconnu"}
+              Google Sheet connect\u00e9
             </div>
           )}
           {userContext.googleAds && (
