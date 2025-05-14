@@ -60,6 +60,32 @@ const adsClientSecret   = process.env.GOOGLE_ADS_CLIENT_SECRET;
 const redirectUriAds    = 'https://api.askeliott.com/auth/google-ads/callback';
 const oauth2ClientAds   = new OAuth2Client(adsClientId, adsClientSecret, redirectUriAds);
 
+// === 🔁 Utility — Rafraîchissement automatique de token ===
+async function getValidAccessToken(uid, type) {
+  const doc = await db.collection('users').doc(uid).get();
+  if (!doc.exists) throw new Error("Utilisateur introuvable dans Firestore");
+  const data = doc.data();
+
+  const access = data[`${type}_access_token`];
+  const refresh = data[`${type}_refresh_token`];
+  const expiresAt = data[`${type}_token_expires_at`];
+
+  if (!refresh) throw new Error(`Pas de refresh_token pour ${type}`);
+  const now = Date.now();
+  if (access && expiresAt && now < expiresAt) return access;
+
+  const client = new google.auth.OAuth2(client_id, client_secret);
+  client.setCredentials({ refresh_token: refresh });
+  const { credentials } = await client.refreshAccessToken();
+
+  await db.collection("users").doc(uid).update({
+    [`${type}_access_token`]: credentials.access_token,
+    [`${type}_token_expires_at`]: credentials.expiry_date || now + 3600 * 1000
+  });
+
+  return credentials.access_token;
+}
+
 // === UTILITIES ===
 const checkTokenValidity = async token => {
   try {
