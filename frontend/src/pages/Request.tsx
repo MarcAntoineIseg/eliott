@@ -12,7 +12,7 @@ import { sendToWebhook } from "@/services/webhook";
 import {
   GoogleSheetsFile,
   getConnectedSheetsFiles,
-  getConnectedSheetsFileIds
+  getConnectedSheetsFileIds,
 } from "@/services/googleSheets";
 
 const Request = () => {
@@ -34,114 +34,112 @@ const Request = () => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
-        console.warn("⚠️ Aucun utilisateur Firebase détecté. Redirection...");
+        console.warn("\u26A0\uFE0F Aucun utilisateur Firebase d\u00e9tect\u00e9. Redirection...");
         navigate("/create-account");
       } else {
-        console.log("✅ Session Firebase détectée :", user.email);
+        console.log("\u2705 Session Firebase d\u00e9tect\u00e9e :", user.email);
       }
     });
     return () => unsubscribe();
   }, [navigate]);
 
   useEffect(() => {
-  const loadContext = async () => {
-    const gaTokens = await fetchGoogleAnalyticsTokensFromFirestore();
-    const gaAccountId = localStorage.getItem("ga_account_id") || "";
-    const gaPropertyId = localStorage.getItem("ga_property_id") || "";
+    const loadContext = async () => {
+      const gaTokens = await fetchGoogleAnalyticsTokensFromFirestore();
+      const gaAccountId = localStorage.getItem("ga_account_id") || "";
+      const gaPropertyId = localStorage.getItem("ga_property_id") || "";
 
-    const auth = getAuth();
-    const user = auth.currentUser;
-    if (!user) return;
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) return;
 
-    const idToken = await user.getIdToken();
-    const tokenRes = await fetch("https://api.askeliott.com/auth/user/tokens", {
-      headers: { Authorization: `Bearer ${idToken}` },
-    });
-    const userData = await tokenRes.json();
-    const sheetFileName = localStorage.getItem("sheetFileName") || "";
+      const idToken = await user.getIdToken();
+      const tokenRes = await fetch("https://api.askeliott.com/auth/user/tokens", {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      const userData = await tokenRes.json();
+      const sheetFileName = localStorage.getItem("sheetFileName") || "";
 
-    setUserContext({
-      googleAnalytics:
-        gaTokens?.accessToken && gaAccountId && gaPropertyId
-          ? {
-              accessToken: gaTokens.accessToken,
-              refreshToken: gaTokens.refreshToken,
-              accountId: gaAccountId,
-              propertyId: gaPropertyId,
-            }
-          : null,
-      googleSheets:
-        userData?.sheets_access_token &&
-        userData?.sheets_refresh_token &&
-        userData?.sheets_connected_file?.id
-          ? {
-              accessToken: userData.sheets_access_token,
-              refreshToken: userData.sheets_refresh_token,
-              fileId: userData.sheets_connected_file.id,
-              fileName: sheetFileName,
-            }
-          : null,
-      googleAds: null,
-    });
+      setUserContext({
+        googleAnalytics:
+          gaTokens?.accessToken && gaAccountId && gaPropertyId
+            ? {
+                accessToken: gaTokens.accessToken,
+                refreshToken: gaTokens.refreshToken,
+                accountId: gaAccountId,
+                propertyId: gaPropertyId,
+              }
+            : null,
+        googleSheets:
+          userData?.sheets_access_token &&
+          userData?.sheets_refresh_token &&
+          userData?.sheets_connected_file?.id
+            ? {
+                accessToken: userData.sheets_access_token,
+                refreshToken: userData.sheets_refresh_token,
+                fileId: userData.sheets_connected_file.id,
+                fileName: sheetFileName,
+              }
+            : null,
+        googleAds: null,
+      });
+    };
+
+    loadContext();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim()) return toast.error("Veuillez saisir une question");
+    if (!userContext.googleSheets && !userContext.googleAnalytics) {
+      return toast.error("Aucune source connect\u00e9e !");
+    }
+
+    setIsLoading(true);
+    try {
+      const sheetsFiles = JSON.parse(localStorage.getItem("sheetsFiles") || "[]");
+
+      const response = await sendToWebhook({
+        query,
+        googleSheets: {
+          ...userContext.googleSheets,
+          files: sheetsFiles,
+        },
+        googleAnalytics: userContext.googleAnalytics,
+        googleAds: userContext.googleAds,
+      });
+
+      toast.success("Requ\u00eate envoy\u00e9e \u00e0 Eliott \u2705");
+      setQuery("");
+
+      const parsedResponse = Array.isArray(response) ? response[0] : response;
+      setResponseMessage(parsedResponse.message || null);
+
+      if (parsedResponse?.chartData?.length && parsedResponse?.chartType) {
+        setChartData(parsedResponse.chartData);
+        setChartType(parsedResponse.chartType as "line" | "bar" | "pie");
+      }
+
+      if (!parsedResponse?.chartData && parsedResponse?.rows) {
+        const parsed = (parsedResponse.rows || []).map((row: any) => ({
+          label: row.dimensionValues?.[0]?.value,
+          value: parseInt(row.metricValues?.[0]?.value || "0", 10),
+        }));
+        setChartData(parsed);
+      }
+    } catch (error) {
+      console.error("\u274C Erreur:", error);
+      toast.error("Erreur lors de l'envoi ou du traitement de la requ\u00eate");
+      setResponseMessage("Erreur lors du traitement de la r\u00e9ponse.");
+    } finally {
+      setIsLoading(false);
+    }
   };
-
-  loadContext(); // ✅ tu l'appelles correctement ici
-}, []); // ✅ ICI tu fermes correctement le useEffect
-
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!query.trim()) return toast.error("Veuillez saisir une question");
-  if (!userContext.googleSheets && !userContext.googleAnalytics) {
-    return toast.error("Aucune source connectée !");
-  }
-
-  setIsLoading(true);
-  try {
-  const sheetsFiles = JSON.parse(localStorage.getItem("sheetsFiles") || "[]");
-
-  const response = await sendToWebhook({
-  query,
-  googleSheets: {
-    ...userContext.googleSheets,
-    files: sheetsFiles
-  },
-  googleAnalytics: userContext.googleAnalytics,
-  googleAds: userContext.googleAds
-});
-
-  toast.success("Requête envoyée à Eliott ✅");
-  setQuery("");
-
-  // ✅ Traitement correct de la réponse : tableau ou objet
-  const parsedResponse = Array.isArray(response) ? response[0] : response;
-
-  setResponseMessage(parsedResponse.message || null);
-
-  if (parsedResponse?.chartData?.length && parsedResponse?.chartType) {
-    setChartData(parsedResponse.chartData);
-    setChartType(parsedResponse.chartType as "line" | "bar" | "pie");
-  }
-
-  if (!parsedResponse?.chartData && parsedResponse?.rows) {
-    const parsed = (parsedResponse.rows || []).map((row: any) => ({
-      label: row.dimensionValues?.[0]?.value,
-      value: parseInt(row.metricValues?.[0]?.value || "0", 10),
-    }));
-    setChartData(parsed);
-  }
-
-} catch (error) {
-  console.error("❌ Erreur:", error);
-  toast.error("Erreur lors de l'envoi ou du traitement de la requête");
-  setResponseMessage("Erreur lors du traitement de la réponse.");
-} finally {
-  setIsLoading(false);
-}
 
   return (
     <div className="min-h-screen w-full bg-[#f4f6f9]">
       <main className="container py-8">
-        <h1 className="text-4xl font-extrabold mb-8 text-gray-800">Hey Eliott! 👋</h1>
+        <h1 className="text-4xl font-extrabold mb-8 text-gray-800">Hey Eliott! \ud83d\udc4b</h1>
 
         <form onSubmit={handleSubmit} className="max-w-3xl">
           <div className="flex gap-3">
@@ -163,19 +161,19 @@ const handleSubmit = async (e: React.FormEvent) => {
           {userContext.googleAnalytics && (
             <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
               <span className="h-2 w-2 rounded-full bg-blue-500"></span>
-              Google Analytics connecté
+              Google Analytics connect\u00e9
             </div>
           )}
           {userContext.googleSheets && (
-  <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm ml-2">
-    <span className="h-2 w-2 rounded-full bg-green-500"></span>
-    Google Sheet connecté : {userContext.googleSheets.fileName || "Nom inconnu"}
-  </div>
-)}
+            <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm ml-2">
+              <span className="h-2 w-2 rounded-full bg-green-500"></span>
+              Google Sheet connect\u00e9 : {userContext.googleSheets.fileName || "Nom inconnu"}
+            </div>
+          )}
           {userContext.googleAds && (
             <div className="inline-flex items-center gap-2 bg-red-50 text-red-700 px-3 py-1 rounded-full text-sm ml-2">
               <span className="h-2 w-2 rounded-full bg-red-500"></span>
-              Google Ads connecté
+              Google Ads connect\u00e9
             </div>
           )}
         </div>
@@ -190,7 +188,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
         {chartData.length > 0 && (
           <div className="mt-10">
-            <h2 className="text-2xl font-semibold text-gray-700 mb-4">Données visualisées</h2>
+            <h2 className="text-2xl font-semibold text-gray-700 mb-4">Donn\u00e9es visualis\u00e9es</h2>
             <DynamicChart type={chartType} data={chartData} />
           </div>
         )}
