@@ -31,6 +31,7 @@ const Integration = () => {
   const [googleSheetsLoading, setGoogleSheetsLoading] = useState(false);
   const [googleSheetsError, setGoogleSheetsError] = useState<string | null>(null);
   const [connectedSheetsFileName, setConnectedSheetsFileName] = useState<string | null>(null);
+  const [connectedGaPropertyId, setConnectedGaPropertyId] = useState<string | null>(null);
 
   const selectedAccountObject = useMemo(() => {
     return accounts.find((acc: any) => acc.name === selectedAccount);
@@ -103,6 +104,12 @@ const Integration = () => {
           }
         );
 
+        useEffect(() => {
+  const stored = localStorage.getItem("ga_property_id");
+  if (stored) setConnectedGaPropertyId(stored);
+}, []);
+
+
         const driveData = await driveRes.json();
         const files = driveData.files || [];
         setGoogleSheetsFiles(files);
@@ -163,10 +170,12 @@ const Integration = () => {
             <CardContent className="p-6 space-y-4">
               <CardTitle>Google Analytics</CardTitle>
               <CardDescription>
-                {selectedAccountObject
-                  ? `Compte sélectionné : ${selectedAccountObject.displayName}`
-                  : "Connectez votre compte Google Analytics"}
-              </CardDescription>
+  {connectedGaPropertyId
+    ? `Propriété connectée : ${connectedGaPropertyId}`
+    : selectedAccountObject
+      ? `Compte sélectionné : ${selectedAccountObject.displayName}`
+      : "Connectez votre compte Google Analytics"}
+</CardDescription>
 
               {!accounts.length ? (
                 <GoogleAuthButton />
