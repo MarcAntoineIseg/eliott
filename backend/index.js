@@ -346,10 +346,10 @@ app.get('/api/analytics/accounts', async (req, res) => {
       return res.status(404).json({ error: "Aucun token GA trouvé pour cet utilisateur." });
     }
 
+    const accessToken = await getValidAccessToken(uid, 'ga');
+
     const client = new google.auth.OAuth2();
-    client.setCredentials({
-      access_token: userData.ga_access_token
-    });
+    client.setCredentials({ access_token: accessToken });
 
     const adminAPI = google.analyticsadmin({ version: 'v1beta', auth: client });
     const { data } = await adminAPI.accounts.list();
@@ -385,10 +385,11 @@ app.get('/api/analytics/properties', async (req, res) => {
       return res.status(404).json({ error: "Aucun token GA trouvé pour cet utilisateur." });
     }
 
+    const accessToken = await getValidAccessToken(uid, 'ga');
+
     const client = new google.auth.OAuth2();
-    client.setCredentials({
-      access_token: userData.ga_access_token
-    });
+    client.setCredentials({ access_token: accessToken });
+
 
     const adminAPI = google.analyticsadmin({ version: 'v1beta', auth: client });
 
