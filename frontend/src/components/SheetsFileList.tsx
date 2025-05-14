@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Link } from "lucide-react";
+import { Link, Trash2 } from "lucide-react";
 import {
   Alert,
   AlertDescription,
@@ -49,9 +49,7 @@ const SheetsFileList = ({
         const idToken = await user.getIdToken();
 
         const res = await fetch("https://api.askeliott.com/auth/user/tokens", {
-          headers: {
-            Authorization: `Bearer ${idToken}`,
-          },
+          headers: { Authorization: `Bearer ${idToken}` },
         });
 
         const data = await res.json();
@@ -79,10 +77,7 @@ const SheetsFileList = ({
 
   const handleConnectFile = async () => {
     const fileToConnect = files.find((f) => f.id === selectedFileId);
-    if (!fileToConnect) {
-      toast.error("Aucun fichier sélectionné");
-      return;
-    }
+    if (!fileToConnect) return toast.error("Aucun fichier sélectionné");
 
     try {
       const user = getAuth().currentUser;
@@ -102,14 +97,13 @@ const SheetsFileList = ({
 
       setConnectedFiles((prev) => {
         const updated = [...prev, fileToConnect];
-        const unique = Array.from(new Map(updated.map(f => [f.id, f])).values());
+        const unique = Array.from(new Map(updated.map((f) => [f.id, f])).values());
         localStorage.setItem("sheetsFiles", JSON.stringify(unique));
         return unique;
       });
 
       setShowConnectButton(false);
       onSelectFile(fileToConnect);
-
       toast.success(`Fichier "${fileToConnect.name}" connecté avec succès`);
     } catch (err) {
       console.error("❌ Erreur lors de la connexion du fichier :", err);
@@ -117,11 +111,33 @@ const SheetsFileList = ({
     }
   };
 
-  const handleRemoveFile = (e: React.MouseEvent, fileId: string) => {
+  const handleRemoveFile = async (e: React.MouseEvent, fileId: string) => {
     e.stopPropagation();
-    setConnectedFiles((prev) => prev.filter((f) => f.id !== fileId));
-    onRemoveFile(fileId);
-    toast.success("Fichier déconnecté avec succès");
+    try {
+      const user = getAuth().currentUser;
+      if (!user) throw new Error("Utilisateur non connecté");
+      const idToken = await user.getIdToken();
+
+      await fetch("https://api.askeliott.com/auth/sheets/disconnect-file", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ fileId }),
+      });
+
+      setConnectedFiles((prev) => prev.filter((f) => f.id !== fileId));
+      localStorage.setItem(
+        "sheetsFiles",
+        JSON.stringify(connectedFiles.filter((f) => f.id !== fileId))
+      );
+      onRemoveFile(fileId);
+      toast.success("Fichier déconnecté avec succès");
+    } catch (err) {
+      console.error("❌ Erreur suppression fichier :", err);
+      toast.error("Erreur lors de la suppression du fichier");
+    }
   };
 
   if (isLoading) {
@@ -209,8 +225,7 @@ const SheetsFileList = ({
               <div className="flex flex-col">
                 <span className="font-medium text-base">{file.name}</span>
                 <span className="text-xs text-gray-500">
-                  ID: {file.id.substring(0, 20)}... •{" "}
-                  {file.modifiedTime
+                  ID: {file.id.substring(0, 20)}... • {file.modifiedTime
                     ? new Date(file.modifiedTime).toLocaleDateString()
                     : "Date inconnue"}
                 </span>
@@ -226,6 +241,15 @@ const SheetsFileList = ({
                     >
                       <Link size={16} />
                     </a>
+                  </Button>
+                )}
+                {isFileConnected(file.id) && (
+                  <Button
+                    size="icon"
+                    variant="destructive"
+                    onClick={(e) => handleRemoveFile(e, file.id)}
+                  >
+                    <Trash2 size={16} />
                   </Button>
                 )}
                 {showConnectButton &&
