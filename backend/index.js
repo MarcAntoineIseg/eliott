@@ -194,14 +194,28 @@ app.post("/auth/sheets/connect-file", async (req, res) => {
       return res.status(400).json({ error: "Fichier invalide" });
     }
 
-    await db.collection("users").doc(uid).set({
-      sheets_connected_file: file
-    }, { merge: true });
+    const userRef = db.collection("users").doc(uid);
+    const userDoc = await userRef.get();
 
-    console.log("✅ Fichier Google Sheets enregistré pour UID :", uid);
-    res.status(200).json({ success: true });
+    let existingFiles = [];
+    if (userDoc.exists && userDoc.data()?.sheets_connected_files) {
+      existingFiles = userDoc.data().sheets_connected_files;
+    }
+
+    const alreadyConnected = existingFiles.find(f => f.id === file.id);
+    if (!alreadyConnected) {
+      existingFiles.push(file);
+    }
+
+    await userRef.set(
+      { sheets_connected_files: existingFiles },
+      { merge: true }
+    );
+
+    console.log(`✅ Fichier "${file.name}" ajouté pour UID :`, uid);
+    res.status(200).json({ success: true, file });
   } catch (err) {
-    console.error("❌ Erreur enregistrement fichier Sheets :", err);
+    console.error("❌ Erreur enregistrement fichiers Sheets :", err);
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
@@ -251,12 +265,21 @@ app.get("/auth/user/tokens", async (req, res) => {
     if (!doc.exists) return res.status(404).json({ error: "Utilisateur non trouvé" });
 
     const data = doc.data();
-    return res.status(200).json(data);
+
+    return res.status(200).json({
+      sheets_access_token: data?.sheets_access_token || null,
+      sheets_refresh_token: data?.sheets_refresh_token || null,
+      sheets_token_expires_at: data?.sheets_token_expires_at || null,
+      sheets_connected_files: data?.sheets_connected_files || [], // ✅ ici tableau toujours renvoyé
+      google_ads: data?.google_ads || null, // si tu as d'autres intégrations
+      google_analytics: data?.google_analytics || null,
+    });
   } catch (err) {
     console.error("❌ Erreur lecture token utilisateur :", err);
     return res.status(500).json({ error: "Erreur serveur" });
   }
 });
+
 
 // -- Meta Ads ---
 app.get('/auth/meta', (req, res) => {

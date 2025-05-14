@@ -56,10 +56,10 @@ const SheetsFileList = ({
         });
 
         const data = await res.json();
-        const file = data?.sheets_connected_file;
-        if (file) {
-          setConnectedFiles([file]);
-        }
+        const files = data?.sheets_connected_files;
+if (Array.isArray(files)) {
+  setConnectedFiles(files);
+}
       } catch (err) {
         console.error("Erreur récupération fichier connecté :", err);
       }
