@@ -100,13 +100,14 @@ const handleSubmit = async (e: React.FormEvent) => {
   const sheetsFiles = JSON.parse(localStorage.getItem("sheetsFiles") || "[]");
 
   const response = await sendToWebhook({
-    query,
-    googleSheets: {
-      files: sheetsFiles
-    },
-    googleAnalytics: userContext.googleAnalytics,
-    googleAds: userContext.googleAds
-  });
+  query,
+  googleSheets: {
+    ...userContext.googleSheets,
+    files: sheetsFiles
+  },
+  googleAnalytics: userContext.googleAnalytics,
+  googleAds: userContext.googleAds
+});
 
   toast.success("Requête envoyée à Eliott ✅");
   setQuery("");

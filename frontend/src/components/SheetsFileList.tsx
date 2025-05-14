@@ -41,7 +41,6 @@ const SheetsFileList = ({
   const [showConnectButton, setShowConnectButton] = useState<boolean>(false);
   const [search, setSearch] = useState<string>("");
 
-  // Lecture du fichier connecté depuis Firestore via /auth/user/tokens
   useEffect(() => {
     const fetchConnectedSheetsFile = async () => {
       try {
@@ -57,9 +56,10 @@ const SheetsFileList = ({
 
         const data = await res.json();
         const files = data?.sheets_connected_files;
-if (Array.isArray(files)) {
-  setConnectedFiles(files);
-}
+        if (Array.isArray(files)) {
+          setConnectedFiles(files);
+          localStorage.setItem("sheetsFiles", JSON.stringify(files));
+        }
       } catch (err) {
         console.error("Erreur récupération fichier connecté :", err);
       }
@@ -78,47 +78,44 @@ if (Array.isArray(files)) {
   };
 
   const handleConnectFile = async () => {
-  const fileToConnect = files.find((f) => f.id === selectedFileId);
-  if (!fileToConnect) {
-    toast.error("Aucun fichier sélectionné");
-    return;
-  }
+    const fileToConnect = files.find((f) => f.id === selectedFileId);
+    if (!fileToConnect) {
+      toast.error("Aucun fichier sélectionné");
+      return;
+    }
 
-  try {
-    const user = getAuth().currentUser;
-    if (!user) throw new Error("Utilisateur non connecté");
-    const idToken = await user.getIdToken();
+    try {
+      const user = getAuth().currentUser;
+      if (!user) throw new Error("Utilisateur non connecté");
+      const idToken = await user.getIdToken();
 
-    const res = await fetch("https://api.askeliott.com/auth/sheets/connect-file", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${idToken}`,
-      },
-      body: JSON.stringify({ file: fileToConnect }),
-    });
+      const res = await fetch("https://api.askeliott.com/auth/sheets/connect-file", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ file: fileToConnect }),
+      });
 
-    if (!res.ok) throw new Error("Erreur côté serveur");
+      if (!res.ok) throw new Error("Erreur côté serveur");
 
-    // ✅ Ajouter au tableau local sans écraser
-    setConnectedFiles((prev) => {
-      const updated = [...prev, fileToConnect];
-      const unique = Array.from(new Map(updated.map(f => [f.id, f])).values());
+      setConnectedFiles((prev) => {
+        const updated = [...prev, fileToConnect];
+        const unique = Array.from(new Map(updated.map(f => [f.id, f])).values());
+        localStorage.setItem("sheetsFiles", JSON.stringify(unique));
+        return unique;
+      });
 
-      // 🧠 Stocker aussi dans le localStorage
-      localStorage.setItem("sheetsFiles", JSON.stringify(unique));
-      return unique;
-    });
+      setShowConnectButton(false);
+      onSelectFile(fileToConnect);
 
-    setShowConnectButton(false);
-    onSelectFile(fileToConnect);
-
-    toast.success(`Fichier "${fileToConnect.name}" connecté avec succès`);
+      toast.success(`Fichier "${fileToConnect.name}" connecté avec succès`);
     } catch (err) {
-    console.error("❌ Erreur lors de la connexion du fichier :", err);
-    toast.error("Erreur lors de la connexion du fichier");
-  }
-
+      console.error("❌ Erreur lors de la connexion du fichier :", err);
+      toast.error("Erreur lors de la connexion du fichier");
+    }
+  };
 
   const handleRemoveFile = (e: React.MouseEvent, fileId: string) => {
     e.stopPropagation();
