@@ -33,6 +33,11 @@ const Integration = () => {
   const [connectedSheetsFileName, setConnectedSheetsFileName] = useState<string | null>(null);
   const [connectedGaPropertyId, setConnectedGaPropertyId] = useState<string | null>(null);
 
+  useEffect(() => {
+  const stored = localStorage.getItem("ga_property_id");
+  if (stored) setConnectedGaPropertyId(stored);
+}, []);
+
   const selectedAccountObject = useMemo(() => {
     return accounts.find((acc: any) => acc.name === selectedAccount);
   }, [accounts, selectedAccount]);
@@ -84,51 +89,37 @@ const Integration = () => {
   }, [firebaseUser, selectedAccount]);
 
   useEffect(() => {
-    const loadGoogleSheetsFiles = async () => {
-      if (!firebaseUser) return;
-      try {
-        setGoogleSheetsLoading(true);
-        const idToken = await firebaseUser.getIdToken();
+  const loadGoogleSheetsFiles = async () => {
+    if (!firebaseUser) return;
 
-        const tokensRes = await fetch("https://api.askeliott.com/auth/user/tokens", {
-          headers: { Authorization: `Bearer ${idToken}` },
-        });
-        const userData = await tokensRes.json();
-        const accessToken = userData?.sheets_access_token;
-        if (!accessToken) return;
+    try {
+      setGoogleSheetsLoading(true);
+      const idToken = await firebaseUser.getIdToken();
 
-        const driveRes = await fetch(
-          "https://www.googleapis.com/drive/v3/files?q=mimeType='application/vnd.google-apps.spreadsheet'&fields=files(id,name,modifiedTime,webViewLink)",
-          {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }
-        );
+      const filesRes = await fetch("https://api.askeliott.com/api/google-sheets/files", {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
 
-        useEffect(() => {
-  const stored = localStorage.getItem("ga_property_id");
-  if (stored) setConnectedGaPropertyId(stored);
-}, []);
+      const filesData = await filesRes.json();
+      const files = filesData.files || [];
+      setGoogleSheetsFiles(files);
 
-
-        const driveData = await driveRes.json();
-        const files = driveData.files || [];
-        setGoogleSheetsFiles(files);
-
-        // 🧠 Si un fichier est connecté, stocke son ID
-        if (userData?.sheets_connected_file?.id) {
-          localStorage.setItem("sheets_file_id", userData.sheets_connected_file.id);
-          setConnectedSheetsFileName(userData.sheets_connected_file.name);
-        }
-      } catch (err) {
-        console.error("❌ Erreur chargement fichiers Google Sheets :", err);
-        setGoogleSheetsError("Erreur chargement fichiers Google Sheets");
-      } finally {
-        setGoogleSheetsLoading(false);
+      if (filesData.connectedFile?.id) {
+        localStorage.setItem("sheets_file_id", filesData.connectedFile.id);
+        setConnectedSheetsFileName(filesData.connectedFile.name);
       }
-    };
+    } catch (err) {
+      console.error("❌ Erreur chargement fichiers Google Sheets :", err);
+      setGoogleSheetsError("Erreur chargement fichiers Google Sheets");
+    } finally {
+      setGoogleSheetsLoading(false);
+    }
+  };
 
-    loadGoogleSheetsFiles();
-  }, [firebaseUser]);
+  loadGoogleSheetsFiles();
+}, [firebaseUser]);
 
   const handleAccountChange = async (accountId: string) => {
     setSelectedAccount(accountId);
@@ -201,16 +192,18 @@ const Integration = () => {
                   </div>
 
                   {selectedAccountObject && (
-                    <PropertyList
-                      properties={properties}
-                      isLoading={loadingProperties}
-                      selectedAccount={selectedAccount}
-                      onSelectProperty={(property) => {
-                        console.log("📌 Propriété sélectionnée :", property);
-                        localStorage.setItem("ga_property_id", property.name);
-                      }}
-                    />
-                  )}
+  <PropertyList
+    properties={properties}
+    isLoading={loadingProperties}
+    selectedAccount={selectedAccount}
+    onSelectProperty={(property) => {
+      console.log("📌 Propriété sélectionnée :", property);
+      localStorage.setItem("ga_property_id", property.name);
+      setConnectedGaPropertyId(property.name); // ✅ met à jour l'état local aussi
+    }}
+  />
+)}
+
                 </>
               )}
             </CardContent>

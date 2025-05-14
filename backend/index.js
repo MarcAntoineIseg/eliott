@@ -419,6 +419,31 @@ app.get('/api/analytics/properties', async (req, res) => {
   }
 });
 
+app.get("/api/google-sheets/files", async (req, res) => {
+  try {
+    const idToken = req.headers.authorization?.split("Bearer ")[1];
+    if (!idToken) return res.status(401).json({ error: "ID Token manquant" });
+
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    const uid = decoded.uid;
+
+    const accessToken = await getValidAccessToken(uid, "sheets");
+
+    const driveRes = await fetch(
+      "https://www.googleapis.com/drive/v3/files?q=mimeType='application/vnd.google-apps.spreadsheet'&fields=files(id,name,modifiedTime,webViewLink)",
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+
+    const data = await driveRes.json();
+    res.status(200).json({ files: data.files || [] });
+  } catch (err) {
+    console.error("❌ Erreur API Google Sheets :", err.message);
+    res.status(500).json({ error: "Erreur chargement fichiers Google Sheets" });
+  }
+});
+
 // === START SERVER ===
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
