@@ -94,9 +94,22 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   setIsLoading(true);
   try {
-    const response = await sendToWebhook(query, userContext);
-    toast.success("Requête envoyée à Eliott ✅");
-    setQuery("");
+  const sheetsFiles = JSON.parse(localStorage.getItem("sheetsFiles") || "[]");
+
+  const response = await sendToWebhook({
+    query,
+    googleSheets: {
+      files: sheetsFiles
+    },
+    googleAnalytics: userContext.googleAnalytics,
+    googleAds: userContext.googleAds
+  });
+
+  toast.success("Requête envoyée à Eliott ✅");
+  setQuery("");
+
+  // ... suite du traitement de la réponse (chartData, etc.)
+}
 
     // ✅ Traitement correct de la réponse : tableau ou objet
     const parsedResponse = Array.isArray(response) ? response[0] : response;

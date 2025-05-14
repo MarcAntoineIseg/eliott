@@ -104,8 +104,21 @@ const SheetsFileList = ({
       setShowConnectButton(false);
       onSelectFile(fileToConnect);
       // 🧠 Stocke aussi le nom du fichier dans le localStorage
-      localStorage.setItem("sheetFileName", fileToConnect.name);
-      localStorage.setItem("sheetFileId", fileToConnect.id);
+      const currentFiles = JSON.parse(localStorage.getItem("sheetsFiles") || "[]");
+
+const updatedFiles = [
+  ...currentFiles,
+  { id: fileToConnect.id, name: fileToConnect.name }
+];
+
+// Évite les doublons (par ID)
+const uniqueFiles = Array.from(
+  new Map(updatedFiles.map(f => [f.id, f])).values()
+);
+
+localStorage.setItem("sheetsFiles", JSON.stringify(uniqueFiles));
+
+
       toast.success(`Fichier "${fileToConnect.name}" connecté avec succès`);
     } catch (err) {
       console.error("❌", err);
