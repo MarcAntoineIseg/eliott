@@ -71,19 +71,22 @@ const Request = () => {
             }
           : null,
       googleSheets:
-  userData?.sheets_access_token && userData?.sheets_refresh_token && userData?.sheets_connected_file?.id
-    ? {
-        accessToken: userData.sheets_access_token,
-        refreshToken: userData.sheets_refresh_token,
-        fileId: userData.sheets_connected_file.id,
-        fileName: sheetFileName, // ✅ ici on ajoute le nom
-      }
-    : null,
-      googleAds: null, // tu peux compléter avec ton système Ads
+        userData?.sheets_access_token &&
+        userData?.sheets_refresh_token &&
+        userData?.sheets_connected_file?.id
+          ? {
+              accessToken: userData.sheets_access_token,
+              refreshToken: userData.sheets_refresh_token,
+              fileId: userData.sheets_connected_file.id,
+              fileName: sheetFileName,
+            }
+          : null,
+      googleAds: null,
     });
   };
-  loadContext();
-}, []);
+
+  loadContext(); // ✅ tu l'appelles correctement ici
+}, []); // ✅ ICI tu fermes correctement le useEffect
 
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
