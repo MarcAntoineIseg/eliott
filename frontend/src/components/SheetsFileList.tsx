@@ -103,6 +103,9 @@ const SheetsFileList = ({
       setConnectedFiles([fileToConnect]);
       setShowConnectButton(false);
       onSelectFile(fileToConnect);
+      // 🧠 Stocke aussi le nom du fichier dans le localStorage
+      localStorage.setItem("sheetFileName", fileToConnect.name);
+      localStorage.setItem("sheetFileId", fileToConnect.id);
       toast.success(`Fichier "${fileToConnect.name}" connecté avec succès`);
     } catch (err) {
       console.error("❌", err);

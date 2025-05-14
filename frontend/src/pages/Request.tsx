@@ -58,6 +58,7 @@ const Request = () => {
       headers: { Authorization: `Bearer ${idToken}` },
     });
     const userData = await tokenRes.json();
+    const sheetFileName = localStorage.getItem("sheetFileName") || "";
 
     setUserContext({
       googleAnalytics:
@@ -70,13 +71,14 @@ const Request = () => {
             }
           : null,
       googleSheets:
-        userData?.sheets_access_token && userData?.sheets_refresh_token && userData?.sheets_connected_file?.id
-          ? {
-              accessToken: userData.sheets_access_token,
-              refreshToken: userData.sheets_refresh_token,
-              fileId: userData.sheets_connected_file.id,
-            }
-          : null,
+  userData?.sheets_access_token && userData?.sheets_refresh_token && userData?.sheets_connected_file?.id
+    ? {
+        accessToken: userData.sheets_access_token,
+        refreshToken: userData.sheets_refresh_token,
+        fileId: userData.sheets_connected_file.id,
+        fileName: sheetFileName, // ✅ ici on ajoute le nom
+      }
+    : null,
       googleAds: null, // tu peux compléter avec ton système Ads
     });
   };
@@ -151,12 +153,12 @@ const handleSubmit = async (e: React.FormEvent) => {
               Google Analytics connecté
             </div>
           )}
-          {userContext.googleSheets?.files?.length > 0 && (
-            <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm ml-2">
-              <span className="h-2 w-2 rounded-full bg-green-500"></span>
-          {userContext.googleSheets.files.length} fichier(s) Google Sheets connecté(s)
-            </div>
-          )}
+          {userContext.googleSheets && (
+  <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm ml-2">
+    <span className="h-2 w-2 rounded-full bg-green-500"></span>
+    Google Sheet connecté : {userContext.googleSheets.fileName || "Nom inconnu"}
+  </div>
+)}
           {userContext.googleAds && (
             <div className="inline-flex items-center gap-2 bg-red-50 text-red-700 px-3 py-1 rounded-full text-sm ml-2">
               <span className="h-2 w-2 rounded-full bg-red-500"></span>

@@ -16,7 +16,9 @@ interface GoogleSheetsFile {
 interface GoogleSheetsContext {
   accessToken: string;
   refreshToken: string;
-  files: GoogleSheetsFile[];
+  fileId?: string;      // ✅ optionnel, si plusieurs fichiers
+  fileName?: string;    // ✅ optionnel aussi
+  files?: GoogleSheetsFile[]; // ✅ tu peux aussi garder le tableau pour les cas multiples
   fileIds?: string[];
 }
 
