@@ -114,9 +114,11 @@ if (Array.isArray(files)) {
     onSelectFile(fileToConnect);
 
     toast.success(`Fichier "${fileToConnect.name}" connecté avec succès`);
-  } catch (err) {
-
+    } catch (err) {
+    console.error("❌ Erreur lors de la connexion du fichier :", err);
+    toast.error("Erreur lors de la connexion du fichier");
   }
+
 
   const handleRemoveFile = (e: React.MouseEvent, fileId: string) => {
     e.stopPropagation();
